@@ -1,3 +1,9 @@
+# Copyright 2021 Toyota Research Institute.  All rights reserved.
+
+"""
+Default chm arguments for training, loss function, dataset creation, inference
+"""
+
 import argparse
 import os
 import json
@@ -179,7 +185,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=0.0,
-        help="dropout_ratio for ALL side channel input ",
+        help="Dropout_ratio for ALL side channel input. When dropout is applied ALL side channel input is zeroed out. Only active raining",
     )
 
     parser.add_argument(
@@ -187,7 +193,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=int,
         default=2000,
-        help="Interval (num of batches) before the learning rate schedulergets updates",
+        help="Interval (num of batches) before the learning rate scheduler gets updates",
     )
     parser.add_argument(
         "--learning_rate_decay",
@@ -291,13 +297,21 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         dest="no_maps_visualize",
         action="store_true",
         default=False,
-        help="Saving maps of example heat/gaze",
+        help="When set, the gaze and awareness maps are not saved.",
     )
     parser.add_argument(
-        "--no_save_model", dest="no_save_model", action="store_true", default=False, help="Saving model"
+        "--no_save_model",
+        dest="no_save_model",
+        action="store_true",
+        default=False,
+        help="when set, model saving does not happen. ",
     )
     parser.add_argument(
-        "--no_run_test", dest="no_run_test", action="store_true", default=False, help="Flag for not running test. "
+        "--no_run_test",
+        dest="no_run_test",
+        action="store_true",
+        default=False,
+        help="When set, the testing phase is skipped during the training run.",
     )
     parser.add_argument(
         "--no_diffusivity_visualize",
@@ -311,24 +325,28 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         dest="no_dump_cost_histograms",
         action="store_true",
         default=False,
-        help="For showing cost distribution histograms",
+        help="When set, the cost histograms are no longer generated",
     )
     parser.add_argument(
         "--no_voronoi_visualize",
         dest="no_voronoi_visualize",
         action="store_true",
         default=False,
-        help="Flag for not visualizing voronoi maps.",
+        help="When set, voronoi maps of side channel gaze are not visualized.",
     )
     parser.add_argument(
         "--num_visualization_examples",
         dest="num_visualization_examples",
         default=8,
         type=int,
-        help="Number of example visalizations",
+        help="Number of examples (gaze/awareness maps) visualized during training",
     )
     parser.add_argument(
-        "--num_test_samples", dest="num_test_samples", default=1000, type=int, help="Number of testing samples"
+        "--num_test_samples",
+        dest="num_test_samples",
+        default=1000,
+        type=int,
+        help="Number of samples (fixed set) used during the testing phase",
     )
 
     ########################################### DATASET ARGS ###########################################
@@ -530,27 +548,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=[8, 32, 64, 128],
         help="Number of features in each of the decoder units in the Decoder. When using s3D, the list should contain 5 elements, otherwise 4",
     )
-    # parser.add_argument(
-    #     "--gaze_spatial_reg_power", action="store", type=float, default=1.0, help="gaze spatial regularization power"
-    # )
-    # parser.add_argument(
-    #     "--gaze_temporal_reg_power", action="store", type=float, default=1.0, help="gaze temporal regularization power"
-    # )
-    # parser.add_argument(
-    #     "--awareness_spatial_reg_power",
-    #     action="store",
-    #     type=float,
-    #     default=1.0,
-    #     help="awareness spatial regularization power",
-    # )
-
-    # parser.add_argument(
-    #     "--awareness_temporal_reg_power",
-    #     action="store",
-    #     type=float,
-    #     default=1.0,
-    #     help="awareness temporal regularization power",
-    # )
     ########################################## LOSS FUNCTION ARGS #######################################
 
     parser.add_argument(
@@ -622,23 +619,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=1.0,
         help="Coefficient on main loss term gaze log-probability",
     )
-
-    # parser.add_argument(
-    #     "--imerit_gen_tasks",
-    #     nargs="*",
-    #     type=str,
-    #     default=["roadonly", "control", "readingtext", "blurred", "flipped"],
-    #     help="list containing the tasks to be considered for imerit_data generation",
-    # )
-    # parser.add_argument(
-    #     "--imerit_nonobject_fraction", action="store", type=float, default=0.2, help="imerit_nonobject_fraction"
-    # )
-    # parser.add_argument(
-    #     "--imerit_edges_fraction", action="store", type=float, default=0.2, help="imerit_edges_fraction"
-    # )
-
-    # parser.add_argument("--imerit_videos_gen_num", type=int, default=10000, help="number of imerit video generation")
-
     parser.add_argument(
         "--gaze_spatial_regularization_coeff",
         action="store",
@@ -830,7 +810,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=0.3,
-        help="Controls the gain for the awareenss of gaze weight curve",
+        help="Controls the gain for the awareness of gaze weight curve",
     )
 
     parser.add_argument(
