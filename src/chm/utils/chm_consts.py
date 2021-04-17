@@ -27,6 +27,9 @@ FIXATION_TYPE = "fixation_type"  # np.array(one_hot[ dim_fixation_types])
 TASK_TYPE = "task_type"
 MAX_NUM_VIDEO_FRAMES = 7501
 ALL_DREYEVE_VIDEO_IDS = [6, 7, 10, 11, 26, 35, 53, 60]
+OPTIC_FLOW_SCALE_FACTOR = 2
+OPTIC_FLOW_H_PAD = 2
+OPTIC_FLOW_W_PAD = 0
 
 
 class InferenceMode(Enum):

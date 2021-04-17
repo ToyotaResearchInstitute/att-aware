@@ -208,9 +208,57 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         Returns
         -------
-        optical_frame: numpy.array (H, W, 2) or (h, w, 2), where H,W refers to full size image dimensions and h, w refers to resized dimensions
+        optic_flow_frame: numpy.array (H, W, 2) or (h, w, 2), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
-        return None
+        optic_flow_directory_cache_path = os.path.join(self.precache_dir, "optic_flow", "{0:02d}".format(video_id))
+        #  precache id for the fullsized image.
+        cached_size_precache_id = "frame_{}".format(frame_idx)
+        cached_size_precache_filename = os.path.join(optic_flow_directory_cache_path, cached_size_precache_id) + ".npy"
+        assert os.path.exists(
+            cached_size_precache_filename
+        ), "Optic flow frames need to be extracted and cached beforehand"
+
+        # precache id for the reduced size for the fullsized image (different aspect ratios will have different images)
+        reduced_size_precache_id = cached_size_precache_id + "_ar_{}".format(self.aspect_ratio_reduction_factor)
+        # full path to reduced_size image (in the same folder as the cached size image)
+        reduced_size_precache_filename = (
+            os.path.join(optic_flow_directory_cache_path, reduced_size_precache_id) + ".npy"
+        )
+
+        full_size_precache_id = cached_size_precache_id + "_full_"
+        # full path to full_size image (in the same folder as the cached size image)
+        full_size_precache_filename = os.path.join(optic_flow_directory_cache_path, full_size_precache_id) + ".npy"
+
+        if return_reduced_size:
+            if os.path.exists(reduced_size_precache_filename):
+                optic_flow_frame = np.load(reduced_size_precache_filename)  # (h, w, 2)
+            else:
+                cached_size_frame = np.load(cached_size_precache_filename)  # (h'+hpad, w'+wpad, 2)
+                if OPTIC_FLOW_H_PAD > 0:
+                    cached_size_frame = cached_size_frame[OPTIC_FLOW_H_PAD:-OPTIC_FLOW_H_PAD, :, :]  # (h', w'+wpad, 2)
+                if OPTIC_FLOW_W_PAD > 0:
+                    cached_size_frame = cached_size_frame[:, OPTIC_FLOW_W_PAD:-OPTIC_FLOW_W_PAD, :]  # (h', w', 2)
+                optic_flow_frame = cv2.resize(
+                    cached_size_frame / (self.aspect_ratio_reduction_factor / OPTIC_FLOW_SCALE_FACTOR),
+                    (self.new_image_width, self.new_image_height),
+                )  # the array has to be scaled, because the ux and uy values change according to resolution. OPTIC_FLOW_SCALE_FACTOR allows for optic flow to be cached at a lower resolution than full scale.
+                np.save(reduced_size_precache_filename, optic_flow_frame)
+        else:
+            if os.path.exists(full_size_precache_filename):
+                optic_flow_frame = np.load(full_size_precache_filename)
+            else:
+                cached_size_frame = np.load(cached_size_precache_filename)  # (h'+hpad, w'+wpad, 2)
+                if OPTIC_FLOW_H_PAD > 0:
+                    cached_size_frame = cached_size_frame[OPTIC_FLOW_H_PAD:-OPTIC_FLOW_H_PAD, :, :]  # (h', w'+wpad, 2)
+                if OPTIC_FLOW_W_PAD > 0:
+                    cached_size_frame = cached_size_frame[:, OPTIC_FLOW_W_PAD:-OPTIC_FLOW_W_PAD, :]  # (h', w', 2)
+
+                optic_flow_frame = cv2.resize(
+                    cached_size_frame * OPTIC_FLOW_SCALE_FACTOR, (DISPLAY_WIDTH, DISPLAY_HEIGHT)
+                )  # scale the optic flow ux uy values to the full resolution before resizing and saving
+                np.save(full_size_precache_filename, optic_flow_frame)
+
+        return optic_flow_frame  # (h, w, 2) or (H, W, 2)
 
     def fetch_segmentation_mask_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
@@ -318,18 +366,24 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         # fetch road video frame image at frame idx
         road_frame = self.fetch_image_from_id(video_id, frame_idx, self.return_reduced_size)
-        road_frame = np.float32(road_frame)
+        road_frame = np.float32(road_frame)  # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
 
-        # fetch segmentation masks
+        # fetch segmentation masks at frame idx
         segmentation_frame = self.fetch_segmentation_mask_from_id(video_id, frame_idx, self.return_reduced_size)
-        segmentation_frame = np.float32(segmentation_frame)
+        segmentation_frame = np.float32(
+            segmentation_frame
+        )  # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
 
-        # fetch optic flow
-        optic_flow_frame = self.fetch_optic_flow_from_id(video_id, frame_idx, self.return_reduced_size)
+        # fetch optic flow at frame idx
+        optic_flow_frame = self.fetch_optic_flow_from_id(
+            video_id, frame_idx, self.return_reduced_size
+        )  # (h, w ,C=2) or (H, W, C=2) depending on return_reduced_size flags
+        # (C, h, w) or (C, H, W) np.float32 already
+        optic_flow_frame = optic_flow_frame.transpose([2, 0, 1])
+        optic_flow_frame = np.float32(optic_flow_frame)
 
         import IPython
 
         IPython.embed(banner1="check image")
 
         return data_item, auxiliary_info
-        pass
