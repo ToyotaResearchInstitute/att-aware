@@ -289,6 +289,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         # fetch road video frame image at frame idx
         road_img = self.fetch_image_from_id(video_id, frame_idx, self.return_reduced_size)
+        import IPython
+
+        IPython.embed(banner1="check image")
 
         return data_item, auxiliary_info
         pass
