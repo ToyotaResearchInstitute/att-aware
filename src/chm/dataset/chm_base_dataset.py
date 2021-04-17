@@ -161,7 +161,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         Returns
         -------
-        video_frame: numpy.array (H, W, 3) or (h, w, 3), where H,W refers to full size image dimensions and h, w refers to resized dimensions
+        road_frame: numpy.array (H, W, 3) or (h, w, 3), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
 
         video_directory_cache_path = os.path.join(self.precache_dir, "frame_image_cached", "{0:02d}".format(video_id))
@@ -179,19 +179,18 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         if return_reduced_size:  # if reduced size image to be returned
             if os.path.exists(reduced_size_precache_filename):  # if already cached read and return
-                video_frame = cv2.imread(reduced_size_precache_filename)  # in BGR format
+                road_frame = cv2.imread(reduced_size_precache_filename)  # in BGR format
             # if not, read in the full size image (assumes it exists), and then resize it and cache it and return it
             else:
                 full_frame = cv2.imread(full_size_precache_filename)
                 # resize full frame and cache the result in the same folder for later use.
                 full_frame = np.float32(full_frame)
-                video_frame = cv2.resize(full_frame, (self.new_image_width, self.new_image_height))
+                road_frame = cv2.resize(full_frame, (self.new_image_width, self.new_image_height))
                 cv2.imwrite(reduced_size_precache_filename, video_frame)
-            return reduced_frame
         else:  # return full sized frame
-            video_frame = cv2.imread(full_size_precache_filename)
+            road_frame = cv2.imread(full_size_precache_filename)
 
-        return video_frame
+        return road_frame
 
     def fetch_optic_flow_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
@@ -211,7 +210,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
         -------
         optical_frame: numpy.array (H, W, 2) or (h, w, 2), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
-        pass
+        return None
 
     def fetch_segmentation_mask_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
@@ -231,7 +230,37 @@ class CognitiveHeatMapBaseDataset(Dataset):
         -------
         segmentation_frame: numpy.array (H, W, 3) or (h, w, 3), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
-        pass
+        segmentations_directory_cache_path = os.path.join(
+            self.precache_dir, "segmentations_from_video", "{0:02d}".format(video_id), "segmentation_frames"
+        )
+        full_size_precache_id = "frame_{}".format(frame_idx)
+        #  path for full size image
+        full_size_precache_filename = (
+            os.path.join(segmentations_directory_cache_path, full_size_precache_id) + ".png"
+        )  # assumed to be .png because lossless format is needed
+        assert os.path.exists(
+            full_size_precache_filename
+        ), "Full resolution video frames need to be extracted and cached beforehand"
+        # precache id for the reduced size for the fullsized image (different aspect ratios will have different images)
+        reduced_size_precache_id = full_size_precache_id + "_ar_{}".format(self.aspect_ratio_reduction_factor)
+        # full path to reduced_size image (in the same folder as the full size image)
+        reduced_size_precache_filename = (
+            os.path.join(segmentations_directory_cache_path, reduced_size_precache_id) + ".png"
+        )
+        if return_reduced_size:
+            if os.path.exists(reduced_size_precache_filename):
+                segmentation_frame = np.asarray(Image.open(reduced_size_precache_filename))  # RGB
+            else:
+                full_frame = np.asarray(Image.open(full_size_precache_filename))
+                full_frame = np.float64(full_frame)
+                segmentation_frame = cv2.resize(full_frame, (self.new_image_width, self.new_image_height))
+                cv2.imwrite(reduced_size_precache_filename, segmentation_frame)
+        else:
+            # get full size segmentation frame.
+            segmentation_frame = np.asarray(Image.open(full_size_precache_filename))
+            segmentation_frame = np.float64(segmentation_frame)
+
+        return segmentation_frame
 
     def fetch_gaze_points_from_id(self, video_id, frame_idx, subject, task):
         """
@@ -288,7 +317,16 @@ class CognitiveHeatMapBaseDataset(Dataset):
         (video_id, subject, task, frame_idx) = metadata
 
         # fetch road video frame image at frame idx
-        road_img = self.fetch_image_from_id(video_id, frame_idx, self.return_reduced_size)
+        road_frame = self.fetch_image_from_id(video_id, frame_idx, self.return_reduced_size)
+        road_frame = np.float32(road_frame)
+
+        # fetch segmentation masks
+        segmentation_frame = self.fetch_segmentation_mask_from_id(video_id, frame_idx, self.return_reduced_size)
+        segmentation_frame = np.float32(segmentation_frame)
+
+        # fetch optic flow
+        optic_flow_frame = self.fetch_optic_flow_from_id(video_id, frame_idx, self.return_reduced_size)
+
         import IPython
 
         IPython.embed(banner1="check image")
