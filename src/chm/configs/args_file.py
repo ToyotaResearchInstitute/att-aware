@@ -95,7 +95,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     )
 
     parser.add_argument(
-        "--orig_road_img_size",
+        "--orig_road_img_dims",
         type=int,
         default=[3, 1080, 1920],
         help="Dimensions of the full original road_image in pixels",
