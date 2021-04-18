@@ -78,12 +78,10 @@ class CognitiveHeatMapPairwiseGazeDataset(CognitiveHeatMapBaseDataset):
         metadata_list_all_comb = [
             d for d in metadata_list_all_comb if d in self.all_videos_subject_task_list
         ]  # filter out those combinations that are not present in the available combinations
-        import IPython
 
-        IPython.embed(banner1="check pairwise metadat list")
         self.metadata_list = [
-            (a, b) for a in metadata_list_all_comb for b in self.query_frame_idxs_list
-        ]  # append the frame query list to each tuple
+            (a, b, b + 1) for a in metadata_list_all_comb for b in self.query_frame_idxs_list[:-1]
+        ]  # append the query_frame at t and t+1 to each video, subject, task tuple
 
         self.metadata_len = len(self.metadata_list)  # Total number of available snippets
 
@@ -102,8 +100,15 @@ class CognitiveHeatMapPairwiseGazeDataset(CognitiveHeatMapBaseDataset):
         """
         data_dict = {}
         (video_id, subject, task), query_frame_t, query_frame_tp1 = self.metadata_list[idx]
-        data_dict_t, auxiliary_info_list_t = self._get_sequence(video_id, subject, task, query_frame_t)
-        data_dict_tp1, auxiliary_info_list_tp1 = self._get_sequence(video_id, subject, task, query_frame_tp1)
+        import IPython
+
+        IPython.embed(banner1="check data item")
+        data_dict_t, auxiliary_info_list_t = self._get_sequence(
+            video_id, subject, task, query_frame_t
+        )  # get gaze datat for sequence at t
+        data_dict_tp1, auxiliary_info_list_tp1 = self._get_sequence(
+            video_id, subject, task, query_frame_tp1
+        )  # get gaze datat for sequence at t+1
 
         data_dict["data_t"] = (data_dict_t, auxiliary_info_list_t)
         data_dict["data_tp1"] = (data_dict_tp1, auxiliary_info_list_tp1)
