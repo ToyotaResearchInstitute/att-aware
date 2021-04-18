@@ -100,15 +100,12 @@ class CognitiveHeatMapPairwiseGazeDataset(CognitiveHeatMapBaseDataset):
         """
         data_dict = {}
         (video_id, subject, task), query_frame_t, query_frame_tp1 = self.metadata_list[idx]
-        import IPython
-
-        IPython.embed(banner1="check data item")
         data_dict_t, auxiliary_info_list_t = self._get_sequence(
             video_id, subject, task, query_frame_t
-        )  # get gaze datat for sequence at t
+        )  # get gaze data for sequence at t
         data_dict_tp1, auxiliary_info_list_tp1 = self._get_sequence(
             video_id, subject, task, query_frame_tp1
-        )  # get gaze datat for sequence at t+1
+        )  # get gaze data for sequence at t+1
 
         data_dict["data_t"] = (data_dict_t, auxiliary_info_list_t)
         data_dict["data_tp1"] = (data_dict_tp1, auxiliary_info_list_tp1)

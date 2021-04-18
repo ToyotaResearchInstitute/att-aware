@@ -83,13 +83,18 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
         Parameters
         ----------
-        idx: Index of the data item in self.att_awareness_labels
+        idx: int
+            Index of the data item in self.att_awareness_labels
 
         Returns
         -------
-        data_dict: Ordered dictionary containing the various data items needed for training.
+        data_dict:  dict
+            Same keys as the data_dict in chm_base_dataset.
+            Additional key: att_annotation
 
-        auxiliary_info_list: List of auxiliary information needed for other purposes. Only returned if auxiliary info flag is set to be True.
+        auxiliary_info_list: list
+            Same as chm_base_dataset
+
         """
 
         att_label_item = self.att_awareness_labels.iloc[idx]

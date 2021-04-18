@@ -90,13 +90,16 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
 
         Parameters
         ----------
-        idx: Index of the data item in self.metadata_list
+        idx: int
+            Index of the data item in self.metadata_list
 
         Returns
         -------
-        data_dict: Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
+        data_dict: dict
+            Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
 
-        auxiliary_info_list: List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
+        auxiliary_info_list: list
+            List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
         """
         (video_id, subject, task), query_frame = self.metadata_list[idx]
         data_dict, auxiliary_info_list = self._get_sequence(video_id, subject, task, query_frame)
