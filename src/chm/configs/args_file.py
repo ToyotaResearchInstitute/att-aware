@@ -13,19 +13,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, conflict_handler="resolve")
 
     ########################################### DATASET TYPES AND DIRECTORY PATHS ###########################################
-    parser.add_argument(
-        "--dataset_type",
-        dest="dataset_type",
-        default="train",
-        help="Argument indicating the dataset type when creating dataset instances during training. [train, test, vis, video]",
-    )
-
-    parser.add_argument(
-        "--inference_ds_type",
-        dest="inference_ds_type",
-        default="test",
-        help="Argument indicating the dataset type when creating dataset instances during inference. [train, test, vis, video]",
-    )
 
     parser.add_argument(
         "--data_dir",
@@ -41,20 +28,26 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Full path to the directory in which the cached images, segmentation masks and optic flow are stored",
     )
     parser.add_argument(
-        "--awareness_files",
-        nargs="*",
+        "--att_awareness_labels",
         type=str,
-        default=["awareness_file.json"],
-        help="list containing filenames of awareness annotations",
+        default=os.path.join(os.path.expanduser("~"), "data", "CHM_ATT_AWARENESS_LABELS.csv"),
+        help="Path to CSV file containing the attended awareness annotations",
     )
 
     parser.add_argument(
-        "--chm_annotation_sagemaker_folders",
-        nargs="*",
-        type=str,
-        default=["awareness_file.json"],
-        help="list containing filenames of awareness annotations",
+        "--dataset_type",
+        dest="dataset_type",
+        default="train",
+        help="Argument indicating the dataset type when creating dataset instances during training. [train, test, vis, video]",
     )
+
+    parser.add_argument(
+        "--inference_ds_type",
+        dest="inference_ds_type",
+        default="test",
+        help="Argument indicating the dataset type when creating dataset instances during inference. [train, test, vis, video]",
+    )
+
     parser.add_argument(
         "--load_model_path",
         dest="load_model_path",
@@ -65,7 +58,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--load_indices_dict_path",
         dest="load_indices_dict_path",
         default=None,
-        help="Full path to folder containing the train/test split indices to be loaded in",
+        help="Full path to folder (generated during training) containing the train/test split indices to be loaded in during inference.",
     )
     parser.add_argument(
         "--log_dir",
@@ -82,31 +75,12 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     )
 
     parser.add_argument(
-        "--use_eyelink_data",
-        action="store_true",
-        default=False,
-        help="Flag for using gaze data collected from EYELINK for training",
-    )
-    parser.add_argument(
-        "--use_original_dreyeve_fixation",
-        action="store_true",
-        default=False,
-        help="Flag for using original dreyeve fixation data",
-    )
-
-    parser.add_argument(
         "--orig_road_img_dims",
         type=int,
         default=[3, 1080, 1920],
         help="Dimensions of the full original road_image in pixels",
     )
 
-    # parser.add_argument(
-    #     "--generate_original_scale_video",
-    #     action="store_true",
-    #     default=False,
-    #     help="Flag for using generating original scale video from saliency maps",
-    # )
     ########################################### TRAINING ARGS ###########################################
     parser.add_argument(
         "--random_seed",

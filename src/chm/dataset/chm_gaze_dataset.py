@@ -45,6 +45,20 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
             data_dir=data_dir, precache_dir=precache_dir, dataset_type=dataset_type, params_dict=params_dict
         )
 
+    def _setup_resources(self):
+        """
+        Sets up any resources (such loading csv files etc) needed for this derived Dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None.
+        """
+        pass
+
     def _create_metadata_tuple_list(self):
         """
         Generates the metadata list for this class. The function is called at the very end of the CognitiveHeatmapBaseDataset init function
@@ -82,40 +96,8 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
         -------
         data_dict: Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
 
-        auxiliary_info_list: List of auxiliary information needed for other purposes. Only returned if auxiliary info flag is set to be True.
+        auxiliary_info_list: List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
         """
         (video_id, subject, task), query_frame = self.metadata_list[idx]
-        data_item_query_framelist = [
-            self.temporal_downsample_factor * (i) + query_frame - self.first_query_frame
-            for i in range(self.sequence_length)
-        ]  # list of frame idxs to be used for the snippet
-
-        data_item_list = []
-        auxiliary_info_list = []
-
-        for query_frame_id_t in data_item_query_framelist:
-            metadata = (video_id, subject, task, query_frame_id_t)
-            data_item_t, auxiliary_info_t = self._get_single_item(metadata)
-            # append the data at each frame at time t to the list
-            data_item_list.append(data_item_t)
-            auxiliary_info_list.append(auxiliary_info_t)
-
-        # convert the data list into a dictionary for cleaner parsing by the dataloader later in the training loop
-        data_dict = collections.OrderedDict()
-        try:
-            for key in data_item_list[0]:
-                data_dict[key] = []
-                for data_item in data_item_list:  # iterate over the list containing the sequence of data_items
-                    data_dict[key].append(np.expand_dims(data_item[key], axis=0))
-
-                data_dict[key] = np.concatenate(data_dict[key], axis=0)
-        except Exception as e:
-            import IPython
-
-            IPython.embed(
-                header="getitem invalid: " + str(e)
-            )  # Embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
-
-        import IPython
-
-        IPython.embed(banner1="check getitem")
+        data_dict, auxiliary_info_list = self._get_sequence(video_id, subject, task, query_frame)
+        return data_dict, auxiliary_info_list

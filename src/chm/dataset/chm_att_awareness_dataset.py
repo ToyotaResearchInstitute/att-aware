@@ -16,6 +16,7 @@ import json
 import collections
 import bisect
 import itertools
+import pandas as pd
 
 from torch.utils.data import Dataset
 from PIL import Image
@@ -24,10 +25,10 @@ from utils.chm_consts import *
 from chm_base_dataset import CognitiveHeatMapBaseDataset
 
 
-class CognitiveHeatMapAttAWarenessDataset(CognitiveHeatMapBaseDataset):
+class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
     def __init__(self, data_dir=None, precache_dir=None, dataset_type=None, params_dict=None):
         """
-        CognitiveHeatMapAttAWarenessDataset dataset class
+        CognitiveHeatMapAttAwarenessDataset dataset class
 
         Parameters
         ----------
@@ -43,10 +44,24 @@ class CognitiveHeatMapAttAWarenessDataset(CognitiveHeatMapBaseDataset):
         super().__init__(
             data_dir=data_dir, precache_dir=precache_dir, dataset_type=dataset_type, params_dict=params_dict
         )
+
+    def _setup_resources(self):
         self.att_awareness_labels_csv_path = self.params_dict.get("att_awareness_labels", None)
         assert (
             self.att_awareness_labels_csv_path is not None
         ), "Please provide the full path to the awareness labels csv file"
+        df = pd.read_csv(
+            self.att_awareness_labels_csv_path, delimiter=","
+        )  # read in the att awareness as a pandas dataframe
+
+        self.att_awareness_labels_unfiltered = copy.deepcopy(df)
+
+        # filter dataframe according to what video_ids, subject and task
+        df_filtered = df[df["video_id"].isin(self.sequence_ids)]
+        df_filtered = df_filtered[df_filtered["cognitive_modifier"].isin(self.task_ids)]
+        df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
+
+        self.att_awareness_labels = copy.deepcopy(df_filtered)
 
     def _create_metadata_tuple_list(self):
         """
@@ -60,7 +75,7 @@ class CognitiveHeatMapAttAWarenessDataset(CognitiveHeatMapBaseDataset):
         -------
         None. Results in populating the self.metadata_list
         """
-        pass
+        self.metadata_len = self.att_awareness_labels.shape[0]
 
     def __getitem__(self, idx):
         """
@@ -75,4 +90,17 @@ class CognitiveHeatMapAttAWarenessDataset(CognitiveHeatMapBaseDataset):
         data_dict: Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
 
         auxiliary_info_list: List of auxiliary information needed for other purposes. Only returned if auxiliary info flag is set to be True.
+        """
+
+        att_label_item = self.att_awareness_labels.iloc[idx]
+
+        video_id = att_label_item["video_id"]
+        subject = att_label_item["subject"]
+        task = att_label_item["cognitive_modifier"]
+        query_frame = att_label_item["query_frame"]
+
+        data_dict, auxiliary_info_dict = self._get_sequence(video_id, subject, task, query_frame)  # get gaze info
+        import IPython
+
+        IPython.embed(banner1="check gaze data")
         pass

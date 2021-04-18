@@ -143,10 +143,14 @@ class CognitiveHeatMapBaseDataset(Dataset):
                 self.all_videos_subjects_tasks_gaze_data_dict, self.all_videos_subject_task_list = pickle.load(fp)
                 self.all_videos_subject_task_list = sorted(self.all_videos_subject_task_list)
 
+        self._setup_resources()  # set up any resources needed for creation of metadata tuple list
         self._create_metadata_tuple_list()  # implementation is the respective derived classes.
         assert (
             self.metadata_len is not None or self.metadata_len <= 0 or self.metadata_list is not None
         ), "Metadata list not properly initialized or is empty"
+
+    def _setup_resources(self):
+        raise NotImplementedError
 
     def _create_metadata_tuple_list(self):
         raise NotImplementedError
@@ -406,9 +410,87 @@ class CognitiveHeatMapBaseDataset(Dataset):
     def __len__(self):
         return self.metadata_len
 
+    def _get_sequence(self, video_id, subject, task, query_frame):
+        """
+        Get the data_dict for a single sequence
+
+        Parameters
+        ----------
+        video_id : int
+            DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
+        frame_id: int
+            Query frame number in video_id - [0, 7500]
+        subject: int
+            Subject ID
+        task: str
+            Cognitive task modifier experienced by subject during gazing.
+
+        Returns
+        -------
+        data_dict: dict, data_dict containing the gaze data for the entire sequence
+            ROAD_IMAGE_0: numpy.array, (C, h, w)
+                Resized video_frame at frame_idx
+            SHOULD_TRAIN_INPUT_GAZE_0: numpy.array, (L, 2)
+                Flag indicating whether the gaze points are valid for training
+            RESIZED_INPUT_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to the network dimensions
+            NORMALIZED_INPUT_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to [0, 1]
+            GROUND_TRUTH_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to the network dimensions
+            SEGMENTATION_MASK_0: numpy.array (C, h, w)
+                Resized segmentation frame at frame_idx
+            OPTIC_FLOW_IMAGE_0: numpy.array (2, h, w)
+                Resized optic flow frame at frame_idx
+
+        auxiliary_info: OrderedDict, with following keys
+            AUXILIARY_INFO_VIDEO_ID: int
+                video_id of the video corresponding to the data item
+            AUXILIARY_INFO_SUBJECT_ID: int
+                subject id of the subject corresponding to the data_item
+            AUXILIARY_INFO_FULL_SIZE_GAZE_0: numpy.array (L, 2)
+                Gaze points in full resolution
+
+        """
+        data_item_query_framelist = [
+            self.temporal_downsample_factor * (i) + query_frame - self.first_query_frame
+            for i in range(self.sequence_length)
+        ]  # list of frame idxs to be used for the snippet
+
+        data_item_list = []
+        auxiliary_info_list = []
+
+        for query_frame_id_t in data_item_query_framelist:
+            metadata = (video_id, subject, task, query_frame_id_t)
+            data_item_t, auxiliary_info_t = self._get_single_item(metadata)
+            # append the data at each frame at time t to the list
+            data_item_list.append(data_item_t)
+            auxiliary_info_list.append(auxiliary_info_t)
+
+        # convert the data list into a dictionary for cleaner parsing by the dataloader later in the training loop
+        data_dict = collections.OrderedDict()
+        try:
+            for key in data_item_list[0]:
+                data_dict[key] = []
+                for data_item in data_item_list:  # iterate over the list containing the sequence of data_items
+                    data_dict[key].append(np.expand_dims(data_item[key], axis=0))
+
+                data_dict[key] = np.concatenate(data_dict[key], axis=0)
+        except Exception as e:
+            import IPython
+
+            IPython.embed(
+                header="getitem invalid: " + str(e)
+            )  # Embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
+
+        if not self.request_auxiliary_info:
+            return data_dict, []
+        else:
+            return data_dict, auxiliary_info_list
+
     def _get_single_item(self, metadata):
         """
-        Get the cached segmentation mask image from video_id and frame index
+        Get the data_dict for a single frame in a sequence
 
         Parameters
         ----------
@@ -426,12 +508,29 @@ class CognitiveHeatMapBaseDataset(Dataset):
         Returns
         -------
         data_item: dict, with following keys
-            ROAD_IMAGE_0: numpy.array, (C, h, w), resized video_frame at frame_idx
-            SHOULD_TRAIN_INPUT_GAZE_0: bool, (L, 2) Flag indicating whether the gaze points are valid for training
-            ....
+            ROAD_IMAGE_0: numpy.array, (C, h, w)
+                Resized video_frame at frame_idx
+            SHOULD_TRAIN_INPUT_GAZE_0: numpy.array, (L, 2)
+                Flag indicating whether the gaze points are valid for training
+            RESIZED_INPUT_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to the network dimensions
+            NORMALIZED_INPUT_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to [0, 1]
+            GROUND_TRUTH_GAZE_0: numpy.array (L, 2)
+                Gaze points resized to the network dimensions
+            SEGMENTATION_MASK_0: numpy.array (C, h, w)
+                Resized segmentation frame at frame_idx
+            OPTIC_FLOW_IMAGE_0: numpy.array (2, h, w)
+                Resized optic flow frame at frame_idx
 
         auxiliary_info: OrderedDict, with following keys
-            ....
+            AUXILIARY_INFO_VIDEO_ID: int
+                video_id of the video corresponding to the data item
+            AUXILIARY_INFO_SUBJECT_ID: int
+                subject id of the subject corresponding to the data_item
+            AUXILIARY_INFO_FULL_SIZE_GAZE_0: numpy.array (L, 2)
+                Gaze points in full resolution
+
         """
 
         (video_id, subject, task, frame_idx) = metadata
@@ -463,16 +562,16 @@ class CognitiveHeatMapBaseDataset(Dataset):
             should_train_array,
         ) = self.fetch_gaze_points_from_id(video_id, frame_idx, subject, task)
 
+        # create data item dictionary
         data_item = {
             ROAD_IMAGE_0: road_frame,  # (C, h, w)
             SHOULD_TRAIN_INPUT_GAZE_0: should_train_array,  # (L, 1)
-            # in reshaped pixel coordinates (L, 2) #network input dimension
-            TRANSFORMED_INPUT_GAZE_0: resized_gaze_points_array,
-            NORMALIZED_TRANSFORMED_INPUT_GAZE_0: normalized_gaze_points_array,  # (L, 2), [0, 1]
+            RESIZED_INPUT_GAZE_0: resized_gaze_points_array,  # (L, 2) in reshaped pixel coordinates (L, 2) #network input dimension
+            NORMALIZED_INPUT_GAZE_0: normalized_gaze_points_array,  # (L, 2), [0, 1]
             GROUND_TRUTH_GAZE_0: resized_gaze_points_array,  # (L, 2)
             SEGMENTATION_MASK_0: segmentation_frame,  # (C, h, w)
             OPTIC_FLOW_IMAGE_0: optic_flow_frame,  # (2, h, w)
-        }  # (L, 2) #network input dimensions. Used for network training
+        }
 
         if not self.request_auxiliary_info:
             return data_item, None
