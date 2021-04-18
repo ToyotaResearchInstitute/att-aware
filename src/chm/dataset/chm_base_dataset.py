@@ -1,50 +1,31 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
 import os
 import cv2
-import tqdm
 import numpy as np
-import os
-import csv
 import collections
-import hashlib
 import pickle
-import json
 import collections
-import bisect
-import pandas as pd
 
 from torch.utils.data import Dataset
 from PIL import Image
-from collections import OrderedDict
 from utils.chm_consts import *
 
 
 class CognitiveHeatMapBaseDataset(Dataset):
-    def __init__(self, data_dir=None, precache_dir=None, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None):
         """
         CognitiveHeatMapBaseDataset dataset class. Base class for all the other Dataset classes used for CHM.
         Implements all the getters for caches and loads up the pandas dataframe with all gaze information
 
         Parameters
         ----------
-        data_dir : str
-            Path to the directory containing the DREYEVE VIDEOS and gaze data
-        precache_dir : str
-            Path to the directory containing image (video frames, segmentations, optic flow) caches
+        dataset_type : str {'train, 'test', 'vis'}
+            String indicating the type of dataset
         params_dict : dict
             Dictionary containing the args passed from the training script
 
         """
         # Asserts
-        assert (
-            params_dict is not None
-        ), "Params Dict should be passed. Contains all args from parse_arguments in args_file"
-        assert (
-            data_dir is not None
-        ), "Data dir has to be a valid directory path to the directory containing the DREYEVE_VIDEOS and gaze data"
-        assert (
-            precache_dir is not None
-        ), "Precache dir has to be a valid directory path to the directory containing the image (video frames, segmentations, optic_flow) caches"
 
         assert dataset_type is not None and dataset_type in [
             "train",
@@ -52,12 +33,17 @@ class CognitiveHeatMapBaseDataset(Dataset):
             "vis",
         ], "Dataset type has to be a string and has to either [train, test, vis]"
 
-        self.data_dir = data_dir
-        self.precache_dir = precache_dir
+        assert (
+            params_dict is not None
+        ), "Params dict should be passed. Contains all args from parse_arguments in args_file"
+
         self.dataset_type = dataset_type
         self.params_dict = params_dict
-        self.metadata_list = None
-        self.metadata_len = None
+
+        self.precache_dir = self.params_dict.get("precache_dir", None)
+        assert self.precache_dir is not None and os.path.exists(
+            self.precache_dir
+        ), "Valid path to directory containing video_frame, segmentation and optic flow cache is necessary"
 
         self.aspect_ratio_reduction_factor = self.params_dict.get(
             "aspect_ratio_reduction_factor", 8.0
@@ -66,11 +52,17 @@ class CognitiveHeatMapBaseDataset(Dataset):
             "temporal_downsample_factor", 6
         )  # Hopsize for downsampled sequences
 
+        self.all_videos_subjects_tasks_gaze_data_dict_path = self.params_dict.get("all_gaze_data_dict", None)
+        assert (
+            self.all_videos_subjects_tasks_gaze_data_dict_path is not None
+        ), "Please provide the full path to the gaze data pkl file"
+
         self.fixed_gaze_list_length = self.params_dict.get("fixed_gaze_list_length", 3)
-        self.request_auxiliary_info = self.params_dict.get("request_auxiliary_info", True)
         assert (
             self.fixed_gaze_list_length <= 10
         ), "The number of gaze points used per frame should in the range [1, 10]. "
+
+        self.request_auxiliary_info = self.params_dict.get("request_auxiliary_info", True)
 
         # Depending on the dataset type grab the corresponding
         # sequence length, sequence id, subject id and task id from the params dict
@@ -92,61 +84,23 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         self.return_reduced_size = (
             False if self.aspect_ratio_reduction_factor == 1.0 else True
-        )  # Flag which ensure that the scaled version of the cached images are returned from the fetch functions when aspect_ratio is smaller.
+        )  # Flag which ensures that the scaled version of the cached images are returned from the fetch functions when aspect_ratio is smaller.
 
         self.new_image_width = int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor))
         self.new_image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
 
-        assert os.path.exists(
-            os.path.join(self.data_dir, "DREYEVE_DATA")
-        ), "Dreyeve video data not present at the data directory."
-
         self.all_videos_subject_task_list = []
-        self.all_videos_subjects_tasks_gaze_data_dict_path = os.path.join(
-            self.precache_dir, "all_videos_subjects_tasks_gaze_data_dict.pkl"
-        )
-        if not os.path.exists(self.all_videos_subjects_tasks_gaze_data_dict_path):
-            self.all_videos_subjects_tasks_gaze_data_dict = collections.OrderedDict()
+        print("Loading all gaze data from cached pkl file")
+        with open(self.all_videos_subjects_tasks_gaze_data_dict_path, "rb") as fp:
+            self.all_videos_subjects_tasks_gaze_data_dict, self.all_videos_subject_task_list = pickle.load(fp)
+            self.all_videos_subject_task_list = sorted(self.all_videos_subject_task_list)
 
-            for video_id in ALL_DREYEVE_VIDEO_IDS:
-                self.all_videos_subjects_tasks_gaze_data_dict[video_id] = collections.OrderedDict()
-                gaze_data_folder = os.path.join(
-                    self.data_dir, "DREYEVE_DATA", "{0:02d}".format(video_id), "eyelink_data"
-                )
-                for subject_task_gaze_file in os.listdir(gaze_data_folder):
-                    subject = int(
-                        subject_task_gaze_file.split("_")[0][1:]
-                    )  # for example extract int(017) from 's017_blurred.txt'
-                    task = subject_task_gaze_file.split("_")[1][
-                        :-4
-                    ]  # for example extract 'blurred' from 's017_blurred.txt'
-                    print("Extracting ", video_id, subject, task)
-                    if subject not in self.all_videos_subjects_tasks_gaze_data_dict[video_id]:
-                        self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject] = collections.OrderedDict()
-                    if task not in self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject]:
-                        self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject][
-                            task
-                        ] = collections.OrderedDict()
-                        self.all_videos_subject_task_list.append((video_id, subject, task))
-
-                    self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject][task] = pd.read_csv(
-                        os.path.join(gaze_data_folder, subject_task_gaze_file), sep=" "
-                    )  # extract the gaze data from the txt file as a pandas data frame
-
-            with open(self.all_videos_subjects_tasks_gaze_data_dict_path, "wb") as fp:
-                pickle.dump(
-                    (self.all_videos_subjects_tasks_gaze_data_dict, sorted(self.all_videos_subject_task_list)), fp
-                )
-        else:
-            print("Loading from cached pkl file")
-            with open(self.all_videos_subjects_tasks_gaze_data_dict_path, "rb") as fp:
-                self.all_videos_subjects_tasks_gaze_data_dict, self.all_videos_subject_task_list = pickle.load(fp)
-                self.all_videos_subject_task_list = sorted(self.all_videos_subject_task_list)
-
+        # setup metadata list.
+        self.metadata_len = None
         self._setup_resources()  # set up any resources needed for creation of metadata tuple list
-        self._create_metadata_tuple_list()  # implementation is the respective derived classes.
+        self._create_metadata_tuple_list()  # implementation is in the respective derived classes.
         assert (
-            self.metadata_len is not None or self.metadata_len <= 0 or self.metadata_list is not None
+            self.metadata_len is not None and self.metadata_len <= 0
         ), "Metadata list not properly initialized or is empty"
 
     def _setup_resources(self):
@@ -322,7 +276,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def fetch_gaze_points_from_id(self, video_id, frame_idx, subject, task):
         """
-        Get the cached segmentation mask image from video_id and frame index
+        Get the gaze points for video_id, subject, task at frame_idx from the pandas data frame
 
         Parameters
         ----------
@@ -331,9 +285,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
         frame_idx: int
             Query frame number in video_id - [0, 7500]
         subject: int
-            Subject ID
+            Subject ID  - [1,23]
         task: str
-            Cognitive task modifier experienced by subject during gazing.
+            Cognitive task modifier experienced by subject during gazing ['control', 'blurred', 'flipped', 'readingtext', 'roadonly'].
 
         Returns
         -------
@@ -373,7 +327,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         gaze_points_x = gaze_df_at_frame_idx["X"].values  # np.array (L, 1) #in full size dimension
         gaze_points_y = gaze_df_at_frame_idx["Y"].values  # np.array (L, 1)
-        event_type_list = gaze_df_at_frame_idx["event_type"].values
+        event_type_list = gaze_df_at_frame_idx[
+            "event_type"
+        ].values  # Type of gaze point. [Fixation, Saccade, Blink, NA] etc
 
         gaze_points = np.concatenate(
             (
@@ -389,7 +345,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
             ):  # if there are nans in the gaze points or if the type is not Fixation
                 gaze_points[i, :] = np.array(
                     [-10 * DISPLAY_WIDTH, -10 * DISPLAY_HEIGHT]
-                )  # if gaze points are NAN, modify the gaze to be outside the screen dimensions and set the train bit to be False
+                )  # Modify the gaze to be outside the screen dimensions and set the train bit to be False
                 should_train_array[i, :] = 0.0  # set should train flag to be 0.0 (False)
 
             # full resolution gaze points
@@ -421,9 +377,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
         frame_id: int
             Query frame number in video_id - [0, 7500]
         subject: int
-            Subject ID
+            Subject ID - [1, 23]
         task: str
-            Cognitive task modifier experienced by subject during gazing.
+            Cognitive task modifier experienced by subject during gazing - ['control', 'blurred', 'flipped', 'readingtext', 'roadonly']
 
         Returns
         -------
@@ -501,9 +457,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
             frame_id: int
                 Query frame number in video_id - [0, 7500]
             subject: int
-                Subject ID
+                Subject ID - [1,23]
             task: str
-                Cognitive task modifier experienced by subject during gazing.
+                Cognitive task modifier experienced by subject during gazing - ['control', 'blurred', 'flipped', 'readingtext', 'roadonly']
 
         Returns
         -------

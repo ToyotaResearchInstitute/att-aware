@@ -33,6 +33,12 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=os.path.join(os.path.expanduser("~"), "data", "CHM_ATT_AWARENESS_LABELS.csv"),
         help="Path to CSV file containing the attended awareness annotations",
     )
+    parser.add_argument(
+        "--all_gaze_data_dict",
+        type=str,
+        default=os.path.join(os.path.expanduser("~"), "data", "all_videos_subjects_tasks_gaze_data_dict.pkl"),
+        help="Path to PKL file containing all the gaze data for all videos, subjects, tasks",
+    )
 
     parser.add_argument(
         "--dataset_type",

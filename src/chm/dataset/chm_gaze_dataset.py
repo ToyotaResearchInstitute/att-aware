@@ -1,49 +1,24 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
-import os
-import cv2
-import tqdm
-import numpy as np
-import os
-import csv
-import collections
-import hashlib
-import pickle
-import importlib
-import subprocess
-import shutil
-import copy
-import json
-import collections
-import bisect
 import itertools
 
-from torch.utils.data import Dataset
-from PIL import Image
-from collections import OrderedDict
-from utils.chm_consts import *
 from chm_base_dataset import CognitiveHeatMapBaseDataset
 
 
 class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
-    def __init__(self, data_dir=None, precache_dir=None, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None):
         """
-        CognitiveHeatMapGazeDataset dataset class
+        CognitiveHeatMapGazeDataset dataset class/
+        Dataset class for returning gaze and image data for a single sequence
 
         Parameters
         ----------
-        data_dir : str
-            Path to the directory containing the DREYEVE VIDEOS and gaze data
-        precache_dir : str
-            Path to the directory containing image (video frames, segmentations, optic flow) caches
         dataset_type : str {'train, 'test', 'vis'}
             String indicating the type of dataset
         params_dict : dict
             Dictionary containing the args passed from the training script
 
         """
-        super().__init__(
-            data_dir=data_dir, precache_dir=precache_dir, dataset_type=dataset_type, params_dict=params_dict
-        )
+        super().__init__(dataset_type=dataset_type, params_dict=params_dict)
 
     def _setup_resources(self):
         """
