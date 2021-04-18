@@ -19,3 +19,6 @@ if __name__ == "__main__":
 
     awareness_dataset = CognitiveHeatMapAttAwarenessDataset(data_dir, precache_dir, "train", params_dict)
     data_dict, auxiliary_info_list = awareness_dataset[12]
+    import IPython
+
+    IPython.embed(banner1="check data_dict")

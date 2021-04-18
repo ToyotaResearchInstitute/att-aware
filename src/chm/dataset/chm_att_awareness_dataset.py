@@ -56,7 +56,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
         self.att_awareness_labels_unfiltered = copy.deepcopy(df)
 
-        # filter dataframe according to what video_ids, subject and task
+        # filter dataframe according to what video_ids, subject and task were requested for the dataset
         df_filtered = df[df["video_id"].isin(self.sequence_ids)]
         df_filtered = df_filtered[df_filtered["cognitive_modifier"].isin(self.task_ids)]
         df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
@@ -75,7 +75,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         -------
         None. Results in populating the self.metadata_list
         """
-        self.metadata_len = self.att_awareness_labels.shape[0]
+        self.metadata_len = self.att_awareness_labels.shape[0]  # number of rows in the filtered data frame
 
     def __getitem__(self, idx):
         """
@@ -87,7 +87,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
         Returns
         -------
-        data_dict: Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
+        data_dict: Ordered dictionary containing the various data items needed for training.
 
         auxiliary_info_list: List of auxiliary information needed for other purposes. Only returned if auxiliary info flag is set to be True.
         """
@@ -100,7 +100,8 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         query_frame = att_label_item["query_frame"]
 
         data_dict, auxiliary_info_dict = self._get_sequence(video_id, subject, task, query_frame)  # get gaze info
-        import IPython
 
-        IPython.embed(banner1="check gaze data")
-        pass
+        # append annotation info to the data_dict dictionary
+        annotation_dict = att_label_item.to_dict()
+        data_dict["att_annotation"] = annotation_dict
+        return data_dict, auxiliary_info_dict

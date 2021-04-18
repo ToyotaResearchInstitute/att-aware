@@ -428,22 +428,22 @@ class CognitiveHeatMapBaseDataset(Dataset):
         Returns
         -------
         data_dict: dict, data_dict containing the gaze data for the entire sequence
-            ROAD_IMAGE_0: numpy.array, (C, h, w)
+            ROAD_IMAGE_0: numpy.array, (T, C, h, w)
                 Resized video_frame at frame_idx
-            SHOULD_TRAIN_INPUT_GAZE_0: numpy.array, (L, 2)
+            SHOULD_TRAIN_INPUT_GAZE_0: numpy.array, (T, L, 2)
                 Flag indicating whether the gaze points are valid for training
-            RESIZED_INPUT_GAZE_0: numpy.array (L, 2)
+            RESIZED_INPUT_GAZE_0: numpy.array (T, L, 2)
                 Gaze points resized to the network dimensions
-            NORMALIZED_INPUT_GAZE_0: numpy.array (L, 2)
+            NORMALIZED_INPUT_GAZE_0: numpy.array (T, L, 2)
                 Gaze points resized to [0, 1]
-            GROUND_TRUTH_GAZE_0: numpy.array (L, 2)
+            GROUND_TRUTH_GAZE_0: numpy.array (T, L, 2)
                 Gaze points resized to the network dimensions
-            SEGMENTATION_MASK_0: numpy.array (C, h, w)
+            SEGMENTATION_MASK_0: numpy.array (T, C, h, w)
                 Resized segmentation frame at frame_idx
-            OPTIC_FLOW_IMAGE_0: numpy.array (2, h, w)
+            OPTIC_FLOW_IMAGE_0: numpy.array (T, 2, h, w)
                 Resized optic flow frame at frame_idx
 
-        auxiliary_info: OrderedDict, with following keys
+        auxiliary_info_list: list (of length T), with each element an OrderedDict
             AUXILIARY_INFO_VIDEO_ID: int
                 video_id of the video corresponding to the data item
             AUXILIARY_INFO_SUBJECT_ID: int
