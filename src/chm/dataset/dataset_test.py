@@ -2,6 +2,7 @@
 from configs.args_file import parse_arguments
 from chm_gaze_dataset import CognitiveHeatMapGazeDataset
 from chm_att_awareness_dataset import CognitiveHeatMapAttAwarenessDataset
+from chm_pairwise_gaze_dataset import CognitiveHeatMapPairwiseGazeDataset
 
 import uuid
 
@@ -17,8 +18,11 @@ if __name__ == "__main__":
     # train_dataset = CognitiveHeatMapGazeDataset(data_dir, precache_dir, "train", params_dict)
     # data_dict, auxiliary_info_list = train_dataset[126]
 
-    awareness_dataset = CognitiveHeatMapAttAwarenessDataset(data_dir, precache_dir, "train", params_dict)
-    data_dict, auxiliary_info_list = awareness_dataset[12]
+    # awareness_dataset = CognitiveHeatMapAttAwarenessDataset(data_dir, precache_dir, "train", params_dict)
+    # data_dict, auxiliary_info_list = awareness_dataset[12]
+
+    pairwise_dataset = CognitiveHeatMapPairwiseGazeDataset(data_dir, precache_dir, "train", params_dict)
+    data_dict = pairwise_dataset[1]
     import IPython
 
     IPython.embed(banner1="check data_dict")

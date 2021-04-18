@@ -24,7 +24,7 @@ from utils.chm_consts import *
 from chm_base_dataset import CognitiveHeatMapBaseDataset
 
 
-class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
+class CognitiveHeatMapPairwiseGazeDataset(CognitiveHeatMapBaseDataset):
     def __init__(self, data_dir=None, precache_dir=None, dataset_type=None, params_dict=None):
         """
         CognitiveHeatMapGazeDataset dataset class
@@ -78,6 +78,9 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
         metadata_list_all_comb = [
             d for d in metadata_list_all_comb if d in self.all_videos_subject_task_list
         ]  # filter out those combinations that are not present in the available combinations
+        import IPython
+
+        IPython.embed(banner1="check pairwise metadat list")
         self.metadata_list = [
             (a, b) for a in metadata_list_all_comb for b in self.query_frame_idxs_list
         ]  # append the frame query list to each tuple
@@ -94,10 +97,14 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
 
         Returns
         -------
-        data_dict: Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
-
-        auxiliary_info_list: List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
+        data_dict: dict
+        Dictionary containing the data_dict, auxiliary_info for sequence at t and at t+1
         """
-        (video_id, subject, task), query_frame = self.metadata_list[idx]
-        data_dict, auxiliary_info_list = self._get_sequence(video_id, subject, task, query_frame)
-        return data_dict, auxiliary_info_list
+        data_dict = {}
+        (video_id, subject, task), query_frame_t, query_frame_tp1 = self.metadata_list[idx]
+        data_dict_t, auxiliary_info_list_t = self._get_sequence(video_id, subject, task, query_frame_t)
+        data_dict_tp1, auxiliary_info_list_tp1 = self._get_sequence(video_id, subject, task, query_frame_tp1)
+
+        data_dict["data_t"] = (data_dict_t, auxiliary_info_list_t)
+        data_dict["data_tp1"] = (data_dict_tp1, auxiliary_info_list_tp1)
+        return data_dict

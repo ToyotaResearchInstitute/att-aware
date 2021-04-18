@@ -65,7 +65,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
     def _create_metadata_tuple_list(self):
         """
-        Generates the metadata list for this class. The function is called at the very end of the CognitiveHeatmapBaseDataset init function
+        Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CognitiveHeatmapBaseDataset init function
 
         Parameters
         ----------
@@ -83,7 +83,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
         Parameters
         ----------
-        idx: Index of the data item in self.metadata_list
+        idx: Index of the data item in self.att_awareness_labels
 
         Returns
         -------
