@@ -111,7 +111,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def fetch_image_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
-        Get the cached video frame image from video_id and frame index
+        Get the cached video frame image from video_id and frame index.
+        Assumes that the images as stored .jpg at ~/(self.precache_dir)/frame_image_cached/"{0:02d}".format(video_id)/frame_{frame_idx}.jpg
+        Performs appropriate resizing if necessary and stores the resized video frame image in the same directory
 
         Parameters
         ----------
@@ -158,7 +160,10 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def fetch_optic_flow_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
-        Get the cached optic flow from video_id and frame index
+        Get the cached optic flow from video_id and frame index. Assumes optic flow is cached as a .npy file with dimensions
+        (DISPLAY_HEIGHT/OPTIC_FLOW_SCALE_FACTOR + 2*OPTIC_FLOW_H_PAD, DISPLAY_WIDTH/OPTIC_FLOW_SCALE_FACTOR + 2*OPTIC_FLOW_W_PAD, 2)
+        Assumes that the optic flow is cached at ~/(self.precache_dir)/optic_flow/"{0:02d}".format(video_id)/frame_{frame_idx}.npy.
+        Performs appropriate resizing if necessary and stores the resized optic flow image in the same directory
 
         Parameters
         ----------
@@ -226,7 +231,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def fetch_segmentation_mask_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
-        Get the cached segmentation mask image from video_id and frame index
+        Get the cached segmentation mask image from video_id and frame index.
+        Assumes that the images as stored .png at ~/(self.precache_dir)/segmentations_from_video/"{0:02d}".format(video_id)/segmentations_frames/frame_{frame_idx}.jpg
+        Performs appropriate resizing if necessary and stores the resized video frame image in the same directory
 
         Parameters
         ----------
@@ -276,7 +283,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def fetch_gaze_points_from_id(self, video_id, frame_idx, subject, task):
         """
-        Get the gaze points for video_id, subject, task at frame_idx from the pandas data frame
+        Get the gaze points for video_id, subject, task at frame_idx from the all_videos_subjects_tasks_gaze_data_dict
 
         Parameters
         ----------
@@ -311,19 +318,19 @@ class CognitiveHeatMapBaseDataset(Dataset):
             n=self.fixed_gaze_list_length, random_state=1
         )  # sample self.fixed_gaze_list_length number of gaze points at frame_idx using a fixed seed
 
-        # initialized gaze point array
+        # initialized data arrays
         resized_gaze_points_array = np.zeros(
             (self.fixed_gaze_list_length, 2), dtype=np.float32
         )  # (L, 2) #gaze points in the resolution needed for network training
         should_train_array = np.zeros(
             (self.fixed_gaze_list_length, 1), dtype=np.float32
-        )  # (L, 2). Boolean array indicating whether the gaze points are valid on not.
+        )  # (L, 2). Array indicating whether the gaze points are valid or not. Valid = 1.0, Invalid = 0.0
         full_size_gaze_points_array = np.zeros(
             (self.fixed_gaze_list_length, 2), dtype=np.float32
-        )  # (L, 2) #raw data in display dimensions (DISPLAY WIDTH, DISPLAY HEIGHT)
+        )  # (L, 2) #gaze data in full display dimensions (DISPLAY WIDTH, DISPLAY HEIGHT)
         normalized_gaze_points_array = np.zeros(
             (self.fixed_gaze_list_length, 2), dtype=np.float32
-        )  # (L, 2) #normalized to [0,1]
+        )  # (L, 2) #gaze normalized to [0,1]
 
         gaze_points_x = gaze_df_at_frame_idx["X"].values  # np.array (L, 1) #in full size dimension
         gaze_points_y = gaze_df_at_frame_idx["Y"].values  # np.array (L, 1)
@@ -522,7 +529,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
         data_item = {
             ROAD_IMAGE_0: road_frame,  # (C, h, w)
             SHOULD_TRAIN_INPUT_GAZE_0: should_train_array,  # (L, 1)
-            RESIZED_INPUT_GAZE_0: resized_gaze_points_array,  # (L, 2) in reshaped pixel coordinates (L, 2) #network input dimension
+            RESIZED_INPUT_GAZE_0: resized_gaze_points_array,  # (L, 2) in #network input dimension
             NORMALIZED_INPUT_GAZE_0: normalized_gaze_points_array,  # (L, 2), [0, 1]
             GROUND_TRUTH_GAZE_0: resized_gaze_points_array,  # (L, 2)
             SEGMENTATION_MASK_0: segmentation_frame,  # (C, h, w)
