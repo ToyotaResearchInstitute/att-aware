@@ -867,7 +867,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         dest="fixed_gaze_list_length",
         type=int,
         default=3,
-        help="Length of gaze list returned by getitem functor",
+        help="Length of gaze list returned by getitem functor. Should be in [1, 10]",
     )
     # parser.add_argument(
     #     "--any_true_list_length",

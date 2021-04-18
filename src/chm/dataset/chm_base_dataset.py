@@ -66,6 +66,12 @@ class CognitiveHeatMapBaseDataset(Dataset):
             "temporal_downsample_factor", 6
         )  # Hopsize for downsampled sequences
 
+        self.fixed_gaze_list_length = self.params_dict.get("fixed_gaze_list_length", 3)
+        self.request_auxiliary_info = self.params_dict.get("request_auxiliary_info", True)
+        assert (
+            self.fixed_gaze_list_length <= 10
+        ), "The number of gaze points used per frame should in the range [1, 10]. "
+
         # Depending on the dataset type grab the corresponding
         # sequence length, sequence id, subject id and task id from the params dict
         self.sequence_length = self.params_dict.get("{}_sequence_length".format(self.dataset_type), 20)
@@ -327,9 +333,75 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         Returns
         -------
-        gaze_points_array: numpy.array (L, 2) , where L is the number of gaze points requested. L is fixed for a particular training run and is determined by args.fixed_gaze_list_length
+        full_size_gaze_points_array: numpy.array (L, 2)
+            Gaze points in full screen resolution where L is the number of gaze points requested. L is fixed for a particular training run and is determined by args.fixed_gaze_list_length
+        resized_gaze_points_array: numpy.array (L, 2)
+            Gaze points in network input dimensions
+        normalized_gaze_points_array: numpy.array (L, 2)
+            Gaze_points normalized to [0, 1]
+        should_train_array: numpy.array (L, 1)
+            Bits indicating whether the gaze points can be used for training
         """
-        pass
+        video_subject_task_gaze_df = self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject][
+            task
+        ]  # cached pandas dataframe for the specified video_id, subject and task
+        all_gaze_df_at_frame_idx = video_subject_task_gaze_df[
+            video_subject_task_gaze_df["frame_gar"] == frame_idx
+        ]  # data frame slice at specified frame idx containing 10 gaze points.
+
+        gaze_df_at_frame_idx = all_gaze_df_at_frame_idx.sample(
+            n=self.fixed_gaze_list_length, random_state=1
+        )  # sample self.fixed_gaze_list_length number of gaze points at frame_idx using a fixed seed
+
+        # initialized gaze point array
+        resized_gaze_points_array = np.zeros(
+            (self.fixed_gaze_list_length, 2), dtype=np.float32
+        )  # (L, 2) #gaze points in the resolution needed for network training
+        should_train_array = np.zeros(
+            (self.fixed_gaze_list_length, 1), dtype=np.float32
+        )  # (L, 2). Boolean array indicating whether the gaze points are valid on not.
+        full_size_gaze_points_array = np.zeros(
+            (self.fixed_gaze_list_length, 2), dtype=np.float32
+        )  # (L, 2) #raw data in display dimensions (DISPLAY WIDTH, DISPLAY HEIGHT)
+        normalized_gaze_points_array = np.zeros(
+            (self.fixed_gaze_list_length, 2), dtype=np.float32
+        )  # (L, 2) #normalized to [0,1]
+
+        gaze_points_x = gaze_df_at_frame_idx["X"].values  # np.array (L, 1) #in full size dimension
+        gaze_points_y = gaze_df_at_frame_idx["Y"].values  # np.array (L, 1)
+        event_type_list = gaze_df_at_frame_idx["event_type"].values
+
+        gaze_points = np.concatenate(
+            (
+                gaze_points_x.reshape(self.fixed_gaze_list_length, 1),
+                gaze_points_y.reshape(self.fixed_gaze_list_length, 1),
+            ),
+            axis=1,
+        )  # (L, 2)
+        for i in range(self.fixed_gaze_list_length):
+            should_train_array[i, :] = 1.0  # set should train flag to be 1 (True)
+            if (
+                np.isnan(gaze_points[i, :]).sum() or event_type_list[i] != "Fixation"
+            ):  # if there are nans in the gaze points or if the type is not Fixation
+                gaze_points[i, :] = np.array(
+                    [-10 * DISPLAY_WIDTH, -10 * DISPLAY_HEIGHT]
+                )  # if gaze points are NAN, modify the gaze to be outside the screen dimensions and set the train bit to be False
+                should_train_array[i, :] = 0.0  # set should train flag to be 0.0 (False)
+
+            # full resolution gaze points
+            full_size_gp = gaze_points[i, :]  # (2,) #in display dimensions
+            full_size_gp = np.expand_dims(full_size_gp, axis=0)  # (1,2)
+            full_size_gaze_points_array[i, :] = full_size_gp  # in display dim (1080, 1920)  (H, W)
+
+            # Resize gaze. Resize it to the size of the network input
+            resized_gaze_points_array[i, 0] = (full_size_gp[0, 0] / DISPLAY_WIDTH) * self.new_image_width
+            resized_gaze_points_array[i, 1] = (full_size_gp[0, 1] / DISPLAY_HEIGHT) * self.new_image_height
+
+            # normalized transformed gaze. [0,1]
+            normalized_gaze_points_array[i, 0] = full_size_gp[0, 0] / DISPLAY_WIDTH
+            normalized_gaze_points_array[i, 1] = full_size_gp[0, 1] / DISPLAY_HEIGHT
+
+        return full_size_gaze_points_array, resized_gaze_points_array, normalized_gaze_points_array, should_train_array
 
     def __len__(self):
         return self.metadata_len
@@ -367,23 +439,47 @@ class CognitiveHeatMapBaseDataset(Dataset):
         # fetch road video frame image at frame idx
         road_frame = self.fetch_image_from_id(video_id, frame_idx, self.return_reduced_size)
         road_frame = np.float32(road_frame)  # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
+        road_frame = road_frame.transpose([2, 0, 1])  # (3, h, w) or (3, H, W)
 
         # fetch segmentation masks at frame idx
         segmentation_frame = self.fetch_segmentation_mask_from_id(video_id, frame_idx, self.return_reduced_size)
         segmentation_frame = np.float32(
             segmentation_frame
         )  # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
+        segmentation_frame = segmentation_frame.transpose([2, 0, 1])  # (3, h, w) or (3, H, W)
 
         # fetch optic flow at frame idx
         optic_flow_frame = self.fetch_optic_flow_from_id(
             video_id, frame_idx, self.return_reduced_size
         )  # (h, w ,C=2) or (H, W, C=2) depending on return_reduced_size flags
-        # (C, h, w) or (C, H, W) np.float32 already
-        optic_flow_frame = optic_flow_frame.transpose([2, 0, 1])
         optic_flow_frame = np.float32(optic_flow_frame)
+        optic_flow_frame = optic_flow_frame.transpose([2, 0, 1])  # (C=2, h, w) or (C=2, H, W)
 
-        import IPython
+        # extract gaze points from the pandas dataframe
+        (
+            full_size_gaze_points_array,
+            resized_gaze_points_array,
+            normalized_gaze_points_array,
+            should_train_array,
+        ) = self.fetch_gaze_points_from_id(video_id, frame_idx, subject, task)
 
-        IPython.embed(banner1="check image")
+        data_item = {
+            ROAD_IMAGE_0: road_frame,  # (C, h, w)
+            SHOULD_TRAIN_INPUT_GAZE_0: should_train_array,  # (L, 1)
+            # in reshaped pixel coordinates (L, 2) #network input dimension
+            TRANSFORMED_INPUT_GAZE_0: resized_gaze_points_array,
+            NORMALIZED_TRANSFORMED_INPUT_GAZE_0: normalized_gaze_points_array,  # (L, 2), [0, 1]
+            GROUND_TRUTH_GAZE_0: resized_gaze_points_array,  # (L, 2)
+            SEGMENTATION_MASK_0: segmentation_frame,  # (C, h, w)
+            OPTIC_FLOW_IMAGE_0: optic_flow_frame,  # (2, h, w)
+        }  # (L, 2) #network input dimensions. Used for network training
 
-        return data_item, auxiliary_info
+        if not self.request_auxiliary_info:
+            return data_item, None
+        else:
+            auxiliary_info = OrderedDict()
+            auxiliary_info[AUXILIARY_INFO_VIDEO_ID] = video_id
+            auxiliary_info[AUXILIARY_INFO_SUBJECT_ID] = subject
+            auxiliary_info[AUXILIARY_INFO_FULL_SIZE_GAZE_0] = full_size_gaze_points_array
+
+            return data_item, auxiliary_info
