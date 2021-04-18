@@ -100,7 +100,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
         self._setup_resources()  # set up any resources needed for creation of metadata tuple list
         self._create_metadata_tuple_list()  # implementation is in the respective derived classes.
         assert (
-            self.metadata_len is not None and self.metadata_len <= 0
+            self.metadata_len is not None and self.metadata_len > 0
         ), "Metadata list not properly initialized or is empty"
 
     def _setup_resources(self):
