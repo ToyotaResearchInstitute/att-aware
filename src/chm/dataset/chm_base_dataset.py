@@ -539,7 +539,7 @@ class CognitiveHeatMapBaseDataset(Dataset):
         if not self.request_auxiliary_info:
             return data_item, None
         else:
-            auxiliary_info = OrderedDict()
+            auxiliary_info = collections.OrderedDict()
             auxiliary_info[AUXILIARY_INFO_VIDEO_ID] = video_id
             auxiliary_info[AUXILIARY_INFO_SUBJECT_ID] = subject
             auxiliary_info[AUXILIARY_INFO_FULL_SIZE_GAZE_0] = full_size_gaze_points_array
