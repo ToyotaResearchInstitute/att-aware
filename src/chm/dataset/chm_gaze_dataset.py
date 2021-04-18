@@ -103,13 +103,10 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
         # convert the data list into a dictionary for cleaner parsing by the dataloader later in the training loop
         data_dict = collections.OrderedDict()
         try:
-            import IPython
-
-            IPython.embed(banner1="check")
             for key in data_item_list[0]:
                 data_dict[key] = []
                 for data_item in data_item_list:  # iterate over the list containing the sequence of data_items
-                    data_item[key].append(np.expand_dims(data_item[key], axis=0))
+                    data_dict[key].append(np.expand_dims(data_item[key], axis=0))
 
                 data_dict[key] = np.concatenate(data_dict[key], axis=0)
         except Exception as e:
