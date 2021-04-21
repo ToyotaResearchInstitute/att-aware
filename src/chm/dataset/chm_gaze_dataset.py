@@ -59,6 +59,21 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
 
         self.metadata_len = len(self.metadata_list)  # Total number of available snippets
 
+    def get_metadata_list(self):
+        """
+        Returns the metadata list (of tuples) for this dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        metadata_list: list
+            List of tuples containing metadata information (video_id, subject, task, query_frame) for each data item
+        """
+        return self.metadata_list
+
     def __getitem__(self, idx):
         """
         Required getitem() for PyTorch gaze dataset.

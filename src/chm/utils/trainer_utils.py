@@ -11,13 +11,20 @@ from chm.losses.cognitive_heatnet_loss import CognitiveHeatNetLoss
 def load_datasets(params_dict):
     gaze_datasets = collections.OrderedDict()
     awareness_datasets = collections.OrderedDict()
+    pairwise_datasets = collections.OrderedDict()
 
-    if not params_dict["use_train_test_split"]:
+    if not params_dict["use_std_train_test_split"]:
+        """
+        splits are according dreyeve train/test video splits.
+        """
         awareness_datasets["train"] = CognitiveHeatMapAttAwarenessDataset("train", params_dict)
+        awareness_datasets["test"] = CognitiveHeatMapAttAwarenessDataset("test", params_dict)
 
         gaze_datasets["train"] = CognitiveHeatMapGazeDataset("train", params_dict)
         gaze_datasets["test"] = CognitiveHeatMapGazeDataset("test", params_dict)
         gaze_datasets["vis"] = CognitiveHeatMapGazeDataset("vis", params_dict)
+
+        pairwise_datasets["train"] = CognitiveHeatMapPairwiseGazeDataset("train", params_dict)
     else:
         pass
 

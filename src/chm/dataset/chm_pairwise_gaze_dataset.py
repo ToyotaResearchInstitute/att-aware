@@ -60,6 +60,9 @@ class CognitiveHeatMapPairwiseGazeDataset(CognitiveHeatMapBaseDataset):
 
         self.metadata_len = len(self.metadata_list)  # Total number of available snippets
 
+    def get_metadata_list(self):
+        return self.metadata_list
+
     def __getitem__(self, idx):
         """
         Required getitem() for PyTorch gaze dataset.

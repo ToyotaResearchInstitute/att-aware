@@ -373,6 +373,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
     def __len__(self):
         return self.metadata_len
 
+    def get_metadata_list(self):
+        raise NotImplementedError
+
     def _get_sequence(self, video_id, subject, task, query_frame):
         """
         Get the data_dict for a single sequence

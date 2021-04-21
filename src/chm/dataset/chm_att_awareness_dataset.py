@@ -36,6 +36,24 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
 
         self.att_awareness_labels = copy.deepcopy(df_filtered)
+        import IPython
+
+        IPython.embed(banner1="checl")
+
+    def get_metadata_list(self):
+        """
+        Returns the metadata list (of tuples) for this dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        att_awareness_label: pandas dataframe
+            List of tuples containing metadata information (video_id, subject, task, query_frame) for each data item
+        """
+        return self.att_awareness_labels
 
     def _create_metadata_tuple_list(self):
         """
