@@ -11,10 +11,10 @@ from PIL import Image
 from utils.chm_consts import *
 
 
-class CognitiveHeatMapBaseDataset(Dataset):
+class CHMBaseDataset(Dataset):
     def __init__(self, dataset_type=None, params_dict=None):
         """
-        CognitiveHeatMapBaseDataset dataset class. Base class for all the other Dataset classes used for CHM.
+        CHMBaseDataset dataset class. Base class for all the other Dataset classes used for CHM.
         Implements all the getters for caches and loads up the pandas dataframe with all gaze information
 
         Parameters
@@ -45,12 +45,10 @@ class CognitiveHeatMapBaseDataset(Dataset):
             self.precache_dir
         ), "Valid path to directory containing video_frame, segmentation and optic flow cache is necessary"
 
-        self.aspect_ratio_reduction_factor = self.params_dict.get(
-            "aspect_ratio_reduction_factor", 8.0
-        )  # Factor by which the full sized image needs to be rescaled before used by network for training
-        self.temporal_downsample_factor = self.params_dict.get(
-            "temporal_downsample_factor", 6
-        )  # Hopsize for downsampled sequences
+        # Factor by which the full sized image needs to be rescaled before used by network for training
+        self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ratio_reduction_factor", 8.0)
+        # Hopsize for downsampled sequences
+        self.temporal_downsample_factor = self.params_dict.get("temporal_downsample_factor", 6)
 
         self.all_videos_subjects_tasks_gaze_data_dict_path = self.params_dict.get("all_gaze_data_dict", None)
         assert (
@@ -69,22 +67,20 @@ class CognitiveHeatMapBaseDataset(Dataset):
         self.sequence_length = self.params_dict.get("{}_sequence_length".format(self.dataset_type), 20)
         self.sequence_ids = self.params_dict.get("{}_sequence_ids".format(self.dataset_type))
         self.subject_ids = self.params_dict.get("{}_subject_ids".format(self.dataset_type))
-        self.task_ids = self.params_dict.get(
-            "{}_task_ids".format(self.dataset_type)
-        )  # cognitive-task-modifiers (referred to as task in the code)
+        # cognitive-task-modifiers (referred to as task in the code)
+        self.task_ids = self.params_dict.get("{}_task_ids".format(self.dataset_type))
 
         self.first_query_frame = (self.sequence_length - 1) * self.temporal_downsample_factor
-        self.query_frame_idxs_list = list(
-            range(self.first_query_frame, MAX_NUM_VIDEO_FRAMES)
-        )  # list of query frames used for each video. Each query frame idx corresponds to the last frame of the snippet used.
+        # list of query frames used for each video. Each query frame idx corresponds to the last frame of the snippet used.
+        self.query_frame_idxs_list = list(range(self.first_query_frame, MAX_NUM_VIDEO_FRAMES))
 
         self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_img_dims")
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
 
-        self.return_reduced_size = (
-            False if self.aspect_ratio_reduction_factor == 1.0 else True
-        )  # Flag which ensures that the scaled version of the cached images are returned from the fetch functions when aspect_ratio is smaller.
+        # Flag which ensures that the scaled version of the cached images are returned from the
+        # fetch functions when aspect_ratio is smaller.
+        self.return_reduced_size = False if self.aspect_ratio_reduction_factor == 1.0 else True
 
         self.new_image_width = int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor))
         self.new_image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
@@ -207,10 +203,13 @@ class CognitiveHeatMapBaseDataset(Dataset):
                     cached_size_frame = cached_size_frame[OPTIC_FLOW_H_PAD:-OPTIC_FLOW_H_PAD, :, :]  # (h', w'+wpad, 2)
                 if OPTIC_FLOW_W_PAD > 0:
                     cached_size_frame = cached_size_frame[:, OPTIC_FLOW_W_PAD:-OPTIC_FLOW_W_PAD, :]  # (h', w', 2)
+
+                # The array has to be scaled, because the ux and uy values change according to resolution.
+                # OPTIC_FLOW_SCALE_FACTOR allows for optic flow to be cached at a lower resolution than full scale.
                 optic_flow_frame = cv2.resize(
                     cached_size_frame / (self.aspect_ratio_reduction_factor / OPTIC_FLOW_SCALE_FACTOR),
                     (self.new_image_width, self.new_image_height),
-                )  # the array has to be scaled, because the ux and uy values change according to resolution. OPTIC_FLOW_SCALE_FACTOR allows for optic flow to be cached at a lower resolution than full scale.
+                )
                 np.save(reduced_size_precache_filename, optic_flow_frame)
         else:
             if os.path.exists(full_size_precache_filename):
@@ -222,9 +221,10 @@ class CognitiveHeatMapBaseDataset(Dataset):
                 if OPTIC_FLOW_W_PAD > 0:
                     cached_size_frame = cached_size_frame[:, OPTIC_FLOW_W_PAD:-OPTIC_FLOW_W_PAD, :]  # (h', w', 2)
 
+                # scale the optic flow ux uy values to the full resolution before resizing and saving
                 optic_flow_frame = cv2.resize(
                     cached_size_frame * OPTIC_FLOW_SCALE_FACTOR, (DISPLAY_WIDTH, DISPLAY_HEIGHT)
-                )  # scale the optic flow ux uy values to the full resolution before resizing and saving
+                )
                 np.save(full_size_precache_filename, optic_flow_frame)
 
         return optic_flow_frame  # (h, w, 2) or (H, W, 2)
@@ -307,36 +307,29 @@ class CognitiveHeatMapBaseDataset(Dataset):
         should_train_array: numpy.array (L, 1)
             Bits indicating whether the gaze points can be used for training
         """
-        video_subject_task_gaze_df = self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject][
-            task
-        ]  # cached pandas dataframe for the specified video_id, subject and task
-        all_gaze_df_at_frame_idx = video_subject_task_gaze_df[
-            video_subject_task_gaze_df["frame_gar"] == frame_idx
-        ]  # data frame slice at specified frame idx containing 10 gaze points.
+        # cached pandas dataframe for the specified video_id, subject and task
+        video_subject_task_gaze_df = self.all_videos_subjects_tasks_gaze_data_dict[video_id][subject][task]
+        # data frame slice at specified frame idx containing 10 gaze points.
+        all_gaze_df_at_frame_idx = video_subject_task_gaze_df[video_subject_task_gaze_df["frame_gar"] == frame_idx]
 
-        gaze_df_at_frame_idx = all_gaze_df_at_frame_idx.sample(
-            n=self.fixed_gaze_list_length, random_state=1
-        )  # sample self.fixed_gaze_list_length number of gaze points at frame_idx using a fixed seed
+        # sample self.fixed_gaze_list_length number of gaze points at frame_idx using a fixed seed
+        gaze_df_at_frame_idx = all_gaze_df_at_frame_idx.sample(n=self.fixed_gaze_list_length, random_state=1)
 
-        # initialized data arrays
-        resized_gaze_points_array = np.zeros(
-            (self.fixed_gaze_list_length, 2), dtype=np.float32
-        )  # (L, 2) #gaze points in the resolution needed for network training
-        should_train_array = np.zeros(
-            (self.fixed_gaze_list_length, 1), dtype=np.float32
-        )  # (L, 2). Array indicating whether the gaze points are valid or not. Valid = 1.0, Invalid = 0.0
-        full_size_gaze_points_array = np.zeros(
-            (self.fixed_gaze_list_length, 2), dtype=np.float32
-        )  # (L, 2) #gaze data in full display dimensions (DISPLAY WIDTH, DISPLAY HEIGHT)
-        normalized_gaze_points_array = np.zeros(
-            (self.fixed_gaze_list_length, 2), dtype=np.float32
-        )  # (L, 2) #gaze normalized to [0,1]
+        # initialize all gaze data arrays
+
+        # gaze points in the resolution needed for network training
+        resized_gaze_points_array = np.zeros((self.fixed_gaze_list_length, 2), dtype=np.float32)  # (L, 2)
+        # Array indicating whether the gaze points are valid or not. Valid = 1.0, Invalid = 0.0
+        should_train_array = np.zeros((self.fixed_gaze_list_length, 1), dtype=np.float32)  # (L, 2)
+        # gaze data in full display dimensions (DISPLAY WIDTH, DISPLAY HEIGHT)
+        full_size_gaze_points_array = np.zeros((self.fixed_gaze_list_length, 2), dtype=np.float32)  # (L, 2)
+        # gaze normalized to [0,1]
+        normalized_gaze_points_array = np.zeros((self.fixed_gaze_list_length, 2), dtype=np.float32)  # (L, 2)
 
         gaze_points_x = gaze_df_at_frame_idx["X"].values  # np.array (L, 1) #in full size dimension
         gaze_points_y = gaze_df_at_frame_idx["Y"].values  # np.array (L, 1)
-        event_type_list = gaze_df_at_frame_idx[
-            "event_type"
-        ].values  # Type of gaze point. [Fixation, Saccade, Blink, NA] etc
+        # Type of gaze point. [Fixation, Saccade, Blink, NA] etc
+        event_type_list = gaze_df_at_frame_idx["event_type"].values
 
         gaze_points = np.concatenate(
             (
@@ -350,9 +343,8 @@ class CognitiveHeatMapBaseDataset(Dataset):
             if (
                 np.isnan(gaze_points[i, :]).sum() or event_type_list[i] != "Fixation"
             ):  # if there are nans in the gaze points or if the type is not Fixation
-                gaze_points[i, :] = np.array(
-                    [-10 * DISPLAY_WIDTH, -10 * DISPLAY_HEIGHT]
-                )  # Modify the gaze to be outside the screen dimensions and set the train bit to be False
+                # Modify the gaze to be outside the screen dimensions and set the train bit to be False
+                gaze_points[i, :] = np.array([-10 * DISPLAY_WIDTH, -10 * DISPLAY_HEIGHT])
                 should_train_array[i, :] = 0.0  # set should train flag to be 0.0 (False)
 
             # full resolution gaze points
@@ -372,6 +364,9 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
     def __len__(self):
         return self.metadata_len
+
+    def get_metadata_list(self):
+        raise NotImplementedError
 
     def _get_sequence(self, video_id, subject, task, query_frame):
         """
@@ -415,10 +410,11 @@ class CognitiveHeatMapBaseDataset(Dataset):
                 Gaze points in full resolution
 
         """
+        # list of frame idxs to be used for the snippet
         data_item_query_framelist = [
             self.temporal_downsample_factor * (i) + query_frame - self.first_query_frame
             for i in range(self.sequence_length)
-        ]  # list of frame idxs to be used for the snippet
+        ]
 
         data_item_list = []
         auxiliary_info_list = []
@@ -442,9 +438,8 @@ class CognitiveHeatMapBaseDataset(Dataset):
         except Exception as e:
             import IPython
 
-            IPython.embed(
-                header="getitem invalid: " + str(e)
-            )  # Embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
+            # Embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
+            IPython.embed(header="getitem invalid: " + str(e))
 
         if not self.request_auxiliary_info:
             return data_dict, []
@@ -505,15 +500,13 @@ class CognitiveHeatMapBaseDataset(Dataset):
 
         # fetch segmentation masks at frame idx
         segmentation_frame = self.fetch_segmentation_mask_from_id(video_id, frame_idx, self.return_reduced_size)
-        segmentation_frame = np.float32(
-            segmentation_frame
-        )  # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
+        # (h, w, 3) if self.return_reduced_size is True else (H, W, 3)
+        segmentation_frame = np.float32(segmentation_frame)
         segmentation_frame = segmentation_frame.transpose([2, 0, 1])  # (3, h, w) or (3, H, W)
 
         # fetch optic flow at frame idx
-        optic_flow_frame = self.fetch_optic_flow_from_id(
-            video_id, frame_idx, self.return_reduced_size
-        )  # (h, w ,C=2) or (H, W, C=2) depending on return_reduced_size flags
+        # (h, w ,C=2) or (H, W, C=2) depending on return_reduced_size flags
+        optic_flow_frame = self.fetch_optic_flow_from_id(video_id, frame_idx, self.return_reduced_size)
         optic_flow_frame = np.float32(optic_flow_frame)
         optic_flow_frame = optic_flow_frame.transpose([2, 0, 1])  # (C=2, h, w) or (C=2, H, W)
 
