@@ -5,7 +5,7 @@ import tensorboardX
 
 from chm.configs.args_file import parse_arguments
 from chm.model.model_wrapper import ModelWrapper
-from chm.trainers.cognitive_heatmap_trainer import CognitiveHeatmapTrainer
+from chm.trainers.cognitive_heatmap_trainer import CHMTrainer
 
 
 def train(args, session_hash):
@@ -26,7 +26,7 @@ def train(args, session_hash):
 
     model_wrapper = ModelWrapper(params_dict, logger)
 
-    trainer = CognitiveHeatmapTrainer(params_dict)
+    trainer = CHMTrainer(params_dict)
 
     trainer.fit(model_wrapper)
 

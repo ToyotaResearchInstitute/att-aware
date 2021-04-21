@@ -1,13 +1,13 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
 import itertools
 
-from chm.dataset.chm_base_dataset import CognitiveHeatMapBaseDataset
+from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
-class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
-    def __init__(self, dataset_type=None, params_dict=None):
+class CHMGazeDataset(CHMBaseDataset):
+    def __init__(self, dataset_type=None, params_dict=None, skip_list=None):
         """
-        CognitiveHeatMapGazeDataset dataset class/
+        CHMGazeDataset dataset class/
         Dataset class for returning gaze and image data for a single sequence
 
         Parameters
@@ -16,9 +16,12 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
             String indicating the type of dataset
         params_dict : dict
             Dictionary containing the args passed from the training script
+        skip_list: list
+            List containing ((video_id, subject, task), query_frame) tuples that needed to be excluded from the gaze dataset.
 
         """
         super().__init__(dataset_type=dataset_type, params_dict=params_dict)
+        self.skip_list = skip_list
 
     def _setup_resources(self):
         """
@@ -36,7 +39,7 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
 
     def _create_metadata_tuple_list(self):
         """
-        Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CognitiveHeatmapBaseDataset init function
+        Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CHMBaseDataset init function
 
         Parameters
         ----------
@@ -47,15 +50,16 @@ class CognitiveHeatMapGazeDataset(CognitiveHeatMapBaseDataset):
         None. Only Results in populating the self.metadata_list
         """
 
-        metadata_list_all_comb = list(
-            itertools.product(self.sequence_ids, self.subject_ids, self.task_ids)
-        )  # create all combinations of video, subject, task tuples for the specified video, subject, task args
-        metadata_list_all_comb = [
-            d for d in metadata_list_all_comb if d in self.all_videos_subject_task_list
-        ]  # filter out those combinations that are not present in the available combinations
-        self.metadata_list = [
-            (a, b) for a in metadata_list_all_comb for b in self.query_frame_idxs_list
-        ]  # append the frame query list to each tuple
+        # create all combinations of video, subject, task tuples for the specified video, subject, task args
+        metadata_list_all_comb = list(itertools.product(self.sequence_ids, self.subject_ids, self.task_ids))
+        # filter out those combinations that are not present in the available combinations
+        metadata_list_all_comb = [d for d in metadata_list_all_comb if d in self.all_videos_subject_task_list]
+        # append the query frame list to each tuple
+        self.metadata_list = [(a, b) for a in metadata_list_all_comb for b in self.query_frame_idxs_list]
+
+        # if a skip_list is provided, filter the metadata list accordingly
+        if self.skip_list is not None:
+            self.metadata_list = [m for m in self.metadata_list if m not in self.skip_list]
 
         self.metadata_len = len(self.metadata_list)  # Total number of available snippets
 

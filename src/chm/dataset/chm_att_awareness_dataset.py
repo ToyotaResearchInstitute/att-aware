@@ -2,13 +2,13 @@
 import copy
 import pandas as pd
 
-from chm.dataset.chm_base_dataset import CognitiveHeatMapBaseDataset
+from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
-class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
+class CHMAttAwarenessDataset(CHMBaseDataset):
     def __init__(self, dataset_type=None, params_dict=None):
         """
-        CognitiveHeatMapAttAwarenessDataset dataset class
+        CHMAttAwarenessDataset dataset class
 
         Parameters
         ----------
@@ -24,9 +24,9 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         assert (
             self.att_awareness_labels_csv_path is not None
         ), "Please provide the full path to the awareness labels csv file"
-        df = pd.read_csv(
-            self.att_awareness_labels_csv_path, delimiter=","
-        )  # read in the att awareness as a pandas dataframe
+
+        # read in the att awareness labels csv as a pandas dataframe
+        df = pd.read_csv(self.att_awareness_labels_csv_path, delimiter=",")
 
         self.att_awareness_labels_unfiltered = copy.deepcopy(df)
 
@@ -47,10 +47,6 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
             query_frame = att_label_item["query_frame"]
             self.metadata_list.append(((video_id, subject, task), query_frame))
 
-        import IPython
-
-        IPython.embed(banner1="checl")
-
     def get_metadata_list(self):
         """
         Returns the metadata list (of tuples) for this dataset
@@ -68,7 +64,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
     def _create_metadata_tuple_list(self):
         """
-        Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CognitiveHeatmapBaseDataset init function
+        Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CHMBaseDataset init function
 
         Parameters
         ----------
@@ -107,7 +103,8 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         task = att_label_item["cognitive_modifier"]
         query_frame = att_label_item["query_frame"]
 
-        data_dict, auxiliary_info_dict = self._get_sequence(video_id, subject, task, query_frame)  # get gaze info
+        # get sequence data dict for the annotation label.
+        data_dict, auxiliary_info_dict = self._get_sequence(video_id, subject, task, query_frame)
 
         # append annotation info to the data_dict dictionary
         annotation_dict = att_label_item.to_dict()
