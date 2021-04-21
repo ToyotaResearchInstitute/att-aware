@@ -80,7 +80,7 @@ class CHMGazeDataset(CHMBaseDataset):
 
     def __getitem__(self, idx):
         """
-        Required getitem() for PyTorch gaze dataset.
+        Required getitem() for PyTorch dataset.
 
         Parameters
         ----------
