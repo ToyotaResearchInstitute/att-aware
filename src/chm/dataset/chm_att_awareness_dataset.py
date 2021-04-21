@@ -36,6 +36,17 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
 
         self.att_awareness_labels = copy.deepcopy(df_filtered)
+
+        self.metadata_list = []
+        for i in range(len(self.att_awareness_labels)):
+            att_label_item = self.att_awareness_labels.iloc[idx]
+
+            video_id = att_label_item["video_id"]
+            subject = att_label_item["subject"]
+            task = att_label_item["cognitive_modifier"]
+            query_frame = att_label_item["query_frame"]
+            self.metadata_list.append(((video_id, subject, task), query_frame))
+
         import IPython
 
         IPython.embed(banner1="checl")
@@ -50,10 +61,10 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
 
         Returns
         -------
-        att_awareness_label: pandas dataframe
-            List of tuples containing metadata information (video_id, subject, task, query_frame) for each data item
+        metadata_lisr: list
+            List of tuples containing metadata information (video_id, subject, task), query_frame for each data item
         """
-        return self.att_awareness_labels
+        return self.metadata_list
 
     def _create_metadata_tuple_list(self):
         """
@@ -67,7 +78,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         -------
         None. Results in populating the self.metadata_list
         """
-        self.metadata_len = self.att_awareness_labels.shape[0]  # number of rows in the filtered data frame
+        self.metadata_len = len(self.metadata_list)  # number of rows in the filtered data frame
 
     def __getitem__(self, idx):
         """
