@@ -2,7 +2,7 @@
 import copy
 import pandas as pd
 
-from chm_base_dataset import CognitiveHeatMapBaseDataset
+from chm.dataset.chm_base_dataset import CognitiveHeatMapBaseDataset
 
 
 class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):

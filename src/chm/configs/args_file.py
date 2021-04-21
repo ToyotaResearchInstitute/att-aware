@@ -91,6 +91,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     parser.add_argument(
         "--random_seed",
         type=int,
+        default=1234,
         help="Random seed for numpy and pytorch. If None is provided, then automatically generated in the trainer.",
     )
     parser.add_argument(
