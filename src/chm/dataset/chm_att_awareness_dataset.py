@@ -38,7 +38,7 @@ class CognitiveHeatMapAttAwarenessDataset(CognitiveHeatMapBaseDataset):
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
         self.metadata_list = []
-        for i in range(len(self.att_awareness_labels)):
+        for idx in range(len(self.att_awareness_labels)):
             att_label_item = self.att_awareness_labels.iloc[idx]
 
             video_id = att_label_item["video_id"]
