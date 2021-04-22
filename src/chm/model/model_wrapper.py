@@ -4,7 +4,7 @@ import collections
 import pickle
 import tensorboardX
 
-from chm.utils.trainer_utils import create_model_and_loss_fn, load_datasets
+from chm.utils.trainer_utils import create_model_and_loss_fn, load_datasets, create_dataloaders
 
 
 class ModelWrapper(torch.nn.Module):

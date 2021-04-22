@@ -7,7 +7,7 @@ from chm.dataset.chm_att_awareness_dataset import CHMAttAwarenessDataset
 from chm.dataset.chm_pairwise_gaze_dataset import CHMPairwiseGazeDataset
 from chm.model.cognitive_heatnet import CognitiveHeatNet
 from chm.losses.cognitive_heatnet_loss import CognitiveHeatNetLoss
-from torch.utils.data import DataLoader, sampler
+from torch.utils.data import DataLoader, Subset, sampler
 
 
 def load_datasets(params_dict):
@@ -20,18 +20,23 @@ def load_datasets(params_dict):
     pairwise_gaze_dataset_indices = None
 
     # Create train datasets
+    print("Creating Awareness Train DS")
     awareness_datasets["train"] = CHMAttAwarenessDataset("train", params_dict)
     # pass the awareness_dataset as the skip list so that it is not double counted during training.
+    print("Creating Gaze Train DS")
     gaze_datasets["train"] = CHMGazeDataset(
         "train", params_dict, skip_list=awareness_datasets["train"].get_metadata_list()
     )
+    print("Creating Pairwise Train DS")
     pairwise_gaze_datasets["train"] = CHMPairwiseGazeDataset("train", params_dict)
     if not params_dict["use_std_train_test_split"]:
         """
         splits are according dreyeve train/test video splits.
         """
         # Create test datasets
+        print("Creating Awareness Test DS")
         awareness_datasets["test"] = CHMAttAwarenessDataset("test", params_dict)
+        print("Creating Gaze Test DS")
         gaze_datasets["test"] = CHMGazeDataset("test", params_dict)
     else:
         """
@@ -47,13 +52,14 @@ def load_datasets(params_dict):
             pairwise_gaze_datasets["train"], params_dict
         )
 
+        print("Creating Awareness Test DS")
         awareness_datasets["test"] = Subset(awareness_datasets["train"], awareness_test_idx)
         awareness_datasets["train"] = Subset(awareness_datasets["train"], awareness_train_idx)
 
+        print("Creating Gaze Test DS")
         gaze_datasets["test"] = Subset(gaze_datasets["train"], gaze_test_idx)
         gaze_datasets["train"] = Subset(gaze_datasets["train"], gaze_train_idx)
 
-        pairwise_gaze_datasets["test"] = Subset(pairwise_gaze_datasets["train"], pairwise_test_idx)
         pairwise_gaze_datasets["train"] = Subset(pairwise_gaze_datasets["train"], pairwise_train_idx)
 
         # Store the train and test indices in a dict. Will be cached for a particular training run.
