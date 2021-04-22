@@ -36,9 +36,7 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
 
         # filter those entries for which full snippets cannot be extracted
-        import IPython
-
-        IPython.embed(banner1="check frame filter")
+        df_filtered = df_filtered[df_filtered["query_frame"] >= self.first_query_frame]
 
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
