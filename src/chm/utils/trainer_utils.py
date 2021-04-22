@@ -104,15 +104,19 @@ def generate_train_test_split_indices(dataset, params_dict):
         train_frames.extend(vc[:train_l])
         test_frames.extend(vc[-test_l:])
 
+    # list of query frames for all data items in the dataset
     frame_list = [d[1] for d in dataset.get_metadata_list()]
+    # dict containing the indices of each unique frame id
     list_indices_for_each_frame_id = get_list_indices(frame_list)
+
     train_idx = []
     test_idx = []
-    for k, v in list_indices_for_each_frame_id.items():
-        if k in train_frames:
-            train_idx.extend(v)
-        elif k in test_frames:
-            test_idx.extend(v)
+    # parse the dict for
+    for unique_frame_id, indices_for_unique_frame_id in list_indices_for_each_frame_id.items():
+        if unique_frame_id in train_frames:
+            train_idx.extend(indices_for_unique_frame_id)
+        elif unique_frame_id in test_frames:
+            test_idx.extend(indices_for_unique_frame_id)
 
     import IPython
 

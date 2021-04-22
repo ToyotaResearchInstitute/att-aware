@@ -35,6 +35,11 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         df_filtered = df_filtered[df_filtered["cognitive_modifier"].isin(self.task_ids)]
         df_filtered = df_filtered[df_filtered["subject"].isin(self.subject_ids)]
 
+        # filter those entries for which full snippets cannot be extracted
+        import IPython
+
+        IPython.embed(banner1="check frame filter")
+
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
         self.metadata_list = []
