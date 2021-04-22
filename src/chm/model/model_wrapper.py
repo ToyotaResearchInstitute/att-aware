@@ -43,6 +43,9 @@ class ModelWrapper(torch.nn.Module):
         pass
 
     def training_step(self):
+        # parse all the batches properly.
+        # pass it through model.
+        # compute loss functions.
         pass
 
     def testing_step(self):

@@ -16,9 +16,13 @@ def load_datasets(params_dict):
     # Create train datasets
     awareness_datasets["train"] = CHMAttAwarenessDataset("train", params_dict)
     # pass the awareness_dataset as the skip list so that it is not double counted during training.
-    gaze_datasets["train"] = CHMGazeDataset("train", params_dict, awareness_datasets["train"].get_metadata_list())
+    gaze_datasets["train"] = CHMGazeDataset(
+        "train", params_dict, skip_list=awareness_datasets["train"].get_metadata_list()
+    )
     pairwise_gaze_datasets["train"] = CHMPairwiseGazeDataset("train", params_dict)
+    import IPython
 
+    IPython.embed(banner1="check gaze awareness dataset indices for intersection")
     if not params_dict["use_std_train_test_split"]:
         """
         splits are according dreyeve train/test video splits.
@@ -26,7 +30,6 @@ def load_datasets(params_dict):
         # Create test datasets
         awareness_datasets["test"] = CHMAttAwarenessDataset("test", params_dict)
         gaze_datasets["test"] = CHMGazeDataset("test", params_dict)
-
     else:
         """
         splits are according to query frame id.
@@ -50,6 +53,9 @@ def load_datasets(params_dict):
 
 
 def generate_train_test_split_indices(dataset, params_dict):
+    import IPython
+
+    IPython.embed(banner1="check split")
     train_idx = None
     test_idx = None
     return train_idx, test_idx
