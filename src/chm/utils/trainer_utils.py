@@ -137,10 +137,13 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
         return dataloaders
 
     # train and test data loaders for each gaze, awareness and pairwise-gaze dataset
+    print("Creating gaze ds dataloaders")
     gaze_dataloaders = individual_data_loaders(gaze_datasets, num_test_samples, batch_size, num_dl_workers)
+    print("Creating awareness ds dataloaders")
     awareness_dataloaders = individual_data_loaders(
         awareness_datasets, num_test_samples, awareness_batch_size, num_dl_workers
     )
+    print("Creating pairwise-gaze ds dataloaders")
     pairwise_gaze_dataloaders = individual_data_loaders(
         pairwise_gaze_datasets, num_test_samples, batch_size, num_dl_workers
     )

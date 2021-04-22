@@ -56,7 +56,7 @@ class ModelWrapper(torch.nn.Module):
 
         # create gaze, awareness and pairwise-gaze dataloaders
         self.gaze_dataloaders, self.awareness_dataloaders, self.pairwise_gaze_dataloaders = create_dataloaders(
-            gaze_datasets, awareness_datasets, pairwise_gaze_datasets, params_dict
+            self.gaze_datasets, self.awareness_datasets, self.pairwise_gaze_datasets, self.params_dict
         )
 
     def configure_optimizers(self):
