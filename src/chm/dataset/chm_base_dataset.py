@@ -12,7 +12,7 @@ from utils.chm_consts import *
 
 
 class CHMBaseDataset(Dataset):
-    def __init__(self, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
         CHMBaseDataset dataset class. Base class for all the other Dataset classes used for CHM.
         Implements all the getters for caches and loads up the pandas dataframe with all gaze information
@@ -93,7 +93,7 @@ class CHMBaseDataset(Dataset):
 
         # setup metadata list.
         self.metadata_len = None
-        self._setup_resources()  # set up any resources needed for creation of metadata tuple list
+        self._setup_resources(**kwargs)  # set up any resources needed for creation of metadata tuple list
         self._create_metadata_tuple_list()  # implementation is in the respective derived classes.
         assert (
             self.metadata_len is not None and self.metadata_len > 0

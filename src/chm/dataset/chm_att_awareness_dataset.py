@@ -6,7 +6,7 @@ from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
 class CHMAttAwarenessDataset(CHMBaseDataset):
-    def __init__(self, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
         CHMAttAwarenessDataset dataset class
 
@@ -17,9 +17,9 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         params_dict : dict
             Dictionary containing the args passed from the training script
         """
-        super().__init__(dataset_type=dataset_type, params_dict=params_dict)
+        super().__init__(dataset_type=dataset_type, params_dict=params_dict, **kwargs)
 
-    def _setup_resources(self):
+    def _setup_resources(self, **kwargs):
         self.att_awareness_labels_csv_path = self.params_dict.get("att_awareness_labels", None)
         assert (
             self.att_awareness_labels_csv_path is not None

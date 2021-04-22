@@ -5,7 +5,7 @@ from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
 class CHMGazeDataset(CHMBaseDataset):
-    def __init__(self, dataset_type=None, params_dict=None, skip_list=None):
+    def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
         CHMGazeDataset dataset class/
         Dataset class for returning gaze and image data for a single sequence
@@ -20,10 +20,9 @@ class CHMGazeDataset(CHMBaseDataset):
             List containing ((video_id, subject, task), query_frame) tuples that needed to be excluded from the gaze dataset.
 
         """
-        super().__init__(dataset_type=dataset_type, params_dict=params_dict)
-        self.skip_list = skip_list
+        super().__init__(dataset_type=dataset_type, params_dict=params_dict, **kwargs)
 
-    def _setup_resources(self):
+    def _setup_resources(self, **kwargs):
         """
         Sets up any resources (such loading csv files etc) needed for this derived Dataset.
 
@@ -35,7 +34,9 @@ class CHMGazeDataset(CHMBaseDataset):
         -------
         None.
         """
-        pass
+        self.skip_list = None
+        if "skip_list" in kwargs:
+            self.skip_list = kwargs["skip_list"]
 
     def _create_metadata_tuple_list(self):
         """

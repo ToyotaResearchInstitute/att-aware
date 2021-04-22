@@ -5,7 +5,7 @@ from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
 class CHMPairwiseGazeDataset(CHMBaseDataset):
-    def __init__(self, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
         CHMPairwiseGazeDataset dataset class.
         Returns a pair of sequences that is used to compute the consistency cost term.
@@ -18,9 +18,9 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
             Dictionary containing the args passed from the training script
 
         """
-        super().__init__(dataset_type=dataset_type, params_dict=params_dict)
+        super().__init__(dataset_type=dataset_type, params_dict=params_dict, **kwargs)
 
-    def _setup_resources(self):
+    def _setup_resources(self, **kwargs):
         """
         Sets up any resources (such loading csv files etc) needed for this derived Dataset.
 
