@@ -83,25 +83,40 @@ def load_datasets(params_dict):
 
 
 def generate_train_test_split_indices(dataset, params_dict):
+    def get_list_indices(a):
+        d = collections.defaultdict(list)
+        for i, j in enumerate(a):
+            d[j].append(i)
+        return d
 
     video_chunk_size = params_dict.get("video_chunk_size", 30.0)
     train_test_split_factor = params_dict.get("train_test_split_factor", 0.2)
     fps = params_dict.get("video_frame_rate", 25.0)
     chunk_size_in_frames = fps * video_chunk_size
-    num_frames = 7500  # number of frames in each video
+    num_frames = 7501  # number of frames in each video
     video_chunks = list(divide_chunks(list(range(num_frames)), int(chunk_size_in_frames)))
-    train_frames = test_frames = []
+    train_frames = []
+    test_frames = []
+
     for vc in video_chunks:
         train_l = round(len(vc) * (1.0 - train_test_split_factor))
         test_l = round(len(vc) * (train_test_split_factor))
         train_frames.extend(vc[:train_l])
         test_frames.extend(vc[-test_l:])
 
+    frame_list = [d[1] for d in dataset.get_metadata_list()]
+    list_indices_for_each_frame_id = get_list_indices(frame_list)
+    train_idx = []
+    test_idx = []
+    for k, v in list_indices_for_each_frame_id.items():
+        if k in train_frames:
+            train_idx.extend(v)
+        elif k in test_frames:
+            test_idx.extend(v)
+
     import IPython
 
     IPython.embed(banner1="check split")
-    train_idx = None
-    test_idx = None
     return train_idx, test_idx
 
 
