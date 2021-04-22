@@ -122,7 +122,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="max number of batches during inference",
     )
     parser.add_argument(
-        "--awareness_ds_batch_size",
+        "--awareness_batch_size",
         action="store",
         type=int,
         default=8,

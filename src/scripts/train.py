@@ -1,7 +1,6 @@
 import os
 import torch
 import uuid
-import tensorboardX
 
 from chm.configs.args_file import parse_arguments
 from chm.model.model_wrapper import ModelWrapper
@@ -16,15 +15,7 @@ def train(args, session_hash):
     else:
         device = torch.device("cuda")
 
-    log_dir = os.path.join(params_dict["log_dir"], session_hash)
-    if not log_dir is None:
-        if params_dict["training_hash"] is None:
-            params_dict["training_hash"] = self.log_dir
-        logger = tensorboardX.SummaryWriter(
-            log_dir=log_dir + params_dict["training_hash"], comment=params_dict["training_hash"]
-        )
-
-    model_wrapper = ModelWrapper(params_dict, logger)
+    model_wrapper = ModelWrapper(params_dict, session_hash)
 
     trainer = CHMTrainer(params_dict)
 
