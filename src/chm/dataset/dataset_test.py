@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     awareness_dataset = CHMAttAwarenessDataset("train", params_dict)
 
-    gaze_dataset = CHMGazeDataset("train", params_dict)
+    gaze_dataset = CHMGazeDataset("train", params_dict, skip_list=awareness_dataset.get_metadata_list())
     gaze_data_dict, gaze_auxiliary_info_list = gaze_dataset[0]
 
     awareness_data_dict, awareness_auxiliary_info_list = awareness_dataset[0]
