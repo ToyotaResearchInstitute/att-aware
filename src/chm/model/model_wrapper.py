@@ -27,8 +27,8 @@ class ModelWrapper(torch.nn.Module):
 
         # create model and loss function and put it on the correct device.
         self.model, self.loss_fn = create_model_and_loss_fn(self.params_dict)
-        self.loss_fn.to(device)
-        self.model.to(device)
+        # self.loss_fn.to(device)
+        # self.model.to(device)
 
         # load gaze, awareness and pairwise-gaze datasets
         gaze_datasets, awareness_datasets, pairwise_gaze_datasets = load_datasets(self.params_dict)
