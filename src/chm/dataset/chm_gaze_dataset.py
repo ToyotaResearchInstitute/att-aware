@@ -60,10 +60,7 @@ class CHMGazeDataset(CHMBaseDataset):
 
         # if a skip_list is provided, filter the metadata list accordingly
         if self.skip_list is not None:
-            import IPython
-
-            IPython.embed(banner1="check different approaches")
-            self.metadata_list = [m for m in self.metadata_list if m not in self.skip_list]
+            self.metadata_list = sorted(set(self.metadata_list) - set(self.skip_list))
 
         self.metadata_len = len(self.metadata_list)  # Total number of available snippets
 
