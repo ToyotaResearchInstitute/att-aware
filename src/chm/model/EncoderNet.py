@@ -35,17 +35,17 @@ def run_over_images(input, net, axis):
     return output
 
 
-def create_encoder(reduced_middle_layer_size=512, use_s3d_encoder=False):
+def create_encoder(reduced_middle_layer_size=512, use_s3d=False):
     """
     Creates the encoder structure. Two possible encoders.
     1. With only ResNet18 encoder layers. 4 layers
-    2. When use_s3d_encoder is True, then 3 layers of S3D will be stacked on top of two layers of ResNet18. Total of 5
+    2. When use_s3d is True, then 3 layers of S3D will be stacked on top of two layers of ResNet18. Total of 5
 
     Parameters:
     ----------
     reduced_middle_layer_size: int
         Number of feature layers for the Conv3D (1 x 1 x 1) after the encoder. Used for reduced the number of parameters
-    use_s3d_encoder: bool
+    use_s3d: bool
         Flag which decides the encoder structure
 
     Returns:
@@ -66,7 +66,7 @@ def create_encoder(reduced_middle_layer_size=512, use_s3d_encoder=False):
     layered_net = torch.nn.ModuleDict()
     layered_net["layer1"] = orig_net.layer1
     layered_net["layer2"] = orig_net.layer2
-    if not use_s3d_encoder:
+    if not use_s3d:
         layered_net["layer3"] = orig_net.layer3
         layered_net["layer4"] = orig_net.layer4
         s3d_net = None
@@ -102,7 +102,7 @@ def create_encoder(reduced_middle_layer_size=512, use_s3d_encoder=False):
     post_processing_bn = None
     post_processing_nonlin = None
     if reduced_middle_layer_size is not None:
-        if not use_s3d_encoder:
+        if not use_s3d:
             orig_latent_dim = list(orig_net.layer4.children())[-1].conv2.out_channels
         else:
             orig_latent_dim = s3d_layer_3_out_channels  # out_channels in s3d_net['s3d_net_3']
@@ -128,7 +128,7 @@ class EncoderNet(torch.nn.Module):
         layered_output: torch.nn.ModuleDict
             Initial layers of the encoder. Either [layer1, layer2] or [layer1, layer2...layer4]
         s3d_net: torch.nn.ModuleDict or None
-            If use_s3d_encoder flag was true the s3d_net consists of [s3d_net_1, s3d_net_2, s3d_net_3]. else None
+            If use_s3d flag was true the s3d_net consists of [s3d_net_1, s3d_net_2, s3d_net_3]. else None
         post_layers: dict or None
             dict containing the various layers for post processing
 
