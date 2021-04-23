@@ -76,7 +76,6 @@ class GazeTransform(torch.nn.Module):
                 gaze_transform_loss += (self.lin_trans.bias.data[i] - self.translation[i]) ** 2
                 for j in range(2):
                     mean = self.linear_transform[i][j]
-                    # import IPython;IPython.embed()
                     gaze_transform_loss += (self.lin_trans.weight.data[i][j] - mean) ** 2
 
         else:
