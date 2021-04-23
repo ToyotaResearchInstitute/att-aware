@@ -25,7 +25,12 @@ class GazeCorruption:
         Parameters
         ----------
         gaze: torch.Tensor
-            dimensions = B x T x L x 2
+            Gaze tensor to be corrupted (B, T, L, 2)
+
+        Returns
+        -------
+        corrupted_gaze: torch.Tensor
+            Corrupted gaze (B, T, L, 2)
         """
         if self.transforms is not None:
             for transform in self.transforms:
@@ -47,11 +52,12 @@ class GazeCorruption:
             weight_factor = torch.ones_like(gaze)  # (B, T, L, 2)
             weight_factor[:, :, :, 0] = weight_factor[:, :, :, 0] * self.x_weight_factor
             weight_factor[:, :, :, 1] = weight_factor[:, :, :, 1] * self.y_weight_factor
-            # B, T, L, 2 gaze is already normalized gaze. Therefore subtract 0.5 from each dimension computes the offset from the center
+            # (B, T, L, 2) gaze is already normalized gaze. Therefore subtract 0.5 from each dimension computes the offset from the center
             diff_from_center = gaze - 0.5 * torch.ones_like(gaze)
             weighted_diff_from_center = diff_from_center * weight_factor  # (B, T, L, 2)
             weighted_dist_from_center = weighted_diff_from_center ** 2  # (B, T, L, 2) dx^2, dy^2
 
+            # (B, T, L, 2)
             corrupted_gaze = (
                 gaze
                 + gaze.clone().normal_() * self.noise_std
@@ -62,5 +68,5 @@ class GazeCorruption:
                         [gaze.shape[0], gaze.shape[1], gaze.shape[2], 1],
                     )
                 )
-            )  # (B, T, L, 2)
+            )
         return corrupted_gaze

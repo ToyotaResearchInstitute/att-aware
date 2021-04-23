@@ -530,6 +530,15 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=6,
         help="Number of latent layers in the common predictor used for emitting the final awareness and gaze maps.",
     )
+
+    parser.add_argument(
+        "--reduced_middle_layer_size",
+        action="store",
+        type=int,
+        default=512,
+        help="Size of the maximum features of the Conv3D with k=1 after encoder layer.",
+    )
+
     parser.add_argument(
         "--decoder_layer_features",
         nargs="*",

@@ -14,10 +14,17 @@ class GazeTransform(torch.nn.Module):
         """
         A module to capture the transformation of the gaze. This should be used either to correct the transformation,
         or to corrupt it.
-        :param scale_factor:
-        :param linear_transform:
-        :param translation:
-        :param pad_gaze_vector: whether to return the original 2D coordinate or to pad with a 1.0 indicator.
+        Parameters
+        ----------
+        scale_factor: float
+
+        linear_transform:
+
+        translation:
+
+        pad_gaze_vector: bool
+            Bool indicating whether the should_train_bit and the dropout bit should be added to the gaze tensor
+
         """
         super().__init__()
         # the weight matrix associated with network is a 2 by 2 matrix since gaze points are
@@ -40,6 +47,7 @@ class GazeTransform(torch.nn.Module):
         else:
             for i in range(2):
                 self.lin_trans.weight.data[i][i] += scale_factor
+
         self.pad_gaze_vector = pad_gaze_vector
 
     def forward(self, input, should_train_input_gaze=False):
