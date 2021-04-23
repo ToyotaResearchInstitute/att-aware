@@ -18,6 +18,9 @@ def create_enc_dec_backbone(params_dict, network_out_height, network_out_weight)
     road_facing_encoder = create_encoder(
         reduced_middle_layer_size=reduced_middle_layer_size, use_s3d_encoder=use_s3d_encoder
     )
+    import IPython
+
+    IPython.embed(banner1="check encoder")
 
 
 class FusionNet(torch.nn.Module):

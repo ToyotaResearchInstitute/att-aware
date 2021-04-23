@@ -1,11 +1,12 @@
 import torch
 import torchvision.models
-import collections 
+import collections
 
 from chm.model.S3D import STConv3d
 
+
 def run_over_images(input, net, axis):
-    ''' 
+    """
     Parameters:
     ----------
 
@@ -20,19 +21,19 @@ def run_over_images(input, net, axis):
     --------
     output: torch.Tensor
         Result of applying net on input
-    '''
+    """
     output = []
-    for i in range(input.shape[axis]): 
-        # for the entire batch grab the ith image along axis by using index_select, 
-        # remove the time dimension using squeeze, pass it through a network 
+    for i in range(input.shape[axis]):
+        # for the entire batch grab the ith image along axis by using index_select,
+        # remove the time dimension using squeeze, pass it through a network
         # that expects a batch of images, and then finally add back the removed dimension
-        tmp = net(torch.index_select(input, dim=axis, index=input.new_tensor(
-            [i]).long()).squeeze(axis)).unsqueeze(axis)
+        tmp = net(torch.index_select(input, dim=axis, index=input.new_tensor([i]).long()).squeeze(axis)).unsqueeze(axis)
         output.append(tmp)
-    # concatenate the results along the time dimension. 
+    # concatenate the results along the time dimension.
     # so its back to B * T * C * H * W
     output = torch.cat(output, axis)
     return output
+
 
 def create_encoder(reduced_middle_layer_size=512, use_s3d_encoder=False):
     """
@@ -111,17 +112,16 @@ def create_encoder(reduced_middle_layer_size=512, use_s3d_encoder=False):
         post_processing_nonlin = torch.nn.ReLU()
 
     post_layers = {}
-    post_layers['conv3d'] = post_processing
-    post_layers['in'] = post_processing_in
-    post_layers['relu'] = post_processing_nonlin
-    returns EncoderNet(preproc_net=preproc_net,
-                      layered_outputs=layered_net,
-                      s3d_net=s3d_net,
-                      post_layers=post_layers)
+    post_layers["conv3d"] = post_processing
+    post_layers["in"] = post_processing_in
+    post_layers["relu"] = post_processing_nonlin
+
+    return EncoderNet(preproc_net=preproc_net, layered_outputs=layered_net, s3d_net=s3d_net, post_layers=post_layers)
+
 
 class EncoderNet(torch.nn.Module):
     def __init__(self, preproc_net, layered_outputs, s3d_net=None, post_layers=None):
-        '''
+        """
         Parameters:
         preproc_net: torch.nn.Sequential
             Initialize preprocessing modules for encoder
@@ -131,17 +131,17 @@ class EncoderNet(torch.nn.Module):
             If use_s3d_encoder flag was true the s3d_net consists of [s3d_net_1, s3d_net_2, s3d_net_3]. else None
         post_layers: dict or None
             dict containing the various layers for post processing
-        
-        '''
+
+        """
         super().__init__()
         self.preproc_net = preproc_net
         self.layered_outputs = layered_outputs
         self.s3d_net = s3d_net
         self.post_layers = post_layers
         if self.post_layers is not None:
-            self.post_layer_conv3d = self.post_layers['conv3d']
-            self.post_layer_in = self.post_layers['in']
-            self.post_layer_relu = self.post_layers['relu']
+            self.post_layer_conv3d = self.post_layers["conv3d"]
+            self.post_layer_in = self.post_layers["in"]
+            self.post_layer_relu = self.post_layers["relu"]
 
     def forward(self, input):
         """
@@ -152,7 +152,7 @@ class EncoderNet(torch.nn.Module):
         ----------
         input: torch.Tensor
             input (or sequence of) images
-        
+
         Returns:
         encoder_output: OrderedDict()
             a dictionary containing all the intermediate results of applying fwd() on the image or batch of images
@@ -162,20 +162,21 @@ class EncoderNet(torch.nn.Module):
         intermediate_output = run_over_images(input, self.preproc_net, axis=1)
         encoder_output = collections.OrderedDict()
         for key in self.layered_outputs:  # keys are [layer1, layer2, [layer3, layer4]]
-            encoder_output[key] = run_over_images(intermediate_output, self.layered_outputs[key], axis=1) 
+            encoder_output[key] = run_over_images(intermediate_output, self.layered_outputs[key], axis=1)
             intermediate_output = encoder_output[key]
 
         if self.s3d_net is not None:
             for key in self.s3d_net:
-                intermediate_output = intermediate_output.permute(0, 2, 1, 3, 4)# B, T, C, H, W --> B, C, T, H, W
+                intermediate_output = intermediate_output.permute(0, 2, 1, 3, 4)  # B, T, C, H, W --> B, C, T, H, W
                 out = self.s3d_net[key](intermediate_output)  # (B, C, T, H, W)
                 encoder_output[key] = out.permute(0, 2, 1, 3, 4)  # (B, T, C, H, W)
                 intermediate_output = encoder_output[key]
-        
+
         if self.post_layer is not None:
             # from [B,T,C,H,W] to [B,C,T,H,W] for 3D conv, and back.
-            intermediate_output = self.post_layer_relu(self.post_layer_in(
-                self.post_layer_conv3d(encoder_output[key].transpose(1, 2)))).transpose(1, 2)
+            intermediate_output = self.post_layer_relu(
+                self.post_layer_in(self.post_layer_conv3d(encoder_output[key].transpose(1, 2)))
+            ).transpose(1, 2)
             encoder_output[key] = intermediate_output
 
         return encoder_output
