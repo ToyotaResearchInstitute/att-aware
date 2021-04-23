@@ -42,13 +42,12 @@ def load_datasets(params_dict):
         """
         splits are according to query frame id.
         """
-
-        # Create train and test split indices according to where the query frames are.
+        # Create train and test split indices according to where the query frames are for gaze, awareness and pairwise-gaze datasets
         awareness_train_idx, awareness_test_idx = generate_train_test_split_indices(
             awareness_datasets["train"], params_dict
         )
         gaze_train_idx, gaze_test_idx = generate_train_test_split_indices(gaze_datasets["train"], params_dict)
-        pairwise_train_idx, pairwise_test_idx = generate_train_test_split_indices(
+        pairwise_gaze_train_idx, pairwise_gaze_test_idx = generate_train_test_split_indices(
             pairwise_gaze_datasets["train"], params_dict
         )
 
@@ -60,9 +59,10 @@ def load_datasets(params_dict):
         gaze_datasets["test"] = Subset(gaze_datasets["train"], gaze_test_idx)
         gaze_datasets["train"] = Subset(gaze_datasets["train"], gaze_train_idx)
 
-        pairwise_gaze_datasets["train"] = Subset(pairwise_gaze_datasets["train"], pairwise_train_idx)
+        pairwise_gaze_datasets["train"] = Subset(pairwise_gaze_datasets["train"], pairwise_gaze_train_idx)
 
         # Store the train and test indices in a dict. Will be cached for a particular training run.
+        # To be later used for experiments, if needed
         gaze_dataset_indices = collections.OrderedDict()
         gaze_dataset_indices["train"] = gaze_train_idx
         gaze_dataset_indices["test"] = gaze_test_idx
@@ -72,8 +72,8 @@ def load_datasets(params_dict):
         awareness_dataset_indices["test"] = awareness_test_idx
 
         pairwise_gaze_dataset_indices = collections.OrderedDict()
-        pairwise_gaze_dataset_indices["train"] = pairwise_train_idx
-        pairwise_gaze_dataset_indices["test"] = pairwise_test_idx
+        pairwise_gaze_dataset_indices["train"] = pairwise_gaze_train_idx
+        pairwise_gaze_dataset_indices["test"] = pairwise_gaze_test_idx
 
     return (gaze_datasets, awareness_datasets, pairwise_gaze_datasets), (
         gaze_dataset_indices,
@@ -83,6 +83,22 @@ def load_datasets(params_dict):
 
 
 def generate_train_test_split_indices(dataset, params_dict):
+    """
+    Creates the train/test split according to frame_id
+    Parameters
+    ----------
+    dataset: Pytorch Dataset (CHMGazeDataset, CHMAttAwarenessDataset, CHMPairwiseGazeDataset)
+        Gaze, Awareness or PairwiseGaze dataset with a metadata_list.
+    params_dict: dict
+        Dictionary containing the args passed from the training script.
+    Returns
+    -------
+    train_idx: list
+        Indices of the dataset that correspond to training data items
+    test_idx: list
+        Indices of the dataset that correspond to testing data items
+    """
+
     def get_list_indices(a):
         d = collections.defaultdict(list)
         for i, j in enumerate(a):
@@ -94,10 +110,12 @@ def generate_train_test_split_indices(dataset, params_dict):
     fps = params_dict.get("video_frame_rate", 25.0)
     chunk_size_in_frames = fps * video_chunk_size
     num_frames = 7501  # number of frames in each video
+    # split the video into chunks of size chunk_size_in_frames
     video_chunks = list(divide_chunks(list(range(num_frames)), int(chunk_size_in_frames)))
     train_frames = []
     test_frames = []
 
+    # extract training and test frame ids from each chunk and collate them according to train/test split factor
     for vc in video_chunks:
         train_l = round(len(vc) * (1.0 - train_test_split_factor))
         test_l = round(len(vc) * (train_test_split_factor))
@@ -111,16 +129,13 @@ def generate_train_test_split_indices(dataset, params_dict):
 
     train_idx = []
     test_idx = []
-    # parse the dict for
+    # parse the dict and assign indices to train and test according whether the unique_frame_id is in train_frames or test_frames
     for unique_frame_id, indices_for_unique_frame_id in list_indices_for_each_frame_id.items():
         if unique_frame_id in train_frames:
             train_idx.extend(indices_for_unique_frame_id)
         elif unique_frame_id in test_frames:
             test_idx.extend(indices_for_unique_frame_id)
 
-    import IPython
-
-    IPython.embed(banner1="check split")
     return train_idx, test_idx
 
 
@@ -184,6 +199,15 @@ def create_model_and_loss_fn(params_dict):
     return model, loss_fn
 
 
+def save_model(state_dict, save_path):
+    torch.save(state_dict, save_path)
+
+
+def parse_data_item():
+    pass
+
+
+# utility functions
 def divide_chunks(l, n):
     # looping till length l
     for i in range(0, len(l), n):

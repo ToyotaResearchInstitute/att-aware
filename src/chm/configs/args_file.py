@@ -224,9 +224,17 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--num_epochs",
         action="store",
         type=int,
-        default=10000,
+        default=100,
         help="Number of max epochs used during the main training experiment",
     )
+    parser.add_argument(
+        "--max_overall_batch_during_training",
+        action="store",
+        type=int,
+        default=None,
+        help="max number of batches during training experiments",
+    )
+
     parser.add_argument(
         "--train_test_split_factor",
         action="store",
