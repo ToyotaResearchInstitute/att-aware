@@ -43,9 +43,9 @@ class CognitiveHeatNet(torch.nn.Module):
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
         self.NETWORK_OUT_SIZE = [
-            num_latent_layers,
-            int(round(self.ORIG_ROAD_IMAGE_HEIGHT / aspect_ratio_reduction_factor)),
-            int(round(self.ORIG_ROAD_IMAGE_WIDTH / aspect_ratio_reduction_factor)),
+            self.num_latent_layers,
+            int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor)),
+            int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor)),
         ]
 
         self.NETWORK_OUT_HEIGHT = self.NETWORK_OUT_SIZE[1]
