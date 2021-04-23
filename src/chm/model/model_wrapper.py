@@ -125,6 +125,7 @@ class ModelWrapper(torch.nn.Module):
         # parse all the batches properly.
 
         (gaze_item, awareness_item, pairwise_gaze_item) = data_batch
+
         (gaze_data_dict, gaze_aux_info_list) = gaze_item
         (awareness_data_dict, awareness_aux_info_list) = awareness_item
         (pairwise_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
