@@ -54,7 +54,7 @@ class CognitiveHeatNet(torch.nn.Module):
         self.gaze_transform = create_identity_gaze_transform()
 
         self.enc_dec_backbone = create_enc_dec_backbone(
-            params_dict=self.params_dict
+            params_dict=self.params_dict,
             network_out_height=self.NETWORK_OUT_HEIGHT,
             network_out_weight=self.NETWORK_OUT_WIDTH,
         )
