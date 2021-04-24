@@ -109,7 +109,8 @@ class ModelWrapper(torch.nn.Module):
         # Check flag for automatic mixed precision
         self.enable_amp = self.params_dict.get("enable_amp", True)
         self.optimizer = torch.optim.Adam(
-            filter(lambda p: p.requires_grad, self.optimization_params), lr=self.learning_rate
+            filter(lambda p: p.requires_grad, self.optimization_params),
+            lr=self.params_dict.get("learning_rate", 0.0005),
         )
         self.optimizer.zero_grad()
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=self.enable_amp)
