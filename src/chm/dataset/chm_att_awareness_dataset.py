@@ -38,6 +38,8 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         # filter those entries for which full snippets cannot be extracted
         df_filtered = df_filtered[df_filtered["query_frame"] >= self.first_query_frame]
 
+        self.awareness_annotations_labels = ["no_definitely", "no_probably", "unsure", "yes_probably", "yes_definitely"]
+
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
         self.metadata_list = []
@@ -79,6 +81,11 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         """
         self.metadata_len = len(self.metadata_list)  # number of rows in the filtered data frame
 
+    def convert_awareness_annotation_to_float(self, label):
+        return (self.awareness_annotations_labels.index(label.lower())) / float(
+            len(self.awareness_annotations_labels) - 1
+        )
+
     def __getitem__(self, idx):
         """
         Required getitem() for PyTorch dataset.
@@ -111,5 +118,7 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
 
         # append annotation info to the data_dict dictionary
         annotation_dict = att_label_item.to_dict()
+        # convert awareness annotation into a float
+        annotation_dict["is_aware"] = self.convert_awareness_annotation_to_float(annotation_dict["is_aware"])
         data_dict["att_annotation"] = annotation_dict
         return data_dict, auxiliary_info_dict
