@@ -149,7 +149,7 @@ class ModelWrapper(torch.nn.Module):
             input_process_dict=self.input_process_dict,
         )
         if gaze_batch_input is None or gaze_batch_target is None:
-            continue
+            return None, True
 
         # parse awareness data item
         awareness_batch_input, awareness_batch_target, awareness_aux_info_list, should_use_batch = parse_data_item(
@@ -160,7 +160,7 @@ class ModelWrapper(torch.nn.Module):
             input_process_dict=self.input_process_dict,
         )
         if awareness_batch_input is None or awareness_batch_target is None:
-            continue
+            return None, True
 
         # parse pairwise data item at t
         (
@@ -176,7 +176,8 @@ class ModelWrapper(torch.nn.Module):
             input_process_dict=self.input_process_dict,
         )
         if pairwise_gaze_batch_input_t is None or pairwise_gaze_batch_target_t is None:
-            continue
+            return None, True
+
         # parse pairwise data item at tp1
         (
             pairwise_gaze_batch_input_tp1,
@@ -191,7 +192,7 @@ class ModelWrapper(torch.nn.Module):
             input_process_dict=self.input_process_dict,
         )
         if pairwise_gaze_batch_input_tp1 is None or pairwise_gaze_batch_target_tp1 is None:
-            continue
+            return None, True
 
         import IPython
 
@@ -199,7 +200,7 @@ class ModelWrapper(torch.nn.Module):
         # pass it through model.
         # compute loss functions.
         output = {"loss": loss}
-        return output
+        return output, False
 
     def testing_step(self):
         pass
