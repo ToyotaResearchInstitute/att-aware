@@ -1,4 +1,5 @@
 import torch
+import collections
 
 from chm.model.gaze_transform import GazeTransform
 from chm.model.FusionNet import create_fusion_net
@@ -68,3 +69,70 @@ class CognitiveHeatNet(torch.nn.Module):
         self.chm_predictor = create_chm_predictor(
             chm_predictor_input_dim_dict=chm_predictor_input_dim_dict, predictor_output_size=self.NETWORK_OUT_SIZE
         )
+
+    def forward(self, batch_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
+        """
+        Parameters:
+        ----------
+        batch_input: dict
+            dict containing various input tensors.
+        should_drop_indices_dict: dict or None
+            if not None, dict containing booleans flag for which batch item is dropped in the side channel
+        should_drop_entire_channel_dict: dict or None
+            if not None, dict with flags indicating which entire side channel was dropped out
+
+        Returns:
+        --------
+
+        """
+        road_image = batch_input["road_image"] / 255.0  # normalized road image
+        normalized_input_gaze = batch_input["normalized_input_gaze"].clone().detach()  # (B, T, L, 2)
+        if "no_detach_gaze" in batch_input:
+            if batch_input["no_detach_gaze"]:
+                # don't detach gaze. Used during calibration optimization training
+                normalized_input_gaze = batch_input["normalized_input_gaze"]  # (B, T, L, 2)
+
+        should_train_input_gaze = batch_input["should_train_input_gaze"].clone().detach()  # (B, T, L, 1)
+
+        try:
+            # (B, T, L, 4)
+            normalized_transformed_gaze = self.gaze_transform(normalized_input_gaze, should_train_input_gaze)
+        except:
+            import IPython
+
+            IPython.embed(header="normalized input gaze invalid")
+
+        # prepare fusion net input
+        fusion_net_input = collections.OrderedDict()
+
+        # main encoder input
+        fusion_net_input["road_facing"] = road_image
+
+        # side channel input
+        fusion_net_input["driver_facing"] = normalized_transformed_gaze
+        if self.add_optic_flow:
+            fusion_net_input["optic_flow"] = batch_input["optic_flow_image"].clone().detach()
+
+        # check for nans in side channel. can happen if side channel module blows up during training
+        if torch.isnan(fusion_net_input["driver_facing"]).sum():
+            import IPython
+
+            print(fusion_net_input["driver_facing"])
+            IPython.embed(banner1="CHM::Forward, fusion_net_input[driver_facing] has nans")
+
+        (decoder_output, side_channel_output, should_drop_dicts) = self.fusion_net(
+            fusion_net_input, should_drop_indices_dict, should_drop_entire_channel_dict
+        )
+
+        # predictor input
+        chm_predictor_input = decoder_output["road_facing"]
+        if (torch.isnan(chm_predictor_input)).sum():  # check if there is any nans in the encoder-decoder pass
+            import IPython
+
+            print(chm_predictor_input)
+            IPython.embed(header="CHM:forward. Output of the decoder decoder_output[0][road_facing] has nans")
+
+        # gaze and awareness density maps
+        chm_output = self.chm_predictor(chm_predictor_input)
+
+        return chm_output, decoder_output, side_channel_output, should_drop_dicts

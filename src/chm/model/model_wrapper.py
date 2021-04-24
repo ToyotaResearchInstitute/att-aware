@@ -43,10 +43,11 @@ class ModelWrapper(torch.nn.Module):
         os.makedirs(self.save_model_dir, exist_ok=True)
 
         if self.params_dict["no_cuda"] or not torch.cuda.is_available():
-            device = torch.device("cpu")
+            self.device = torch.device("cpu")
         else:
-            device = torch.device("cuda")
+            self.device = torch.device("cuda")
 
+        self.enable_amp = self.params_dict.get("enable_amp", True)
         self.gaze_corruption = self.params_dict.get("gaze_corruption", None)
         self.gaze_correction = self.params_dict.get("gaze_correction", None)
         self.input_process_dict = self.params_dict.get("input_process_dict", None)
@@ -118,7 +119,7 @@ class ModelWrapper(torch.nn.Module):
             self.model, self.optimization_params = param_grad_setter(self.model)
 
         # Check flag for automatic mixed precision
-        self.enable_amp = self.params_dict.get("enable_amp", True)
+
         self.optimizer = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.optimization_params),
             lr=self.params_dict.get("learning_rate", 0.0005),
@@ -194,9 +195,50 @@ class ModelWrapper(torch.nn.Module):
         if pairwise_gaze_batch_input_tp1 is None or pairwise_gaze_batch_target_tp1 is None:
             return None, True
 
-        import IPython
+        # move input and target to appropriate device.
+        for key in gaze_batch_input:
+            gaze_batch_input[key] = gaze_batch_input[key].to(self.device)
+            awareness_batch_input[key] = awareness_batch_input[key].to(self.device)
+            pairwise_gaze_batch_input_t[key] = pairwise_gaze_batch_input_t[key].to(self.device)
+            pairwise_gaze_batch_input_tp1[key] = pairwise_gaze_batch_input_tp1[key].to(self.device)
 
-        IPython.embed(banner1="check training step")
+        gaze_batch_target = gaze_batch_target.to(self.device)
+        awareness_batch_target = awareness_batch_target.to(self.device)
+        pairwise_gaze_batch_target_t = pairwise_gaze_batch_target_t.to(self.device)
+        pairwise_gaze_batch_target_tp1 = pairwise_gaze_batch_target_tp1.to(self.device)
+
+        # ensure force dropout dict is empty during training
+        self.model.fusion_net.force_input_dropout = {}
+        # Model forwards for all the parsed data items
+        with torch.cuda.amp.autocast(enabled=self.enable_amp):
+            predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
+            predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+
+            predicted_pairwise_gaze_t, _, _, should_drop_dicts = self.model.forward(pairwise_gaze_batch_input_t)
+            should_drop_indices_dict, should_drop_entire_channel_dict = should_drop_dicts
+            predicted_pairwise_gaze_tp1, _, _, should_drop_dicts_tp1 = self.model.forward(
+                pairwise_gaze_batch_input_tp1,
+                should_drop_indices_dict=should_drop_indices_dict,
+                should_drop_entire_channel_dict=should_drop_entire_channel_dict,
+            )
+            should_drop_indices_dict_tp1, should_drop_entire_channel_dict_tp1 = should_drop_dicts_tp1
+
+            # these asserts are to make sure that both tp and tp1 used the same dropout indices.
+            assert (
+                should_drop_indices_dict.keys()
+                == should_drop_entire_channel_dict.keys()
+                == should_drop_indices_dict_tp1.keys()
+                == should_drop_entire_channel_dict_tp1.keys()
+            )
+            for key in should_drop_indices_dict.keys():
+                assert torch.all(torch.eq(should_drop_indices_dict[key], should_drop_indices_dict_tp1[key]))
+                assert torch.all(
+                    torch.eq(should_drop_entire_channel_dict[key], should_drop_entire_channel_dict_tp1[key])
+                )
+
+            import IPython
+
+            IPython.embed(banner1="check training step")
         # pass it through model.
         # compute loss functions.
         output = {"loss": loss}
