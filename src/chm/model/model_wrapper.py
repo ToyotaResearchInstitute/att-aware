@@ -107,7 +107,7 @@ class ModelWrapper(torch.nn.Module):
             self.model, self.optimization_params = param_grad_setter(self.model)
 
         # Check flag for automatic mixed precision
-        self.enable_amp = self.params_dict("enable_amp", True)
+        self.enable_amp = self.params_dict.get("enable_amp", True)
         self.optimizer = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.optimization_params), lr=self.learning_rate
         )
@@ -128,9 +128,13 @@ class ModelWrapper(torch.nn.Module):
         (pairwise_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
         (pairwise_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
 
+        import IPython
+
+        IPython.embed(banner1="check training step")
         # pass it through model.
         # compute loss functions.
-        pass
+        output = {"loss": loss}
+        return output
 
     def testing_step(self):
         pass
