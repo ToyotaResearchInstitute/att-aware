@@ -32,13 +32,19 @@ def create_enc_dec_backbone(params_dict, network_out_height, network_out_weight)
     # reduced_middle_layer_size is the output_num_channels of the 3d conv after the last the encoder layer
     # and before the first decoder
     decoder_layer_features[-1] = reduced_middle_layer_size
+
+    # side channel input channel dimensions
+    # voronoi mapa dimensions
     dx_sq_layer_dim = 1
     dy_sq_layer_dim = 1
     dx_times_dy_layer_dim = 1
     dxdy_dist_layer_dim = 1
+    # optic flow dimensions
     optic_flow_output_dim = 2
+    # side channel gaze module dim
     gaze_transform_output_dim = 4
 
+    # decoder params dict.
     decoder_net_params = {}
     decoder_net_params["output_dim_of_decoder"] = output_dim_of_decoder
     decoder_net_params["decoder_layer_features"] = decoder_layer_features
@@ -52,6 +58,7 @@ def create_enc_dec_backbone(params_dict, network_out_height, network_out_weight)
         )
     decoder_net_params["use_s3d"] = use_s3d
 
+    # create decoder
     road_facing_decoder = create_decoder(decoder_net_params)
 
 
