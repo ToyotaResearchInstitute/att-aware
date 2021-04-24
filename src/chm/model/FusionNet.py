@@ -87,10 +87,22 @@ def create_enc_dec_backbone(params_dict, network_out_height, network_out_width):
 class FusionNet(torch.nn.Module):
     """
     FusionNet is the network class that combines the different modules
-    (road facing, driver facing, decoder) to form the encoder-decoder backbone
+
     """
 
     def __init__(self, side_channel_modules, map_modules, output_dims, params_dict):
+        """
+        Parameters:
+        -----------
+        side_channel_modules: torch.nn.ModuleDict()
+            Side channel network modules to process different types of side channel input such as gaze, optic flow etc.
+        map_modules: torch.nn.Modules()
+            Main encoder-decoder backbone used for processing road image input
+        output_dims: OrderedDict()
+            dict containing the output dimensions (for example, [3, 240, 135]) for each of the encoder-decoder backbone in map_modules
+        params_dict : dict
+            dict containing args for network structure
+        """
         super().__init__()
         self.params_dict = params_dict
         self.side_channel_modules = side_channel_modules
@@ -103,9 +115,6 @@ class FusionNet(torch.nn.Module):
         # If key is in the self.force_input_dropout, use it to override the input's dropout.
         # The key corresonds to the name of the child networks. driver facing, optic flow
         self.force_input_dropout = {}
-        import IPython
-
-        IPython.embed(banner1="check in fusion net init")
 
     def forward(self, side_channel_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
         side_channel_outputs = []  # list containing the outputs of each side_channel networks

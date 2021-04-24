@@ -154,11 +154,10 @@ class EncoderNet(torch.nn.Module):
             input (or sequence of) images
 
         Returns:
+        -------
         encoder_output: OrderedDict()
             a dictionary containing all the intermediate results of applying fwd() on the image or batch of images
         """
-        # TODO: replace with better balanced image coloring, for better matching to pretrained Resnet assumptions.
-
         intermediate_output = run_over_images(input, self.preproc_net, axis=1)
         encoder_output = collections.OrderedDict()
         for key in self.layered_outputs:  # keys are [layer1, layer2, [layer3, layer4]]

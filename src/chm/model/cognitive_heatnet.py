@@ -29,7 +29,7 @@ class CognitiveHeatNet(torch.nn.Module):
 
         Parameters
         ----------
-        depth_net : dict
+        params_dict : dict
             dict containing args for network structure
         """
         super().__init__()
