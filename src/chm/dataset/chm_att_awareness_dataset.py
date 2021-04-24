@@ -82,9 +82,22 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         self.metadata_len = len(self.metadata_list)  # number of rows in the filtered data frame
 
     def convert_awareness_annotation_to_float(self, label):
-        return (self.awareness_annotations_labels.index(label.lower())) / float(
+        """
+        Converts text based annotation to a float value in [0.0, 1.0]
+        Parameters
+        -----------
+        label: str
+            Attended awareness annotation label ["no_definitely", "no_probably", "unsure", "yes_probably", "yes_definitely"]
+
+        Returns:
+        -------
+        awareness_annotation: float
+            Awareness annotation as a float value. 0.0 = no_definitely, 1.0 = yes_definitely
+        """
+        awareness_annotation = (self.awareness_annotations_labels.index(label.lower())) / float(
             len(self.awareness_annotations_labels) - 1
         )
+        return awareness_annotation
 
     def __getitem__(self, idx):
         """

@@ -160,20 +160,44 @@ class ModelWrapper(torch.nn.Module):
             self.device,
         )
 
-        # extract chm input from each batch
-        gaze_batch_input = gaze_data_batch["batch_input"]
-        awareness_batch_input = awareness_data_batch["batch_input"]
-        pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
-        pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
+        # extract individual batch inputs
+        individual_batch_inputs = extract_individual_batch_input(
+            gaze_data_batch,
+            awareness_data_batch,
+            pairwise_gaze_data_batch_t,
+            pairwise_gaze_data_batch_tp1,
+        )
 
-        # extract target from each batch
-        gaze_batch_target = gaze_data_batch["batch_target"]
-        awareness_batch_target = awareness_data_batch["batch_target"]
-        pairwise_gaze_batch_target_t = pairwise_gaze_data_batch_t["batch_target"]
-        pairwise_gaze_batch_target_tp1 = pairwise_gaze_data_batch_tp1["batch_target"]
+        # extract annotation info
+
+        awareness_batch_annotation_data = {
+            "query_x": awareness_data_batch["batch_annotation_query_x"],
+            "query_y": awareness_data_batch["batch_annotation_query_y"],
+            "annotation_target": awareness_data_batch["batch_annotation_target"],
+        }
+        # post process and separate the individual batch inputs
+        (
+            gaze_batch_input,
+            awareness_batch_input,
+            pairwise_gaze_batch_input_t,
+            pairwise_gaze_batch_input_tp1,
+            gaze_aux_info_list,
+            awareness_aux_info_list,
+            pairwise_gaze_aux_info_list_t,
+            pairwise_gaze_aux_info_list_tp1,
+            gaze_batch_target,
+            awareness_batch_target,
+            pairwise_gaze_batch_target_t,
+            pairwise_gaze_batch_target_tp1,
+            gaze_batch_should_use_batch,
+            awareness_batch_should_use_batch,
+            pairwise_gaze_batch_should_use_batch_t,
+            pairwise_gaze_batch_should_use_batch_tp1,
+        ) = post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict=self.input_process_dict)
 
         # ensure force dropout dict is empty during training
         self.model.fusion_net.force_input_dropout = {}
+
         # Model forwards for all the parsed data items
         with torch.cuda.amp.autocast(enabled=self.enable_amp):
             predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
@@ -208,7 +232,7 @@ class ModelWrapper(torch.nn.Module):
                 predicted_awareness_output,
                 awareness_batch_input,
                 awareness_batch_target,
-                awareness_batch_label_data,
+                awareness_batch_annotation_data,
                 predicted_pairwise_gaze_t,
                 pairwise_gaze_batch_input_t,
                 pairwise_gaze_batch_target_t,

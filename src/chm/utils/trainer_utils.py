@@ -271,15 +271,15 @@ def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process
         gaze_correction=gaze_correction,
         input_process_dict=input_process_dict,
     )
-    import IPython
 
-    IPython.embed(banner1="check annotation target")
     awareness_data_batch = {}
     awareness_data_batch["batch_input"] = awareness_batch_input
     awareness_data_batch["batch_target"] = awareness_batch_target
-    awareness_data_batch["batch_annotation_target"] = awareness_annotation_target
     awareness_data_batch["aux_info_list"] = awareness_aux_info_list
     awareness_data_batch["should_use_batch"] = awareness_should_use_batch
+    awareness_data_batch["batch_annotation_target"] = awareness_data_dict["att_annotation"]["anno_is_aware"]
+    awareness_data_batch["batch_annotation_query_x"] = awareness_data_dict["att_annotation"]["query_x"]
+    awareness_data_batch["batch_annotation_query_y"] = awareness_data_dict["att_annotation"]["query_y"]
 
     # parse pairwise data item at t
     (
@@ -327,6 +327,139 @@ def sample_to_device(data_batch_list, device):
             data_batch["batch_input"][key] = data_batch["batch_input"][key].to(device)
 
         data_batch["batch_target"] = data_batch["batch_target"].to(device)
+        if 'batch_annotation_target' in data_batch:
+            data_batch['batch_annotation_target'] = data_batch['batch_annotation_target'].to(device)
+
+
+def extract_individual_batch_input(
+    gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1
+):
+    # extract chm input from each batch
+    gaze_batch_input = gaze_data_batch["batch_input"]
+    awareness_batch_input = awareness_data_batch["batch_input"]
+    pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
+    pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
+
+    # extract aux_info list from each batch
+    gaze_aux_info_list = gaze_data_batch["aux_info_list"]
+    awareness_aux_info_list = awareness_data_batch["aux_info_list"]
+    pairwise_gaze_aux_info_list_t = pairwise_gaze_data_batch_t["aux_info_list"]
+    pairwise_gaze_aux_info_list_tp1 = pairwise_gaze_data_batch_tp1["aux_info_list"]
+
+    # extract target from each batch
+    gaze_batch_target = gaze_data_batch["batch_target"]
+    awareness_batch_target = awareness_data_batch["batch_target"]
+    pairwise_gaze_batch_target_t = pairwise_gaze_data_batch_t["batch_target"]
+    pairwise_gaze_batch_target_tp1 = pairwise_gaze_data_batch_tp1["batch_target"]
+
+    # extract should_use_batch
+    gaze_batch_should_use_batch = gaze_data_batch["should_use_batch"]
+    awareness_batch_should_use_batch = awareness_data_batch["should_use_batch"]
+    pairwise_gaze_batch_should_use_batch_t = pairwise_gaze_data_batch_t["should_use_batch"]
+    pairwise_gaze_batch_should_use_batch_tp1 = pairwise_gaze_data_batch_tp1["should_use_batch"]
+
+    return (
+        gaze_batch_input,
+        awareness_batch_input,
+        pairwise_gaze_batch_input_t,
+        pairwise_gaze_batch_input_tp1,
+        gaze_aux_info_list,
+        awareness_aux_info_list,
+        pairwise_gaze_aux_info_list_t,
+        pairwise_gaze_aux_info_list_tp1,
+        gaze_batch_target,
+        awareness_batch_target,
+        pairwise_gaze_batch_target_t,
+        pairwise_gaze_batch_target_tp1,
+        gaze_batch_should_use_batch,
+        awareness_batch_should_use_batch,
+        pairwise_gaze_batch_should_use_batch_t,
+        pairwise_gaze_batch_should_use_batch_tp1,
+    )
+
+
+def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict):
+    # post process input before model forward (typically used in controlled experiments to modify input)
+    (
+        gaze_batch_input,
+        awareness_batch_input,
+        pairwise_gaze_batch_input_t,
+        pairwise_gaze_batch_input_tp1,
+        gaze_aux_info_list,
+        awareness_aux_info_list,
+        pairwise_gaze_aux_info_list_t,
+        pairwise_gaze_aux_info_list_tp1,
+        gaze_batch_target,
+        awareness_batch_target,
+        pairwise_gaze_batch_target_t,
+        pairwise_gaze_batch_target_tp1,
+        gaze_batch_should_use_batch,
+        awareness_batch_should_use_batch,
+        pairwise_gaze_batch_should_use_batch_t,
+        pairwise_gaze_batch_should_use_batch_tp1,
+    ) = individual_batch_inputs
+    if input_process_dict is not None:
+        if "post_parse_data_item" in input_process_dict:
+            if "functor" in input_process_dict["post_parse_data_item"]:
+                post_parse_data_item_functor = input_process_dict["post_parse_data_item"]["functor"]
+                gaze_batch_input, gaze_aux_info_list, gaze_should_use_batch = post_parse_data_item_functor(
+                    gaze_batch_input,
+                    gaze_aux_info_list,
+                    gaze_should_use_batch,
+                    input_process_dict["post_parse_data_item"]["params"],
+                )
+
+                (
+                    awareness_batch_input,
+                    awareness_aux_info_list,
+                    awareness_should_use_batch,
+                ) = post_parse_data_item_functor(
+                    awareness_batch_input,
+                    awareness_aux_info_list,
+                    awareness_should_use_batch,
+                    input_process_dict["post_parse_data_item"]["params"],
+                )
+
+                (
+                    pairwise_gaze_batch_input_t,
+                    pairwise_gaze_aux_info_list_t,
+                    pairwise_gaze_should_use_batch_t,
+                ) = post_parse_data_item_functor(
+                    pairwise_gaze_batch_input_t,
+                    pairwise_gaze_aux_info_list_t,
+                    pairwise_gaze_should_use_batch_t,
+                    input_process_dict["post_parse_data_item"]["params"],
+                )
+
+                (
+                    pairwise_gaze_batch_input_tp1,
+                    pairwise_gaze_aux_info_list_tp1,
+                    pairwise_gaze_should_use_batch_tp1,
+                ) = post_parse_data_item_functor(
+                    pairwise_gaze_batch_input_tp1,
+                    pairwise_gaze_aux_info_list_tp1,
+                    pairwise_gaze_should_use_batch_tp1,
+                    input_process_dict["post_parse_data_item"]["params"],
+                )
+
+    return (
+        gaze_batch_input,
+        awareness_batch_input,
+        pairwise_gaze_batch_input_t,
+        pairwise_gaze_batch_input_tp1,
+        gaze_aux_info_list,
+        awareness_aux_info_list,
+        pairwise_gaze_aux_info_list_t,
+        pairwise_gaze_aux_info_list_tp1,
+        gaze_batch_target,
+        awareness_batch_target,
+        pairwise_gaze_batch_target_t,
+        pairwise_gaze_batch_target_tp1,
+        gaze_batch_should_use_batch,
+        awareness_batch_should_use_batch,
+        pairwise_gaze_batch_should_use_batch_t,
+        pairwise_gaze_batch_should_use_batch_tp1,
+    )
 
 
 # utility functions
