@@ -27,15 +27,15 @@ class CHMPredictorNet(torch.nn.Module):
 
         kernel_size = 5
         self.common_predictor = torch.nn.Conv2d(
-            predictor_input_num_features,
-            predictor_output_num_features,  # = num_latent_layers argument
+            self.predictor_input_num_features,
+            self.predictor_output_num_features,  # = num_latent_layers argument
             kernel_size,
             padding=kernel_size // 2,
         )
         # gaze_predictor_output_feature = 1
-        self.gaze_predictor = torch.nn.Conv1d(predictor_output_num_features, 1, [1], padding=0)
+        self.gaze_predictor = torch.nn.Conv1d(self.predictor_output_num_features, 1, [1], padding=0)
         # awareness_predictor_output_features = 1
-        self.awareness_predictor = torch.nn.Conv1d(predictor_output_num_features, 1, [1], padding=0)
+        self.awareness_predictor = torch.nn.Conv1d(self.predictor_output_num_features, 1, [1], padding=0)
         # dim=3 works because before applying the softmax we flatten the 2d heatmap. The softmax makes sure the probability sums to one over the entire heatmap
         self.softmax = torch.nn.Softmax(dim=3)
 
@@ -99,8 +99,9 @@ class CHMPredictorNet(torch.nn.Module):
         gaze_awareness_maps_output["gaze_density_map"] = gaze_density_map
         gaze_awareness_maps_output["log_gaze_density_map"] = torch.log(gaze_density_map)
         gaze_awareness_maps_output["awareness_map"] = awareness_map
-        gaze_awareness_maps_output["unnormalized_gaze"] = gaze_estimate  # sq(mean). higher coeff.
-        gaze_awareness_maps_output["common_predictor_map"] = reshaped_common  # mean(sq) - L2 reg
+        gaze_awareness_maps_output["unnormalized_gaze"] = gaze_estimate
+        gaze_awareness_maps_output["common_predictor_map"] = reshaped_common
+
         if torch.isnan(gaze_density_map).sum():
             import IPython
 
