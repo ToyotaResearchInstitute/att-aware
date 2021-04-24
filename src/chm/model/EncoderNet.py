@@ -171,7 +171,7 @@ class EncoderNet(torch.nn.Module):
                 encoder_output[key] = out.permute(0, 2, 1, 3, 4)  # (B, T, C, H, W)
                 intermediate_output = encoder_output[key]
 
-        if self.post_layer is not None:
+        if self.post_layers is not None:
             # from [B,T,C,H,W] to [B,C,T,H,W] for 3D conv, and back.
             intermediate_output = self.post_layer_relu(
                 self.post_layer_in(self.post_layer_conv3d(encoder_output[key].transpose(1, 2)))
