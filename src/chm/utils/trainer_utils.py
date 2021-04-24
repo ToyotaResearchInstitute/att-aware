@@ -8,6 +8,7 @@ from chm.dataset.chm_pairwise_gaze_dataset import CHMPairwiseGazeDataset
 from chm.model.cognitive_heatnet import CognitiveHeatNet
 from chm.losses.cognitive_heatnet_loss import CognitiveHeatNetLoss
 from torch.utils.data import DataLoader, Subset, sampler
+from utils.chm_consts import *
 
 
 def load_datasets(params_dict):
