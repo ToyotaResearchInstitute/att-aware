@@ -140,7 +140,7 @@ class ModelWrapper(torch.nn.Module):
             gaze_data_batch,
             awareness_data_batch,
             pairwise_gaze_data_batch_t,
-            pairwise_gaze_data_batch_t,
+            pairwise_gaze_data_batch_tp1,
         ) = parse_data_batch(
             data_batch,
             gaze_corruption=self.gaze_corruption,
@@ -149,21 +149,28 @@ class ModelWrapper(torch.nn.Module):
         )
 
         # move input and target to appropriate device.
-        import IPython
 
-        IPython.embed(banner1="before sample to cuda")
         sample_to_device(
             (
                 gaze_data_batch,
                 awareness_data_batch,
                 pairwise_gaze_data_batch_t,
-                pairwise_gaze_data_batch_t,
+                pairwise_gaze_data_batch_tp1,
             ),
             self.device,
         )
-        import IPython
 
-        IPython.embed(banner1="after sample to cuda")
+        # extract chm input from each batch
+        gaze_batch_input = gaze_data_batch["batch_input"]
+        awareness_batch_input = awareness_data_batch["batch_input"]
+        pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
+        pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
+
+        # extract target from each batch
+        gaze_batch_target = gaze_data_batch["batch_target"]
+        awareness_batch_target = awareness_data_batch["batch_target"]
+        pairwise_gaze_batch_target_t = pairwise_gaze_data_batch_t["batch_target"]
+        pairwise_gaze_batch_target_tp1 = pairwise_gaze_data_batch_tp1["batch_target"]
 
         # ensure force dropout dict is empty during training
         self.model.fusion_net.force_input_dropout = {}
@@ -194,6 +201,21 @@ class ModelWrapper(torch.nn.Module):
                     torch.eq(should_drop_entire_channel_dict[key], should_drop_entire_channel_dict_tp1[key])
                 )
 
+            cost, stats = self.loss_fn.loss(
+                predicted_gaze_output,
+                gaze_batch_input,
+                gaze_batch_target,
+                predicted_awareness_output,
+                awareness_batch_input,
+                awareness_batch_target,
+                awareness_batch_label_data,
+                predicted_pairwise_gaze_t,
+                pairwise_gaze_batch_input_t,
+                pairwise_gaze_batch_target_t,
+                predicted_pairwise_gaze_tp1,
+                pairwise_gaze_batch_input_tp1,
+                pairwise_gaze_batch_target_tp1,
+            )
             import IPython
 
             IPython.embed(banner1="check training step")

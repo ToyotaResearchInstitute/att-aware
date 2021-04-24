@@ -271,9 +271,13 @@ def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process
         gaze_correction=gaze_correction,
         input_process_dict=input_process_dict,
     )
+    import IPython
+
+    IPython.embed(banner1="check annotation target")
     awareness_data_batch = {}
     awareness_data_batch["batch_input"] = awareness_batch_input
     awareness_data_batch["batch_target"] = awareness_batch_target
+    awareness_data_batch["batch_annotation_target"] = awareness_annotation_target
     awareness_data_batch["aux_info_list"] = awareness_aux_info_list
     awareness_data_batch["should_use_batch"] = awareness_should_use_batch
 
