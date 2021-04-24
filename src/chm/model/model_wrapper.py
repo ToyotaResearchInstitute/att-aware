@@ -10,6 +10,8 @@ from chm.utils.trainer_utils import (
     create_dataloaders,
     save_model,
     parse_data_item,
+    parse_data_batch,
+    sample_to_device,
 )
 
 
@@ -134,78 +136,34 @@ class ModelWrapper(torch.nn.Module):
     def training_step(self, data_batch, *args):
         # parse all the batches properly.
 
-        (gaze_item, awareness_item, pairwise_gaze_item) = data_batch
-
-        (gaze_data_dict, gaze_aux_info_list) = gaze_item
-        (awareness_data_dict, awareness_aux_info_list) = awareness_item
-        (pairwise_gaze_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
-        (pairwise_gaze_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
-
-        # parse gaze data items
-        gaze_batch_input, gaze_batch_target, gaze_aux_info_list, should_use_batch = parse_data_item(
-            gaze_data_dict,
-            gaze_aux_info_list,
-            gaze_corruption=self.gaze_corruption,
-            gaze_correction=self.gaze_correction,
-            input_process_dict=self.input_process_dict,
-        )
-        if gaze_batch_input is None or gaze_batch_target is None:
-            return None, True
-
-        # parse awareness data item
-        awareness_batch_input, awareness_batch_target, awareness_aux_info_list, should_use_batch = parse_data_item(
-            awareness_data_dict,
-            awareness_aux_info_list,
-            gaze_corruption=self.gaze_corruption,
-            gaze_correction=self.gaze_correction,
-            input_process_dict=self.input_process_dict,
-        )
-        if awareness_batch_input is None or awareness_batch_target is None:
-            return None, True
-
-        # parse pairwise data item at t
         (
-            pairwise_gaze_batch_input_t,
-            pairwise_gaze_batch_target_t,
-            pairwise_gaze_aux_info_list_t,
-            should_use_batch,
-        ) = parse_data_item(
-            pairwise_gaze_data_dict_t,
-            pairwise_gaze_aux_info_list_t,
+            gaze_data_batch,
+            awareness_data_batch,
+            pairwise_gaze_data_batch_t,
+            pairwise_gaze_data_batch_t,
+        ) = parse_data_batch(
+            data_batch,
             gaze_corruption=self.gaze_corruption,
             gaze_correction=self.gaze_correction,
             input_process_dict=self.input_process_dict,
         )
-        if pairwise_gaze_batch_input_t is None or pairwise_gaze_batch_target_t is None:
-            return None, True
-
-        # parse pairwise data item at tp1
-        (
-            pairwise_gaze_batch_input_tp1,
-            pairwise_gaze_batch_target_tp1,
-            pairwise_gaze_aux_info_list_tp1,
-            should_use_batch,
-        ) = parse_data_item(
-            pairwise_gaze_data_dict_tp1,
-            pairwise_gaze_aux_info_list_tp1,
-            gaze_corruption=self.gaze_corruption,
-            gaze_correction=self.gaze_correction,
-            input_process_dict=self.input_process_dict,
-        )
-        if pairwise_gaze_batch_input_tp1 is None or pairwise_gaze_batch_target_tp1 is None:
-            return None, True
 
         # move input and target to appropriate device.
-        for key in gaze_batch_input:
-            gaze_batch_input[key] = gaze_batch_input[key].to(self.device)
-            awareness_batch_input[key] = awareness_batch_input[key].to(self.device)
-            pairwise_gaze_batch_input_t[key] = pairwise_gaze_batch_input_t[key].to(self.device)
-            pairwise_gaze_batch_input_tp1[key] = pairwise_gaze_batch_input_tp1[key].to(self.device)
+        import IPython
 
-        gaze_batch_target = gaze_batch_target.to(self.device)
-        awareness_batch_target = awareness_batch_target.to(self.device)
-        pairwise_gaze_batch_target_t = pairwise_gaze_batch_target_t.to(self.device)
-        pairwise_gaze_batch_target_tp1 = pairwise_gaze_batch_target_tp1.to(self.device)
+        IPython.embed(banner1="before sample to cuda")
+        sample_to_device(
+            (
+                gaze_data_batch,
+                awareness_data_batch,
+                pairwise_gaze_data_batch_t,
+                pairwise_gaze_data_batch_t,
+            ),
+            self.device,
+        )
+        import IPython
+
+        IPython.embed(banner1="after sample to cuda")
 
         # ensure force dropout dict is empty during training
         self.model.fusion_net.force_input_dropout = {}
@@ -242,7 +200,7 @@ class ModelWrapper(torch.nn.Module):
         # pass it through model.
         # compute loss functions.
         output = {"loss": loss}
-        return output, False
+        return output
 
     def testing_step(self):
         pass

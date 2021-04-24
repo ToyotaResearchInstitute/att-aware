@@ -80,9 +80,7 @@ class CHMTrainer(object):
                 module.train()
 
             # Training step data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
-            output, is_continue = module.training_step(data_batch)
-            if is_continue:
-                continue
+            output = module.training_step(data_batch)
             loss = output["loss"]
             loss = loss.mean()
             if self.overall_batch_num % self.batch_aggregation_size == 0:

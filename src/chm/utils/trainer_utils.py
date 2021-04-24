@@ -237,6 +237,94 @@ def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correct
     return batch_input, batch_target, aux_info_list, should_use_batch
 
 
+def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict):
+    (gaze_item, awareness_item, pairwise_gaze_item) = data_batch
+    (gaze_data_dict, gaze_aux_info_list) = gaze_item
+    (awareness_data_dict, awareness_aux_info_list) = awareness_item
+    (pairwise_gaze_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
+    (pairwise_gaze_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
+
+    # parse gaze data items
+    gaze_batch_input, gaze_batch_target, gaze_aux_info_list, gaze_should_use_batch = parse_data_item(
+        gaze_data_dict,
+        gaze_aux_info_list,
+        gaze_corruption=gaze_corruption,
+        gaze_correction=gaze_correction,
+        input_process_dict=input_process_dict,
+    )
+    gaze_data_batch = {}
+    gaze_data_batch["batch_input"] = gaze_batch_input
+    gaze_data_batch["batch_target"] = gaze_batch_target
+    gaze_data_batch["aux_info_list"] = gaze_aux_info_list
+    gaze_data_batch["should_use_batch"] = gaze_should_use_batch
+
+    # parse awareness data item
+    (
+        awareness_batch_input,
+        awareness_batch_target,
+        awareness_aux_info_list,
+        awareness_should_use_batch,
+    ) = parse_data_item(
+        awareness_data_dict,
+        awareness_aux_info_list,
+        gaze_corruption=gaze_corruption,
+        gaze_correction=gaze_correction,
+        input_process_dict=input_process_dict,
+    )
+    awareness_data_batch = {}
+    awareness_data_batch["batch_input"] = awareness_batch_input
+    awareness_data_batch["batch_target"] = awareness_batch_target
+    awareness_data_batch["aux_info_list"] = awareness_aux_info_list
+    awareness_data_batch["should_use_batch"] = awareness_should_use_batch
+
+    # parse pairwise data item at t
+    (
+        pairwise_gaze_batch_input_t,
+        pairwise_gaze_batch_target_t,
+        pairwise_gaze_aux_info_list_t,
+        pairwise_gaze_should_use_batch_t,
+    ) = parse_data_item(
+        pairwise_gaze_data_dict_t,
+        pairwise_gaze_aux_info_list_t,
+        gaze_corruption=gaze_corruption,
+        gaze_correction=gaze_correction,
+        input_process_dict=input_process_dict,
+    )
+    pairwise_gaze_data_batch_t = {}
+    pairwise_gaze_data_batch_t["batch_input"] = pairwise_gaze_batch_input_t
+    pairwise_gaze_data_batch_t["batch_target"] = pairwise_gaze_batch_target_t
+    pairwise_gaze_data_batch_t["aux_info_list"] = pairwise_gaze_aux_info_list_t
+    pairwise_gaze_data_batch_t["should_use_batch"] = pairwise_gaze_should_use_batch_t
+    # parse pairwise data item at tp1
+    (
+        pairwise_gaze_batch_input_tp1,
+        pairwise_gaze_batch_target_tp1,
+        pairwise_gaze_aux_info_list_tp1,
+        pairwise_gaze_should_use_batch_tp1,
+    ) = parse_data_item(
+        pairwise_gaze_data_dict_tp1,
+        pairwise_gaze_aux_info_list_tp1,
+        gaze_corruption=gaze_corruption,
+        gaze_correction=gaze_correction,
+        input_process_dict=input_process_dict,
+    )
+    pairwise_gaze_data_batch_tp1 = {}
+    pairwise_gaze_data_batch_tp1["batch_input"] = pairwise_gaze_batch_input_tp1
+    pairwise_gaze_data_batch_tp1["batch_target"] = pairwise_gaze_batch_target_tp1
+    pairwise_gaze_data_batch_tp1["aux_info_list"] = pairwise_gaze_aux_info_list_tp1
+    pairwise_gaze_data_batch_tp1["should_use_batch"] = pairwise_gaze_should_use_batch_tp1
+
+    return gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1
+
+
+def sample_to_device(data_batch_list, device):
+    for data_batch in data_batch_list:
+        for key in data_batch["batch_input"].keys():
+            data_batch["batch_input"][key] = data_batch["batch_input"][key].to(device)
+
+        data_batch["batch_target"] = data_batch["batch_target"].to(device)
+
+
 # utility functions
 def divide_chunks(l, n):
     # looping till length l
