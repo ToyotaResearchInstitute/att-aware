@@ -12,9 +12,9 @@ def create_decoder(decoder_net_params=None):
     side_channel_input_dim = decoder_net_params["side_channel_input_dim"]
     skip_layers = decoder_net_params["skip_layers"]
 
-    post_proc = torch.nn.Sequential()
     decoder_layers = torch.nn.ModuleDict()
 
+    # note that the layer names go backwards. Because the decoder layers mirror the encoder layers
     if not use_s3d:
         decoder_layers["layer4"] = DecoderUnit(
             last_out_dim=decoder_layer_features[-1],  # 128
@@ -46,12 +46,12 @@ def create_decoder(decoder_net_params=None):
         )
     else:
         decoder_layers["s3d_net_3"] = DecoderUnit(
-            last_out_dim=decoder_layer_features[-1],  # 128 #
-            output_dim=decoder_layer_features[-2],  # 64
-            skip_dim=skip_layers[-1],  # 0
+            last_out_dim=decoder_layer_features[-1],  # 256 #
+            output_dim=decoder_layer_features[-2],  # 128
+            skip_dim=skip_layers[-1],  # 0, no skip connections for S3D
             side_channel_input_dim=side_channel_input_dim,
             use_s3d=use_s3d,
-        )  # innermost DU. skip_layers[-1] = 0
+        )
         decoder_layers["s3d_net_2"] = DecoderUnit(
             last_out_dim=decoder_layer_features[-2],  # 128
             output_dim=decoder_layer_features[-3],  # 64
@@ -88,16 +88,14 @@ def create_decoder(decoder_net_params=None):
         skip_layers_keys = ["layer2", "layer1"]
 
     return DecoderNet(
-        postproc=postproc,
         decoder_layers=decoder_layers,
         skip_layers_keys=skip_layers_keys,
     )
 
 
 class DecoderNet(torch.nn.Module):
-    def __init__(self, post_proc, decoder_layers, skip_layers_keys):
+    def __init__(self, decoder_layers, skip_layers_keys):
         super().__init__()
-        self.postproc = postproc
         self.decoder_layers = decoder_layers  # these are the DecoderUnits.
         self.skip_layers_keys = skip_layers_keys
         self.upsm = torch.nn.Upsample(mode="bilinear")
