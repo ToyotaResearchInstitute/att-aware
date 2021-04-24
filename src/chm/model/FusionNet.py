@@ -5,7 +5,7 @@ from chm.model.EncoderNet import create_encoder
 from chm.model.DecoderNet import create_decoder
 
 
-def create_enc_dec_backbone(params_dict, network_out_height, network_out_width):
+def create_fusion_net(params_dict, network_out_height, network_out_width):
 
     use_s3d = params_dict.get("use_s3d", False)
     add_optic_flow = params_dict.get("add_optic_flow", False)

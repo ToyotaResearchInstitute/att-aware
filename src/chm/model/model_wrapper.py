@@ -72,10 +72,7 @@ class ModelWrapper(torch.nn.Module):
         self.optimization_params = self.model.parameters()
 
         # extract individual modules of the cognitive heat net
-        if torch.cuda.device_count() > 1:
-            road_facing_network = self.model.module.cognitive_map.domain_dict["road_facing"]
-        else:
-            road_facing_network = self.model.cognitive_map.domain_dict["road_facing"]
+        road_facing_network = self.model.fusion_net.map_modules["road_facing"]
 
         # Check whether encoder parameters need to be frozen
         if self.params_dict["nograd_encoder"]:

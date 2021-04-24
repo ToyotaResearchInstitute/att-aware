@@ -1,7 +1,7 @@
 import torch
 
 from chm.model.gaze_transform import GazeTransform
-from chm.model.FusionNet import create_enc_dec_backbone
+from chm.model.FusionNet import create_fusion_net
 from chm.model.CHMPredictorNet import create_chm_predictor
 
 
@@ -54,14 +54,14 @@ class CognitiveHeatNet(torch.nn.Module):
         # create an identity gaze transform module.
         self.gaze_transform = create_identity_gaze_transform()
 
-        self.enc_dec_backbone = create_enc_dec_backbone(
+        self.fusion_net = create_fusion_net(
             params_dict=self.params_dict,
             network_out_height=self.NETWORK_OUT_HEIGHT,
             network_out_width=self.NETWORK_OUT_WIDTH,
         )
 
         # this is the dict containing the output dimensions of all outputs from the decoder.
-        chm_predictor_input_dim_dict = self.enc_dec_backbone.output_dims
+        chm_predictor_input_dim_dict = self.fusion_net.output_dims
 
         # create image cognitive predictor (heatmap), predictor_input_dim is the output size (64, 224, 224) of the decoder
         # output_img_size is the size of the heatmap. 1 channel heatmap
