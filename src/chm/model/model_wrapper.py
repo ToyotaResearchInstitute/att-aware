@@ -4,7 +4,13 @@ import collections
 import pickle
 import tensorboardX
 
-from chm.utils.trainer_utils import create_model_and_loss_fn, load_datasets, create_dataloaders, save_model
+from chm.utils.trainer_utils import (
+    create_model_and_loss_fn,
+    load_datasets,
+    create_dataloaders,
+    save_model,
+    parse_data_item,
+)
 
 
 class ModelWrapper(torch.nn.Module):
@@ -40,6 +46,11 @@ class ModelWrapper(torch.nn.Module):
             device = torch.device("cpu")
         else:
             device = torch.device("cuda")
+
+        self.gaze_corruption = self.params_dict.get("gaze_corruption", None)
+        self.gaze_correction = self.params_dict.get("gaze_correction", None)
+        self.input_process_dict = self.params_dict.get("input_process_dict", None)
+        self.output_process_dict = self.params_dict.get("output_process_dict", None)
 
         # create model and loss function and put it on the correct device.
         self.model, self.loss_fn = create_model_and_loss_fn(self.params_dict)
@@ -126,8 +137,61 @@ class ModelWrapper(torch.nn.Module):
 
         (gaze_data_dict, gaze_aux_info_list) = gaze_item
         (awareness_data_dict, awareness_aux_info_list) = awareness_item
-        (pairwise_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
-        (pairwise_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
+        (pairwise_gaze_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
+        (pairwise_gaze_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
+
+        # parse gaze data items
+        gaze_batch_input, gaze_batch_target, gaze_aux_info_list, should_use_batch = parse_data_item(
+            gaze_data_dict,
+            gaze_aux_info_list,
+            gaze_corruption=self.gaze_corruption,
+            gaze_correction=self.gaze_correction,
+            input_process_dict=self.input_process_dict,
+        )
+        if gaze_batch_input is None or gaze_batch_target is None:
+            continue
+
+        # parse awareness data item
+        awareness_batch_input, awareness_batch_target, awareness_aux_info_list, should_use_batch = parse_data_item(
+            awareness_data_dict,
+            awareness_aux_info_list,
+            gaze_corruption=self.gaze_corruption,
+            gaze_correction=self.gaze_correction,
+            input_process_dict=self.input_process_dict,
+        )
+        if awareness_batch_input is None or awareness_batch_target is None:
+            continue
+
+        # parse pairwise data item at t
+        (
+            pairwise_gaze_batch_input_t,
+            pairwise_gaze_batch_target_t,
+            pairwise_gaze_aux_info_list_t,
+            should_use_batch,
+        ) = parse_data_item(
+            pairwise_gaze_data_dict_t,
+            pairwise_gaze_aux_info_list_t,
+            gaze_corruption=self.gaze_corruption,
+            gaze_correction=self.gaze_correction,
+            input_process_dict=self.input_process_dict,
+        )
+        if pairwise_gaze_batch_input_t is None or pairwise_gaze_batch_target_t is None:
+            continue
+        # parse pairwise data item at tp1
+        (
+            pairwise_gaze_batch_input_tp1,
+            pairwise_gaze_batch_target_tp1,
+            pairwise_gaze_aux_info_list_tp1,
+            should_use_batch,
+        ) = parse_data_item(
+            pairwise_gaze_data_dict_tp1,
+            pairwise_gaze_aux_info_list_tp1,
+            gaze_corruption=self.gaze_corruption,
+            gaze_correction=self.gaze_correction,
+            input_process_dict=self.input_process_dict,
+        )
+        if pairwise_gaze_batch_input_tp1 is None or pairwise_gaze_batch_target_tp1 is None:
+            continue
 
         import IPython
 

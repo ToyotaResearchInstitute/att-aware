@@ -203,8 +203,37 @@ def save_model(state_dict, save_path):
     torch.save(state_dict, save_path)
 
 
-def parse_data_item():
-    pass
+def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correction=None, input_process_dict=None):
+    batch_input = {}
+
+    batch_input["road_image"] = data_dict[ROAD_IMAGE_0]  # garmin image
+    batch_input["segmentation_mask_image"] = data_dict[SEGMENTATION_MASK_0]  # mask image
+    batch_input["optic_flow_image"] = data_dict[OPTIC_FLOW_IMAGE_0]
+    batch_input["should_train_input_gaze"] = data_dict[SHOULD_TRAIN_INPUT_GAZE_0]  # (B, T, L, 1)
+    batch_input["input_gaze"] = data_dict[RESIZED_INPUT_GAZE_0]  # (B, T, L, 2) in network dimensions
+    batch_input["normalized_input_gaze"] = data_dict[NORMALIZED_INPUT_GAZE_0]  # normalized (0,1) gaze #(B, T, L, 2)
+
+    if gaze_corruption is not None:
+        # apply gaze corruption to the input gaze, if available
+        batch_input["normalized_input_gaze"] = gaze_corruption.corrupt_gaze(batch_input["normalized_input_gaze"])
+
+    # This is a flag which will be used during inference to determine whether a batch needs to be ignored or not. For training, this will always be true
+    should_use_batch = True
+    # input process dict is typically used to provide a function handle to modify the input or determine whether the batch should be used or not
+    # after corruption. Used in experiments
+    if input_process_dict is not None and input_process_dict["functor"] is not None:
+        input_process_functor = input_process_dict["functor"]
+        batch_input, aux_info_list, should_use_batch = input_process_functor(
+            batch_input, aux_info_list, input_process_dict["params"]
+        )
+
+    if gaze_correction is not None:
+        #  apply gaze correction to the input gaze, if available
+        batch_input["normalized_input_gaze"] = gaze_correction(batch_input["normalized_input_gaze"])
+
+    # training target
+    batch_target = data_dict[GROUND_TRUTH_GAZE_0]
+    return batch_input, batch_target, aux_info_list, should_use_batch
 
 
 # utility functions
