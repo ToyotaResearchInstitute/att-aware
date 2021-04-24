@@ -116,5 +116,155 @@ class FusionNet(torch.nn.Module):
         # The key corresonds to the name of the child networks. driver facing, optic flow
         self.force_input_dropout = {}
 
-    def forward(self, side_channel_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
-        side_channel_outputs = []  # list containing the outputs of each side_channel networks
+    def forward(self, fusion_net_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
+        """
+        Parameters:
+        ----------
+        fusion_net_input: dict
+            Dict containing inputs to the main encoder as the side channel inputs
+        should_drop_indices_dict: dict
+            Dict with boolean flags indicating which batch items needed to dropped out during training
+        should_drop_entire_channel_dict: dict
+            Dict with flags indicating if an entire side channel needs to be dropped out
+
+        Returns:
+        -------
+
+        fusion_output: torch.Tensor
+            Output of the FusionNet (= output from the final decoder layer)
+        side_channel_output: dict
+            Containing outputs of the side channel modules. Used as input to the decoder layers
+        should_drop_indices_dict: dict
+            Dict with boolean flags indicating which batch items were dropped out during training
+        should_drop_entire_channel_dict: dict
+            Dict with flags indicating which entire side channel was dropped out
+        """
+        side_channel_module_outputs = []  # list containing the outputs of each side_channel networks
+
+        # Process the side channel information.
+        for fusion_net_inp_key in fusion_net_input:
+            if fusion_net_inp_key in self.side_channel_modules:
+                # For fusion_net_inp_key='driver_facing', fusion_net_input[fusion_net_inp_key] is (B, T, L, 4).
+                # Last dimension is [x,y,should_train_indicator, droput_indicator].
+                # The input to driver facing module comes from the GazeTransform module
+
+                # for fusion_net_inp_key='optic_flow', fusion_net_input[fusion_net_inp_key] is (B, T, 2, H, W)
+                sc_input = fusion_net_input[fusion_net_inp_key]
+                if fusion_net_inp_key == "driver_facing":
+                    sc_out = sc_input
+                    for subkey in self.side_channel_modules[fusion_net_inp_key]:
+                        sc_net = self.side_channel_modules[fusion_net_inp_key][subkey]
+                        if sc_net is not None:
+                            if subkey == "linear0":
+                                sc_input_reshaped = sc_input.reshape(
+                                    sc_input.shape[0], sc_input.shape[1] * sc_input.shape[2], -1
+                                )  # (B, TL, 4)
+                                sc_out_reshaped = sc_net(sc_input_reshaped)  # (B, TL,4)
+                                sc_out = sc_out_reshaped.reshape(
+                                    sc_input.shape[0], sc_input.shape[1], sc_input.shape[2], -1
+                                )  # (B, T, L, 4)
+                elif fusion_net_inp_key == "optic_flow":
+                    sc_out = sc_input  # (B,T,C=2,H,W)
+                    for subkey in self.side_channel_modules[fusion_net_inp_key]:
+                        sc_net = self.side_channel_modules[fusion_net_inp_key][subkey]
+                        if sc_net is not None:
+                            sc_out = sc_net(sc_out)
+
+                side_channel_module_outputs.append((sc_out, fusion_net_inp_key))
+
+        side_channel_module_outputs_list = [x[0] for x in side_channel_module_outputs]
+        # names of the side channel module outputs that produced the intermediate list
+        side_channel_module_outputs_list_keys = [x[1] for x in side_channel_module_outputs]
+        # For each type of child network output choose to dropout or not some of the data_items in the batch
+        for i, (x, x_key) in enumerate(zip(side_channel_module_outputs_list, side_channel_module_outputs_list_keys)):
+            # creates a vector of size BATCH_SIZE (x.shape[0]) of bools indicating whether the intermediate result should be dropped or not?
+            # x_key is driver_facing, task_network etc. THis is the "dict" passed from the command line
+            assert x_key in self.dropout_ratio
+            # each side channel input has its own dropout ratio, as specified in the dropout_ratio dict
+            # if not should_drop_indices_dict was explicitly passed to the forward function
+            if should_drop_indices_dict is None:
+                # determines which of the batch items should be dropped out
+                should_drop = torch.rand([x.shape[0]]) < self.dropout_ratio[x_key]
+                should_drop_indices_dict = collections.OrderedDict()
+                should_drop_indices_dict[x_key] = should_drop
+            else:
+                # could happen because a partial should_drop_indices_dict was passed or it was created in the previous if block
+                if should_drop_indices_dict is not None:
+                    if x_key not in should_drop_indices_dict:
+                        should_drop = torch.rand([x.shape[0]]) < self.dropout_ratio[x_key]
+                        should_drop_indices_dict[x_key] = should_drop
+                    else:
+                        assert (
+                            x_key in should_drop_indices_dict
+                        ), "the key for the side channel should be present in the indices dict"
+                        should_drop = should_drop_indices_dict[x_key]
+
+            # If it is testing override the rand vector created and zero it out
+            if not (self.training):
+                should_drop = should_drop * 0
+
+            # this should be the same keys as the side channel networks, such as driver_facing, optic_flow etc.
+            # Also doesn't make sense to loop over all keys. Only use the key corresponding to the ith element in the side_channel_module_outputs_list
+            if x_key in self.force_input_dropout:
+                for b in range(x.shape[0]):
+                    should_drop[b] = self.force_input_dropout[x_key]
+            for b in range(x.shape[0]):
+                if should_drop[b]:
+                    x[b, :] *= 0  # is mutable. Therefore elements in intermediate list will be changed
+
+            # side channel output (after processed through side channel modules) and dropout.
+            # From the decoder's perspective, it will be referred to as side_channel_input in DecoderNet class
+            side_channel_output = {key: sc_out for sc_out, key in side_channel_module_outputs}
+
+        for key in side_channel_output:
+            # if any of the intermediate outputs are nans STOP!
+            if torch.isnan(side_channel_output[key]).sum():
+                import IPython
+
+                print("Intermediate output", side_channel_output)
+                print("Input", input)
+                IPython.embed(
+                    header="Fusion::forward - side_channel_output (concatenated outputs of the child networks) has nans"
+                )
+
+        fusion_output = collections.OrderedDict()
+        for fusion_net_inp_key in fusion_net_input:
+            # Process the main enc-dec backbone inputs
+            if fusion_net_inp_key in self.map_modules:
+                # The intermediate output from the side_channel networks are fed alongside the output of the encoder
+                # as the input to decoder for EACH enc-dec module separately.
+                enc = self.map_modules[fusion_net_inp_key]["encoder"]
+                dec = self.map_modules[fusion_net_inp_key]["decoder"]
+
+                enc_input_shape = fusion_net_input[fusion_net_inp_key].shape
+
+                # output of the encoder network as a dictionary containing the intermediates results of layer1,2,3,4
+                encoder_output_dict = enc(fusion_net_input[fusion_net_inp_key])
+                side_channel_output_tmp = side_channel_output
+                if self.training:
+                    # to determine if the whole child network output should be dropped off or not.
+                    for side_key in side_channel_output_tmp:
+                        if should_drop_entire_channel_dict is None:
+                            should_drop_entire_channel = torch.rand([1]) < self.dropout_ratio_external_inputs
+                            should_drop_entire_channel_dict = collections.OrderedDict()
+                            should_drop_entire_channel_dict[side_key] = should_drop_entire_channel
+                        else:
+                            if should_drop_entire_channel_dict is not None:
+                                if side_key not in should_drop_entire_channel_dict:
+                                    should_drop_entire_channel = torch.rand([1]) < self.dropout_ratio_external_inputs
+                                    should_drop_entire_channel_dict[side_key] = should_drop_entire_channel
+                                else:
+                                    assert (
+                                        side_key in should_drop_entire_channel_dict
+                                    ), "side channel key should be in the should_drop_entire_channel_dict"
+                                    should_drop_entire_channel = should_drop_entire_channel_dict[side_key]
+
+                        if should_drop_entire_channel:
+                            side_channel_output_tmp[side_key] = side_channel_output[side_key] * 0
+
+                fusion_output[fusion_net_inp_key] = dec(
+                    encoder_output_dict, side_channel_output_tmp, enc_input_shape=enc_input_shape
+                )
+
+        # returns the final output (after going through encoder, decoder and all that) and also the combined output of the side_channel networks
+        return fusion_output, side_channel_output, (should_drop_indices_dict, should_drop_entire_channel_dict)

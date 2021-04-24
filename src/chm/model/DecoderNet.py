@@ -101,7 +101,7 @@ class DecoderNet(torch.nn.Module):
         self.skip_layers_keys = skip_layers_keys
         self.upsm = torch.nn.Upsample(mode="bilinear")
 
-    def forward(self, encoder_output_dict, side_channel_input, enc_output_shape):
+    def forward(self, encoder_output_dict, side_channel_input, enc_input_shape):
         """
         Decode an output image via Conv3d (or s3D) +upsampling + side channel information model
         Parameters:
@@ -111,8 +111,8 @@ class DecoderNet(torch.nn.Module):
         side_channel_input: dict
             Dict containing the side channel input. Depending on the key, different processing is applied.
             For example, gaze points are transformed into voronoi maps
-        enc_output_shape: torch.Tensor
-            Tensor indicating the shape of the encoder output (now fed into the decoder net)
+        enc_input_shape: torch.Tensor
+            Tensor indicating the shape of the encoder input. Needed for making sure the upsampled output of the final decoder layer matches the original image dimension
 
         Returns:
         --------
@@ -122,7 +122,7 @@ class DecoderNet(torch.nn.Module):
         """
         du_keys = list(self.decoder_layers.keys())
         upsm_target_size_list = [[encoder_output_dict[x].shape[3], encoder_output_dict[x].shape[4]] for x in du_keys]
-        upsm_target_size_list.append([int(round(enc_output_shape[3] / 2)), int(round(enc_output_shape[4] / 2))])
+        upsm_target_size_list.append([int(round(enc_input_shape[3] / 2)), int(round(enc_input_shape[4] / 2))])
 
         # layer4, layer3, layer2, layer1 or
         # s3d_net_3, s3d_net_2, s3d_net_1, layer2, layer1 in that order.
@@ -330,7 +330,7 @@ class DecoderNet(torch.nn.Module):
             previous_du_out = new_du_out
 
         # at this stage previous_du_out is the output of decoder_unit named layer1.
-        self.upsm.size = [enc_output_shape[3], enc_output_shape[4]]
+        self.upsm.size = [enc_input_shape[3], enc_input_shape[4]]
         # upsampling is done on tensor in which B and T are combined.
         # (BT, C, H, W)
         previous_du_out_tmp = self.upsm(
