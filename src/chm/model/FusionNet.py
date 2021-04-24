@@ -1,4 +1,5 @@
 import torch
+import collections
 
 from chm.model.EncoderNet import create_encoder
 from chm.model.DecoderNet import create_decoder
