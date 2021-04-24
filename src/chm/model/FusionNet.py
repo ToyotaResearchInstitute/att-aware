@@ -4,7 +4,7 @@ from chm.model.EncoderNet import create_encoder
 from chm.model.DecoderNet import create_decoder
 
 
-def create_enc_dec_backbone(params_dict, network_out_height, network_out_weight):
+def create_enc_dec_backbone(params_dict, network_out_height, network_out_width):
 
     use_s3d = params_dict.get("use_s3d", False)
     add_optic_flow = params_dict.get("add_optic_flow", False)
@@ -61,6 +61,27 @@ def create_enc_dec_backbone(params_dict, network_out_height, network_out_weight)
     # create decoder
     road_facing_decoder = create_decoder(decoder_net_params)
 
+    # Side channel modules
+    side_channel_modules = torch.nn.ModuleDict()
+    side_channel_modules["driver_facing"] = torch.nn.ModuleDict()
+    side_channel_modules["driver_facing"]["linear0"] = None
+
+    if add_optic_flow:
+        side_channel_modules["optic_flow"] = torch.nn.ModuleDict()
+        side_channel_modules["optic_flow"]["linear0"] = None
+
+    # Road facing modules
+    map_modules = torch.nn.ModuleDict()
+    map_modules["road_facing"] = torch.nn.ModuleDict()
+    map_modules["road_facing"]["encoder"] = road_facing_encoder
+    map_modules["road_facing"]["decoder"] = road_facing_decoder
+
+    output_dims = collections.OrderedDict()
+    output_dims["road_facing"] = [output_dim_of_decoder, network_out_width, network_out_height]
+    fusion_net = FusionNet(side_channel_modules, map_modules, output_dims, params_dict)
+
+    return fusion_net
+
 
 class FusionNet(torch.nn.Module):
     """
@@ -68,5 +89,22 @@ class FusionNet(torch.nn.Module):
     (road facing, driver facing, decoder) to form the encoder-decoder backbone
     """
 
-    def __init__(self, params_dict):
-        pass
+    def __init__(self, side_channel_modules, map_modules, output_dims, params_dict):
+        super().__init__()
+        self.params_dict = params_dict
+        self.side_channel_modules = side_channel_modules
+        self.map_modules = map_modules
+        self.output_dims = output_dims
+
+        self.dropout_ratio = self.params_dict.get("dropout_ratio", {"driver_facing": 0.5, "optic_flow": 0.0})
+        self.dropout_ratio_external_inputs = self.params_dict.get("dropout_ratio_external_inputs", 0.0)
+
+        # If key is in the self.force_input_dropout, use it to override the input's dropout.
+        # The key corresonds to the name of the child networks. driver facing, optic flow
+        self.force_input_dropout = {}
+        import IPython
+
+        IPython.embed(banner1="check in fusion net init")
+
+    def forward(self, side_channel_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
+        side_channel_outputs = []  # list containing the outputs of each side_channel networks

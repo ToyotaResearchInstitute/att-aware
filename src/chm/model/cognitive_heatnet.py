@@ -56,7 +56,7 @@ class CognitiveHeatNet(torch.nn.Module):
         self.enc_dec_backbone = create_enc_dec_backbone(
             params_dict=self.params_dict,
             network_out_height=self.NETWORK_OUT_HEIGHT,
-            network_out_weight=self.NETWORK_OUT_WIDTH,
+            network_out_width=self.NETWORK_OUT_WIDTH,
         )
 
         # this is the dict containing the output dimensions of all outputs from the decoder.
