@@ -149,26 +149,26 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
         dataloaders = collections.OrderedDict()
         for key in datasets:
             assert datasets[key] is not None, "Dataset provided is invalid"
-        if key == "train":
-            sampler = None
-        elif key == "test":
-            test_inds = np.random.choice(
-                range(len(datasets[key])), min(len(datasets[key]), num_test_samples), replace=False
-            )
-            # fix the indices for the testing set.
-            sampler = SubsetSampler(test_inds)
-        else:
-            assert "Unspecified dataset type. Has to be either train or test"
+            if key == "train":
+                sampler = None
+            elif key == "test":
+                test_inds = np.random.choice(
+                    range(len(datasets[key])), min(len(datasets[key]), num_test_samples), replace=False
+                )
+                # fix the indices for the testing set.
+                sampler = SubsetSampler(test_inds)
+            else:
+                assert "Unspecified dataset type. Has to be either train or test"
 
-        dataloaders[key] = DataLoader(
-            datasets[key],
-            batch_size=batch_size,
-            shuffle=(sampler is None),
-            sampler=sampler,
-            drop_last=True,
-            num_workers=num_dl_workers,
-        )
-        return dataloaders
+            dataloaders[key] = DataLoader(
+                datasets[key],
+                batch_size=batch_size,
+                shuffle=(sampler is None),
+                sampler=sampler,
+                drop_last=True,
+                num_workers=num_dl_workers,
+            )
+            return dataloaders
 
     # train and test data loaders for each gaze, awareness and pairwise-gaze dataset
     print("Creating gaze ds dataloaders")
