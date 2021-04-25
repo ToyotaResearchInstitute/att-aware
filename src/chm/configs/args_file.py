@@ -81,7 +81,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     )
 
     parser.add_argument(
-        "--orig_road_img_dims",
+        "--orig_road_image_dims",
         type=int,
         default=[3, 1080, 1920],
         help="Dimensions of the full original road_image in pixels",
@@ -588,19 +588,19 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     )
 
     parser.add_argument(
-        "--across_batch_smoothness_coeff_gaze",
+        "--consistency_coeff_gaze",
         action="store",
         type=float,
         default=1e10,
-        help="Coeff for across batch smoothness coeff for gaze. ",
+        help="Coeff for consistency smoothness coeff for gaze. ",
     )
 
     parser.add_argument(
-        "--across_batch_smoothness_coeff_awareness",
+        "--consistency_coeff_awareness",
         action="store",
         type=float,
         default=1000,
-        help="Coeff for across batch smoothness coeff for awareness. ",
+        help="Coeff for consistency smoothness coeff for awareness. ",
     )
 
     parser.add_argument(

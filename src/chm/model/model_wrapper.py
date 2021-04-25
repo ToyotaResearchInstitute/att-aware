@@ -190,7 +190,7 @@ class ModelWrapper(torch.nn.Module):
                     torch.eq(should_drop_entire_channel_dict[key], should_drop_entire_channel_dict_tp1[key])
                 )
 
-            cost, stats = self.loss_fn.loss(
+            loss, stats = self.loss_fn.loss(
                 predicted_gaze_output,
                 gaze_batch_input,
                 gaze_batch_target,

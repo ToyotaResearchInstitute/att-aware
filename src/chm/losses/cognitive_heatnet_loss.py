@@ -74,8 +74,105 @@ class CognitiveHeatNetLoss(object):
     def _compute_consistency_smoothness(self):
         pass
 
-    def _compute_common_loss(self):
-        pass
+    def _compute_common_loss(self, predicted_output, batch_input, batch_target):
+        # extract the gaze and awareness maps from the output dictionary
+        normalized_gaze_map = predicted_output["gaze_density_map"]
+        log_normalized_gaze_map = predicted_output["log_gaze_density_map"]
+        awareness_map = predicted_output["awareness_map"]
+        unnormalized_gaze_map = predicted_output["unnormalized_gaze"]
+        common_predictor_map = predicted_output["common_predictor_map"]
+
+        # initialize stats
+        stats = {}
+
+        # main gaze cost term
+        negative_logprob = self.compute_nll(normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target)
+
+        # aware at gaze points
+        (
+            awareness_at_gaze_points_loss,
+            awareness_at_gaze_points_loss_pre_mult,
+        ) = self.compute_awareness_at_gaze_points_loss(awareness_map, batch_input, batch_target)
+
+        # spatial+temporal regularization for gaze map
+        gaze_spatial_regularization, reg_stats = self.spatial_regularization(
+            normalized_gaze_map,
+            image=batch_input["road_image"],
+        )
+        gaze_temporal_regularization, treg_stats = self.temporal_regularization(
+            normalized_gaze_map,
+            image=batch_input["road_image"],
+        )
+        # mean over batch and time dimension
+        gaze_spatial_reg_loss = self.gaze_spatial_regularization_coeff * torch.mean(gaze_spatial_regularization)
+        gaze_temporal_reg_loss = self.gaze_temporal_regularization_coeff * torch.mean(gaze_temporal_regularization)
+
+        # spatial+temporal regularization for awareness map
+        awareness_spatial_regularization, reg_stats = self.spatial_regularization(
+            awareness_map,
+            image=batch_input["segmentation_mask_image"],
+        )
+        awareness_temporal_regularization, treg_stats = self.temporal_regularization(
+            awareness_map,
+            image=batch_input["segmentation_mask_image"],
+        )
+        awareness_spatial_reg_loss = self.awareness_spatial_regularization_coeff * torch.mean(
+            awareness_spatial_regularization
+        )
+        awareness_temporal_reg_loss = self.awareness_temporal_regularization_coeff * torch.mean(
+            awareness_temporal_regularization
+        )
+
+        # optic flow based temporal regularization
+        optic_flow_awareness_temporal_smoothness = self._compute_optic_flow_based_temp_regularization(
+            awareness_map, batch_input
+        )
+
+        # awareness decay loss
+        aware_decay_loss = self.awareness_decay_coeff * torch.mean(
+            (
+                torch.mean(awareness_map[:, :-1, :, :, :], dim=(2, 3, 4)) * (1 - self.awareness_decay_alpha)
+                - torch.mean(awareness_map[:, 1:, :, :, :], dim=(2, 3, 4))
+            )
+            ** 2
+        )
+
+        # steady state loss.
+        # Total sum of each frame's awareness map should be fairly the same.
+        awareness_map_sum0_tminus1 = torch.sum(awareness_map[:, :-1, :, :, :], dim=(2, 3, 4))  # (B, T-1)
+        awareness_map_sum1_t = torch.sum(awareness_map[:, 1:, :, :, :], dim=(2, 3, 4))  # (B, T-1)
+
+        awareness_map_sum_diff_along_t_sq = (
+            awareness_map_sum0_tminus1 - awareness_map_sum1_t
+        ) ** 2  # (B, T-1) # along the time dimension, the values represent the difference in the sum of awareness values for consecutive frames
+        aware_steady_state_loss = self.awareness_steady_state_coeff * torch.mean(
+            torch.mean(awareness_map_sum_diff_along_t_sq, dim=(1))
+        )  # []
+
+        # gaze transform prior loss. Unnormalized gaze loss, common predictor loss.
+        # Regularizations to ensure that these modules don't blow up
+        gaze_transform_prior_loss = self.gt_prior_loss_coeff * self.gt_prior_loss()
+        unnormalized_gaze_loss = self.unnormalized_gaze_loss_coeff * (torch.mean(unnormalized_gaze)) ** 2
+        common_predictor_map_loss = self.common_predictor_map_loss_coeff * torch.mean(common_predictor_map ** 2)
+
+        return (
+            (
+                negative_logprob,
+                gaze_spatial_reg_loss,
+                gaze_temporal_reg_loss,
+                awareness_spatial_reg_loss,
+                awareness_temporal_reg_loss,
+                awareness_at_gaze_points_loss,
+                awareness_at_gaze_points_loss_pre_mult,
+                aware_steady_state_loss,
+                aware_decay_loss,
+                gaze_transform_prior_loss,
+                unnormalized_gaze_loss,
+                common_predictor_map_loss,
+                optic_flow_awareness_temporal_smoothness,
+            ),
+            stats,
+        )
 
     def _compute_nll(self):
         pass
@@ -155,6 +252,7 @@ class CognitiveHeatNetLoss(object):
             awareness_ds_optic_flow_awareness_temporal_smoothness,
         ) = awareness_loss_tuple
 
+        # add cost computed on the awareness data batch to the cost computed on the gaze data batch.
         gaze_ds_negative_logprob += awareness_ds_negative_logprob
         gaze_ds_gaze_spatial_reg_loss += awareness_ds_gaze_spatial_reg_loss
         gaze_ds_gaze_temporal_reg_loss += awareness_ds_gaze_temporal_reg_loss
@@ -176,8 +274,8 @@ class CognitiveHeatNetLoss(object):
             )
             awareness_label_loss = self.awareness_label_coeff * awareness_loss_pre_mult
         else:
-            awareness_label_loss = aware_steady_state_loss.new_tensor(0.0)
-            awareness_loss_pre_mult = aware_steady_state_loss.new_tensor(0.0)
+            awareness_label_loss = gaze_ds_aware_steady_state_loss.new_tensor(0.0)
+            awareness_loss_pre_mult = gaze_ds_aware_steady_state_loss.new_tensor(0.0)
             awareness_loss_stats = {
                 "awareness_mse": 0,
                 "awareness_l1_loss": 0,
@@ -194,8 +292,8 @@ class CognitiveHeatNetLoss(object):
                 consistency_smoothness_gaze,
             ) = self._compute_consistency_smoothness(predicted_pairwise_gaze_t, predicted_pairwise_gaze_tp1)
         else:
-            consistency_smoothness_gaze = aware_steady_state_loss.new_tensor(0.0)
-            consistency_smoothness_awareness = aware_steady_state_loss.new_tensor(0.0)
+            consistency_smoothness_gaze = gaze_ds_aware_steady_state_loss.new_tensor(0.0)
+            consistency_smoothness_awareness = gaze_ds_aware_steady_state_loss.new_tensor(0.0)
 
         # store stats
         stats["negative_logprob"] = gaze_ds_negative_logprob
@@ -229,7 +327,7 @@ class CognitiveHeatNetLoss(object):
         stats["gaze_transform_prior_loss"] = gaze_ds_gaze_transform_prior_loss
 
         # total loss
-        result_loss = (
+        loss = (
             negative_logprob
             + gaze_ds_gaze_spatial_reg_loss
             + gaze_ds_gaze_temporal_reg_loss
@@ -247,7 +345,7 @@ class CognitiveHeatNetLoss(object):
             + awareness_label_loss
         )
 
-        return result_loss, stats
+        return loss, stats
 
     def to(self, device):
         self.spatial_regularization.to(device)
