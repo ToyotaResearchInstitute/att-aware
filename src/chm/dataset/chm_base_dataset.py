@@ -74,7 +74,7 @@ class CHMBaseDataset(Dataset):
         # list of query frames used for each video. Each query frame idx corresponds to the last frame of the snippet used.
         self.query_frame_idxs_list = list(range(self.first_query_frame, MAX_NUM_VIDEO_FRAMES))
 
-        self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_img_dims")
+        self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_image_dims")
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
 

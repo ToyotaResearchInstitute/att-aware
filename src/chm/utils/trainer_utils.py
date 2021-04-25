@@ -9,6 +9,7 @@ from chm.model.cognitive_heatnet import CognitiveHeatNet
 from chm.losses.cognitive_heatnet_loss import CognitiveHeatNetLoss
 from torch.utils.data import DataLoader, Subset, sampler
 from utils.chm_consts import *
+from functools import partial
 
 
 def load_datasets(params_dict):
@@ -189,8 +190,9 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
 def create_model_and_loss_fn(params_dict):
 
     model = CognitiveHeatNet(params_dict)
-    # _, _, gaze_transform_prior_loss = model.get_modules()
-    loss_fn = CognitiveHeatNetLoss(params_dict)
+    _, _, gaze_transform_prior_loss = model.get_modules()  # handle to prior_loss()
+
+    loss_fn = CognitiveHeatNetLoss(params_dict, gt_prior_loss=partial(gaze_transform_prior_loss))
 
     load_model_path = params_dict["load_model_path"]
     if load_model_path is not None:
@@ -235,6 +237,54 @@ def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correct
     # training target
     batch_target = data_dict[GROUND_TRUTH_GAZE_0]
     return batch_input, batch_target, aux_info_list, should_use_batch
+
+
+# Data batch parsing functions.
+def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict, device):
+    (
+        gaze_data_batch,
+        awareness_data_batch,
+        pairwise_gaze_data_batch_t,
+        pairwise_gaze_data_batch_tp1,
+    ) = parse_data_batch(
+        data_batch,
+        gaze_corruption=gaze_corruption,
+        gaze_correction=gaze_correction,
+        input_process_dict=input_process_dict,
+    )
+
+    # move input and target to appropriate device.
+
+    sample_to_device(
+        (
+            gaze_data_batch,
+            awareness_data_batch,
+            pairwise_gaze_data_batch_t,
+            pairwise_gaze_data_batch_tp1,
+        ),
+        device,
+    )
+
+    # extract individual batch inputs
+    individual_batch_inputs = extract_individual_batch_input(
+        gaze_data_batch,
+        awareness_data_batch,
+        pairwise_gaze_data_batch_t,
+        pairwise_gaze_data_batch_tp1,
+    )
+
+    # extract annotation info
+    awareness_batch_annotation_data = {
+        "query_x": awareness_data_batch["batch_annotation_query_x"],
+        "query_y": awareness_data_batch["batch_annotation_query_y"],
+        "annotation_target": awareness_data_batch["batch_annotation_target"],
+    }
+    # post process and separate the individual batch inputs
+    individual_batch_inputs = post_process_individual_batch_inputs(
+        individual_batch_inputs, input_process_dict=input_process_dict
+    )
+
+    return individual_batch_inputs, awareness_batch_annotation_data
 
 
 def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict):
@@ -327,8 +377,8 @@ def sample_to_device(data_batch_list, device):
             data_batch["batch_input"][key] = data_batch["batch_input"][key].to(device)
 
         data_batch["batch_target"] = data_batch["batch_target"].to(device)
-        if 'batch_annotation_target' in data_batch:
-            data_batch['batch_annotation_target'] = data_batch['batch_annotation_target'].to(device)
+        if "batch_annotation_target" in data_batch:
+            data_batch["batch_annotation_target"] = data_batch["batch_annotation_target"].to(device)
 
 
 def extract_individual_batch_input(

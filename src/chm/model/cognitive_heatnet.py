@@ -41,7 +41,7 @@ class CognitiveHeatNet(torch.nn.Module):
         self.num_latent_layers = self.params_dict.get("num_latent_layers", 6)
         self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ration_reduction_factor", 8.0)
 
-        self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_img_dims")
+        self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_image_dims")
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
         self.NETWORK_OUT_SIZE = [
@@ -69,6 +69,16 @@ class CognitiveHeatNet(torch.nn.Module):
         self.chm_predictor = create_chm_predictor(
             chm_predictor_input_dim_dict=chm_predictor_input_dim_dict, predictor_output_size=self.NETWORK_OUT_SIZE
         )
+
+    def get_modules(self):
+        """
+        Get individual modules in the network
+        """
+        road_facing_network = self.fusion_net.map_modules["road_facing"]
+        fusion_net_network = self.fusion_net
+        gaze_transform_prior_loss = self.gaze_transform.prior_loss
+
+        return fusion_net_network, road_facing_network, gaze_transform_prior_loss
 
     def forward(self, batch_input, should_drop_indices_dict=None, should_drop_entire_channel_dict=None):
         """

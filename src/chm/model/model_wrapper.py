@@ -12,6 +12,7 @@ from chm.utils.trainer_utils import (
     parse_data_item,
     parse_data_batch,
     sample_to_device,
+    process_and_extract_data_batch,
 )
 
 
@@ -22,10 +23,10 @@ class ModelWrapper(torch.nn.Module):
 
     Parameters
     ----------
-    config : dict
+    params_dict : dict
         params dict containing the args from args_file.py
-    logger : TensorboardX instance
-        tensorboardx logger used for logging loss curves and visualizations
+    session_hash : str
+        unique hashid for creating logging folder
     """
 
     def __init__(self, params_dict, session_hash=None):
@@ -54,10 +55,11 @@ class ModelWrapper(torch.nn.Module):
         self.gaze_correction = self.params_dict.get("gaze_correction", None)
         self.input_process_dict = self.params_dict.get("input_process_dict", None)
         self.output_process_dict = self.params_dict.get("output_process_dict", None)
+        self.results_aggregator = {}
 
         # create model and loss function and put it on the correct device.
         self.model, self.loss_fn = create_model_and_loss_fn(self.params_dict)
-        # self.loss_fn.to(self.device)
+        self.loss_fn.to(self.device)
         self.model.to(self.device)
 
         self.gaze_datasets = self.awareness_datasets = self.pairwise_gaze_datasets = None
@@ -135,47 +137,10 @@ class ModelWrapper(torch.nn.Module):
 
     def training_step(self, data_batch, *args):
         # parse all the batches properly.
-
-        (
-            gaze_data_batch,
-            awareness_data_batch,
-            pairwise_gaze_data_batch_t,
-            pairwise_gaze_data_batch_tp1,
-        ) = parse_data_batch(
-            data_batch,
-            gaze_corruption=self.gaze_corruption,
-            gaze_correction=self.gaze_correction,
-            input_process_dict=self.input_process_dict,
+        overall_batch_num = args[0]
+        individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
+            data_batch, self.gaze_corruption, self.gaze_correction, self.input_process_dict
         )
-
-        # move input and target to appropriate device.
-
-        sample_to_device(
-            (
-                gaze_data_batch,
-                awareness_data_batch,
-                pairwise_gaze_data_batch_t,
-                pairwise_gaze_data_batch_tp1,
-            ),
-            self.device,
-        )
-
-        # extract individual batch inputs
-        individual_batch_inputs = extract_individual_batch_input(
-            gaze_data_batch,
-            awareness_data_batch,
-            pairwise_gaze_data_batch_t,
-            pairwise_gaze_data_batch_tp1,
-        )
-
-        # extract annotation info
-
-        awareness_batch_annotation_data = {
-            "query_x": awareness_data_batch["batch_annotation_query_x"],
-            "query_y": awareness_data_batch["batch_annotation_query_y"],
-            "annotation_target": awareness_data_batch["batch_annotation_target"],
-        }
-        # post process and separate the individual batch inputs
         (
             gaze_batch_input,
             awareness_batch_input,
@@ -193,7 +158,7 @@ class ModelWrapper(torch.nn.Module):
             awareness_batch_should_use_batch,
             pairwise_gaze_batch_should_use_batch_t,
             pairwise_gaze_batch_should_use_batch_tp1,
-        ) = post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict=self.input_process_dict)
+        ) = individual_batch_inputs
 
         # ensure force dropout dict is empty during training
         self.model.fusion_net.force_input_dropout = {}
@@ -243,8 +208,30 @@ class ModelWrapper(torch.nn.Module):
             import IPython
 
             IPython.embed(banner1="check training step")
-        # pass it through model.
-        # compute loss functions.
+
+        if self.output_process_dict is not None:
+            output_process_functor = self.output_process_dict["functor"]
+            training_output_dict = {}
+            training_output_dict["gaze_batch_input"] = gaze_batch_input
+            training_output_dict["gaze_aux_info_list"] = gaze_aux_info_list
+            training_output_dict["gaze_batch_target"] = gaze_batch_target
+            training_output_dict["gaze_data_dict"] = gaze_data_dict
+            training_output_dict["gaze_predicted_output"] = predicted_gaze_output
+
+            training_output_dict["awareness_batch_input"] = awareness_batch_input
+            training_output_dict["awareness_aux_info_list"] = awareness_aux_info_list
+            training_output_dict["awareness_batch_gaze_target"] = awareness_batch_target
+            training_output_dict["awareness_batch_annotation_target_data"] = awareness_batch_label_data
+            training_output_dict["awareness_predicted_output"] = predicted_awareness_output
+
+            self.results_aggregator = output_process_functor(
+                training_output_dict,
+                self.output_process_dict["params"],
+                overall_batch_num,
+                model=self.model,
+                experiment_results_aggregator=self.results_aggregator,
+            )
+
         output = {"loss": loss}
         return output
 
