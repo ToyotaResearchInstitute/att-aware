@@ -1,4 +1,6 @@
 import torch
+import numpy as np
+import itertools
 
 from chm.losses.regularizations import EPSpatialRegularization, EPTemporalRegularization
 from chm.losses.awareness_label_loss import AwarenessPointwiseLabelLoss
@@ -14,6 +16,7 @@ class CognitiveHeatNetLoss(object):
         self.image_width = int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor))
         self.image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
         self.add_optic_flow = self.params_dict.get("add_optic_flow", False)
+        self.gaussian_kernel_size = self.params_dict.get("gaussian_kernel_size", 2)
         regularization_eps = self.params_dict.get("regularization_eps", 1e-3)
         sig_scale_factor = self.params_dict.get("sig_scale_factor", 1)
 
@@ -70,9 +73,6 @@ class CognitiveHeatNetLoss(object):
         self.gt_prior_loss_coeff = self.params_dict.get("gt_prior_loss_coeff", 1.0)
         self.unnormalized_gaze_loss_coeff = self.params_dict.get("unnormalized_gaze_loss_coeff", 1e-5)
         self.common_predictor_map_loss_coeff = self.params_dict.get("common_predictor_map_loss_coeff", 1e-5)
-
-    def _compute_consistency_smoothness(self):
-        pass
 
     def _compute_common_loss(self, predicted_output, batch_input, batch_target):
         # extract the gaze and awareness maps from the output dictionary
@@ -174,14 +174,198 @@ class CognitiveHeatNetLoss(object):
             stats,
         )
 
-    def _compute_nll(self):
-        pass
+    def _compute_nll(self, normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target):
+        """
+        Compute the negative log probability at each of the gaze points
+        """
+        logprob = normalized_gaze_map.new_zeros([1, 1])
+        should_train_input_gaze = batch_input["should_train_input_gaze"]  # (B, T, L, 1)
+        for b in range(log_normalized_gaze_map.shape[0]):  # batch dimension
+            logprob_max = log_normalized_gaze_map[b, :, :, :, :].max().clone().detach()
+            logprob_min = logprob_max - self.logprob_gap
+            for t in range(log_normalized_gaze_map.shape[1]):  # time dimension
+                log_gaze_map_bt = log_normalized_gaze_map[b, t, 0, :, :]  # grab the 2d heatmap
+                lp = normalized_gaze_map.new_zeros([1, 1])  # accumulator of negative log probs
+                # iterate through all the gaze points for the specific frame
+                for l in range(batch_target.shape[2]):
+                    x = max(0, min(batch_target[b, t, l, 0].int(), log_gaze_map_bt.shape[1] - 1))
+                    y = max(0, min(batch_target[b, t, l, 1].int(), log_gaze_map_bt.shape[0] - 1))
+                    # only consider valid gaze points for computing negative log prob
+                    if should_train_input_gaze[b, t, l, 0]:
+                        lp += max(log_gaze_map_bt[y, x], logprob_min)
+                logprob += lp * self.gaze_data_coeff  # scale factor for gaze cost.
 
-    def _compute_awareness_at_gaze_points_loss(self):
-        pass
+        negative_logprob = -logprob
+        return negative_logprob
 
-    def _compute_optic_flow_based_temp_regularization(self):
-        pass
+    def _compute_awareness_at_gaze_points_loss(self, awareness_map, batch_input, batch_target):
+        """
+        Compute awareness at the gaze points. Applies a gaussian filter around the gaze points to compute expected awareness estimates
+        around the gaze points
+        """
+        awareness_at_gaze_points_loss = awareness_map.new_zeros([1, 1])
+        sig = 3  # std range for the gaussian kernel size
+        should_train_input_gaze = batch_input["should_train_input_gaze"]
+        N = self.gaussian_kernel_size
+        for b in range(awareness_map.shape[0]):
+            for t in range(awareness_map.shape[1]):
+                awareness_map_bt = awareness_map[b, t, 0, :, :]
+                a_at_g_loss = awareness_map.new_zeros([1, 1])
+                for l in range(batch_target.shape[2]):
+                    x = max(0, min(batch_target[b, t, l, 0].int(), awareness_map_bt.shape[1] - 1))
+                    y = max(0, min(batch_target[b, t, l, 1].int(), awareness_map_bt.shape[0] - 1))
+                    if should_train_input_gaze[b, t, l, 0]:
+                        shift_x = 0
+                        shift_y = 0
+                        # make necessary shifts to the kernel based on where the gaze is
+                        # check if gaze is close to left edge
+                        shift_x = max(0, int(-(x - N)))
+                        min_x = x - max(0, x - N)
+                        max_x = 2 * N - min_x + 1
+                        # if not near left edge, check if close to right edge
+                        if shift_x == 0:
+                            shift_x = min(0, -(int(x + N) - (awareness_map_bt.shape[1] - 1)))  # negative value
+                            min_x = x - max(0, x - N) - shift_x
+                            max_x = 2 * N - min_x + 1
+
+                        # check if gaze is close to top edge
+                        shift_y = max(0, int(-(y - N)))
+                        min_y = y - max(0, y - N)
+                        max_y = 2 * N - min_y + 1
+                        # if not near top edge, check for near bottom edge
+                        if shift_y == 0:
+                            shift_y = min(0, -(int(y + N) - (awareness_map_bt.shape[0] - 1)))  # negative value
+                            min_y = y - max(0, y - N) - shift_y
+                            max_y = 2 * N - min_y + 1
+
+                        kernel_x, kernel_y = np.meshgrid(
+                            range(-N + shift_x, N + 1 + shift_x), range(-N + shift_y, N + 1 + shift_y)
+                        )
+
+                        # create the shifted gaussian kernel
+                        kernel = np.exp(-(kernel_x ** 2 + kernel_y ** 2) / (sig ** 2))
+                        kernel = awareness_map_bt.new_tensor(kernel / np.sum(kernel))
+                        awareness_map_bt_patch = awareness_map_bt[y - min_y : y + max_y, x - min_x : x + max_x]
+                        a_at_g_loss += torch.sum(
+                            (
+                                awareness_map_bt_patch
+                                - (torch.ones_like(awareness_map_bt_patch) * kernel / torch.max(kernel))
+                            )
+                            ** 2
+                        )
+                awareness_at_gaze_points_loss += a_at_g_loss
+
+        awareness_at_gaze_points_loss_pre_mult = awareness_at_gaze_points_loss
+        awareness_at_gaze_points_loss = self.awareness_at_gaze_points_loss_coeff * awareness_at_gaze_points_loss
+        return awareness_at_gaze_points_loss, awareness_at_gaze_points_loss_pre_mult
+
+    def _compute_optic_flow_based_temp_regularization(self, awareness_map, batch_input):
+        """
+        Compute temporal regularization loss for awareness map using optic flow.
+        """
+        optic_flow_awareness_temporal_smoothness = awareness_map.new_zeros([1, 1])
+        # scaled optic flow image (B, T, C=2, H, W), C=0 channel is ux and C=1 is uy, channel
+        if self.add_optic_flow:
+            optic_flow_image = batch_input["optic_flow_image"]
+
+            # coordinate grid. xv is the row indices, yv is the column indices
+            xv, yv = torch.meshgrid(
+                [
+                    awareness_map.new_tensor(torch.arange(0, awareness_map.shape[3]).clone().detach().numpy()),
+                    awareness_map.new_tensor(torch.arange(0, awareness_map.shape[4]).clone().detach().numpy()),
+                ]
+            )
+            # x_disp and y_disp indicate the delta to add from the displaced pixel computed from the flow
+            # currently computing only at the displaced pixel, hence 0
+            x_disp = [0]
+            y_disp = [0]
+            for b in range(awareness_map.shape[0]):
+                for t in range(awareness_map.shape[1] - 1):  # 0, T-1
+                    # h, w channel 0 contains displacement along the column dimension (index 1) (ux)
+                    # and channel 1 contains displacement along the row dimension (index 0) (uy)
+                    for (x_d, y_d) in list(itertools.product(x_disp, y_disp)):
+                        optic_flow_image_t_ux_uy = optic_flow_image[b, t + 1, :, :, :]  # (2, h, w)
+                        # (h, w) #awarness_map at t
+                        awareness_map_t = awareness_map[b, t, 0, :, :]
+                        # (h, w) awareness map at t + 1
+                        awareness_map_tp1 = awareness_map[b, t + 1, 0, :, :]
+
+                        # compute displaced pixels rounded from previous frame
+                        xv_new_p = torch.floor(xv + torch.floor(optic_flow_image_t_ux_uy[1, :, :]) + x_d)
+                        xv_new_p[xv_new_p < 0] = 0.0  # limit the index to stay within bounds
+                        xv_new_p[xv_new_p >= awareness_map_t.shape[0]] = awareness_map_t.shape[0] - 1
+                        yv_new_p = torch.floor(yv + torch.floor(optic_flow_image_t_ux_uy[0, :, :]) + y_d)
+                        yv_new_p[yv_new_p < 0] = 0.0
+                        yv_new_p[yv_new_p >= awareness_map_t.shape[1]] = awareness_map_t.shape[1] - 1
+
+                        # grab the awareness values at time t corresponding to the displaced pixels.
+                        # Flatten the x and y indices and then reshape it back to the original shape.
+                        displaced_awareness_t_p = awareness_map_t[
+                            xv_new_p.flatten().long(), yv_new_p.flatten().long()
+                        ].reshape(awareness_map_t.shape[0], awareness_map_t.shape[1])
+
+                        # (H, W)
+                        eps_temporal_difference = (
+                            awareness_map_tp1 - self.optic_flow_temporal_smoothness_decay * displaced_awareness_t_p
+                        )
+                        # separate the positive and negative change
+                        positive_temporal_difference = eps_temporal_difference.clamp(min=0)  # (H, W)
+                        negative_temporal_difference = -eps_temporal_difference.clamp(max=0)  # (H, W)
+
+                        # penalize decrease more drastically, hence the squared.
+                        negative_temporal_difference = (
+                            negative_temporal_difference ** 2 * self.NEGATIVE_DIFFERENCE_COEFFICIENT
+                        )
+                        # positive change in awareness (increase) is penalized less, hence linear
+                        positive_temporal_difference = (
+                            positive_temporal_difference * self.POSITIVE_DIFFERENCE_COEFFICIENT
+                        )
+                        # (H, W)
+                        temporal_difference_penalty = positive_temporal_difference + negative_temporal_difference
+                        # weight based on displacement. Same for all pixels as the shift is the same
+                        temporal_difference_penalty = np.exp(-np.linalg.norm((x_d, y_d))) * temporal_difference_penalty
+                        # mean over the image dimensions (or number of pixels)
+                        optic_flow_awareness_temporal_smoothness += torch.mean(temporal_difference_penalty)
+
+            # average over B*(T-1) the number of outer loops
+            optic_flow_awareness_temporal_smoothness = optic_flow_awareness_temporal_smoothness / (
+                awareness_map.shape[0] * awareness_map.shape[1] - 1
+            )
+            optic_flow_awareness_temporal_smoothness = (
+                self.optic_flow_temporal_smoothness_coeff * optic_flow_awareness_temporal_smoothness
+            )
+
+        return optic_flow_awareness_temporal_smoothness
+
+    def _compute_consistency_smoothness(self, predicted_gaze_t, predicted_gaze_tp1):
+        normalized_gaze_map_t = predicted_gaze_t["gaze_density_map"]  # (B, T, 1, H, W)
+        awareness_map_t = predicted_gaze_t["awareness_map"]  # (B, T, 1, H, W)
+
+        normalized_gaze_map_tp1 = predicted_gaze_tp1["gaze_density_map"]  # (B, T, 1, H, W)
+        awareness_map_tp1 = predicted_gaze_tp1["awareness_map"]  # (B, T, 1, H, W)
+        T = normalized_gaze_map_t.shape[1]  # number of time steps
+
+        consistency_smoothness_awareness = awareness_map_t.new_zeros([1, 1])
+        consistency_smoothness_gaze = normalized_gaze_map_t.new_zeros([1, 1])
+
+        # only consider the time stamps towrads the end of the slice so that sufficient temporal history is captured.
+        # (B, T/2, C, H, W)
+        awareness_diff_at_later_common_frame_idxs = (
+            awareness_map_t[:, round(T / 2) :, :, :, :] - awareness_map_tp1[:, (round(T / 2) - 1) : -1, :, :, :]
+        )
+        # (B, T/2, C, H, W)
+        normalized_gaze_diff_at_later_common_frame_idxs = (
+            normalized_gaze_map_t[:, round(T / 2) :, :, :, :]
+            - normalized_gaze_map_tp1[:, (round(T / 2) - 1) : -1, :, :, :]
+        )
+        consistency_smoothness_awareness = self.consistency_coeff_awareness * torch.mean(
+            torch.mean(torch.sum((awareness_diff_at_later_common_frame_idxs ** 2), dim=(2, 3, 4)), dim=(1))
+        )
+        consistency_smoothness_gaze = self.consistency_coeff_gaze * torch.mean(
+            torch.mean(torch.sum((normalized_gaze_diff_at_later_common_frame_idxs ** 2), dim=(2, 3, 4)), dim=(1))
+        )
+
+        return consistency_smoothness_awareness, consistency_smoothness_gaze
 
     def loss(
         self,

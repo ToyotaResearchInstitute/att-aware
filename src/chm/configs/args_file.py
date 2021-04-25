@@ -772,13 +772,13 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     #     help="denotes the number of batches to be processed to reach the knee of the awareness of gaze weight factor",
     # )
 
-    # parser.add_argument(
-    #     "--gaussian_kernel_size",
-    #     action="store",
-    #     type=int,
-    #     default=2,
-    #     help="denotes the kernel size used for the gaussian filter for loss function",
-    # )
+    parser.add_argument(
+        "--gaussian_kernel_size",
+        action="store",
+        type=int,
+        default=2,
+        help="Denotes the kernel size used for the gaussian filter for awareness at gaze loss function",
+    )
 
     parser.add_argument(
         "--gaze_bias_std",
