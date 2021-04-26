@@ -41,9 +41,9 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         df_filtered = df_filtered[df_filtered["query_frame"] >= self.first_query_frame]
 
         # filter those entries in which the anno_is_aware is NA. Need valid labels for supervision
-        import IPython
+        df_filtered = df_filtered[df_filtered["anno_is_aware"].notna()]
 
-        IPython.embed(banner1="check NA in anno_is_aware")
+        print("Number of valid attended awareness annotations ", len(df_filtered))
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
         self.metadata_list = []

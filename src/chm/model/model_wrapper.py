@@ -207,7 +207,7 @@ class ModelWrapper(torch.nn.Module):
             )
             import IPython
 
-            IPython.embed(banner1="check training step")
+            IPython.embed(banner1="check after loss")
 
         if self.output_process_dict is not None:
             output_process_functor = self.output_process_dict["functor"]
@@ -232,7 +232,7 @@ class ModelWrapper(torch.nn.Module):
                 experiment_results_aggregator=self.results_aggregator,
             )
 
-        output = {"loss": loss}
+        output = {"loss": loss, "stats", stats}
         return output
 
     def testing_step(self):
