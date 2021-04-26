@@ -88,13 +88,13 @@ class CognitiveHeatNetLoss(object):
         stats = {}
 
         # main gaze cost term
-        negative_logprob = self.compute_nll(normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target)
+        negative_logprob = self._compute_nll(normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target)
 
         # aware at gaze points
         (
             awareness_at_gaze_points_loss,
             awareness_at_gaze_points_loss_pre_mult,
-        ) = self.compute_awareness_at_gaze_points_loss(awareness_map, batch_input, batch_target)
+        ) = self._compute_awareness_at_gaze_points_loss(awareness_map, batch_input, batch_target)
 
         # spatial+temporal regularization for gaze map
         gaze_spatial_regularization, reg_stats = self.spatial_regularization(
