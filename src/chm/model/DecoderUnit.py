@@ -84,7 +84,7 @@ class DecoderUnit(torch.nn.Module):
                 skip_input = self.replication_pad(skip_input)
                 skip_input = self.skip_nonlin(self.skip_instance_norm(self.skip_net(skip_input)))
             else:
-                skip_input = self.skip_net_sep_conv3d(skip_input)
+                skip_input = self.skip_net_s3d(skip_input)
 
             skip_input = skip_input.permute(0, 2, 1, 3, 4)  # (B, T, C, H, W)
             # concatenate along the channel dimension. (B, T, C, H, W)
