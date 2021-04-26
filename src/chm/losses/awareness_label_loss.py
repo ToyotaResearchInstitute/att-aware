@@ -60,20 +60,20 @@ class AwarenessPointwiseLabelLoss:
                 t = awareness_map.shape[1] - 1
                 # grab the 2d awareness heatmap for the last time frame for the bth time slice in the batch
                 img = awareness_map[b, t, 0, :, :]  # 0 because it is a single channel, img is 2D
-                # scale annotation to the proper network output size
+                # scale annotation to the proper network output size. query_x and query_y are in full video resolution
                 x = (
                     awareness_batch_annotation_data["query_x"][b]
-                    / self.annotation_image_size[1][b]
+                    / self.annotation_image_size[1]
                     * awareness_map.shape[-1]
                 ).int()
                 y = (
                     awareness_batch_annotation_data["query_y"][b]
-                    / self.annotation_image_size[0][b]
+                    / self.annotation_image_size[0]
                     * awareness_map.shape[-2]
                 ).int()
+
                 # get an patch around the label and compute loss for all pixels in the patch.
                 # under the assumption that the annotated awareness is the same in every pixel in the patch
-
                 minx = max(x.new_tensor(0), x - self.patch_half_size)
                 maxx = min(x.new_tensor(img.shape[1] - 1), x + self.patch_half_size)
                 miny = max(y.new_tensor(0), y - self.patch_half_size)
