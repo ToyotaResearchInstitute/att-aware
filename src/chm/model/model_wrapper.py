@@ -232,7 +232,7 @@ class ModelWrapper(torch.nn.Module):
                 experiment_results_aggregator=self.results_aggregator,
             )
 
-        output = {"loss": loss, "stats", stats}
+        output = {"loss": loss, "stats": stats}
         return output
 
     def testing_step(self):
