@@ -13,6 +13,8 @@ class CognitiveHeatNetLoss(object):
 
         self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ratio_reduction_factor", 8)
         self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_image_dims")
+        self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
+        self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
         self.image_width = int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor))
         self.image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
         self.add_optic_flow = self.params_dict.get("add_optic_flow", False)
