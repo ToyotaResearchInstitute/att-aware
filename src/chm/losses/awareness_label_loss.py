@@ -63,12 +63,12 @@ class AwarenessPointwiseLabelLoss:
                 # scale annotation to the proper network output size. query_x and query_y are in full video resolution
                 x = (
                     awareness_batch_annotation_data["query_x"][b]
-                    / self.annotation_image_size[1]
+                    / self.annotation_image_size[2]
                     * awareness_map.shape[-1]
                 ).int()
                 y = (
                     awareness_batch_annotation_data["query_y"][b]
-                    / self.annotation_image_size[0]
+                    / self.annotation_image_size[1]
                     * awareness_map.shape[-2]
                 ).int()
 
