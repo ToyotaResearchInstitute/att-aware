@@ -106,11 +106,11 @@ class ModelWrapper(torch.nn.Module):
                     p.requires_grad = True
             else:
                 # for the s3d encoder, only the last three encoder layers are unfrozen. These are spatio-temporal convolutions using s3D
-                for p in road_facing_network.encoder.s3d_layers.s3d_net_3.parameters():
+                for p in road_facing_network.encoder.s3d_net.s3d_net_3.parameters():
                     p.requires_grad = True
-                for p in road_facing_network.encoder.s3d_layers.s3d_net_2.parameters():
+                for p in road_facing_network.encoder.s3d_net.s3d_net_2.parameters():
                     p.requires_grad = True
-                for p in road_facing_network.encoder.s3d_layers.s3d_net_1.parameters():
+                for p in road_facing_network.encoder.s3d_net.s3d_net_1.parameters():
                     p.requires_grad = True
 
         # log trainable params from full model info on tensorboard
