@@ -19,6 +19,8 @@ class CognitiveHeatNetLoss(object):
         self.image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
         self.add_optic_flow = self.params_dict.get("add_optic_flow", False)
         self.gaussian_kernel_size = self.params_dict.get("gaussian_kernel_size", 2)
+        self.NEGATIVE_DIFFERENCE_COEFFICIENT = self.params_dict.get("negative_difference_coeff", 10.0)
+        self.POSITIVE_DIFFERENCE_COEFFICIENT = self.params_dict.get("positive_difference_coeff", 1.0)
         regularization_eps = self.params_dict.get("regularization_eps", 1e-3)
         sig_scale_factor = self.params_dict.get("sig_scale_factor", 1)
 
@@ -34,6 +36,8 @@ class CognitiveHeatNetLoss(object):
             image_height=self.image_height,
             eps=regularization_eps,
             sig_scale_factor=sig_scale_factor,
+            negative_difference_coeff=self.NEGATIVE_DIFFERENCE_COEFFICIENT,
+            positive_difference_coeff=self.POSITIVE_DIFFERENCE_COEFFICIENT,
         )
 
         # Cost coeffs and parameters
@@ -56,9 +60,6 @@ class CognitiveHeatNetLoss(object):
 
         self.consistency_coeff_gaze = self.params_dict.get("consistency_coeff_gaze", 10)
         self.consistency_coeff_awareness = self.params_dict.get("consistency_coeff_awareness", 10)
-
-        self.NEGATIVE_DIFFERENCE_COEFFICIENT = self.params_dict.get("negative_difference_coeff", 10.0)
-        self.POSITIVE_DIFFERENCE_COEFFICIENT = self.params_dict.get("positive_difference_coeff", 1.0)
 
         self.awareness_loss_type = self.params_dict.get("awareness_loss_type", "huber_loss")
         self.awareness_label_loss_patch_half_size = self.params_dict.get("awareness_label_loss_patch_half_size", 4)
