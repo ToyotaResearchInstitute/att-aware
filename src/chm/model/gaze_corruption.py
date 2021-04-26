@@ -7,12 +7,28 @@ class GazeCorruption:
     def __init__(
         self, bias_std, noise_std, transforms=None, x_weight_factor=1.0, y_weight_factor=1.3, is_spatially_varying=False
     ):
+        """
+        Parameters:
+        ----------
+        bias_std: float
+            The amount of bias in the Gaussian noise
+        noise_std: float
+            The standard deviation of the Gaussian noise
+        transforms: list or None
+            List of GazeTransforms to be applied before adding noise
+        x_weight_factor: float
+            Weight factor for x dimension when using spatially varying noise
+        x_weight_factor: float
+            Weight factor for y dimension when using spatially varying noise
+        is_spatially_varying: bool
+            Bool indicating whether the noise adding is spatially varying
+
+        """
         self.bias_std = bias_std
         self.noise_std = noise_std
         self.is_spatially_varying = is_spatially_varying
         self.x_weight_factor = x_weight_factor
         self.y_weight_factor = y_weight_factor
-        # self.added_noise=np.random.normal(0,self.bias_std,[2,1])
         self.added_noise = np.random.normal(0, self.bias_std, [1, 2])  # fixed zero mean noise added
         if transforms is not None and type(transforms) is not list:
             transforms = [transforms]

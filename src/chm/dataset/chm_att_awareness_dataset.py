@@ -25,6 +25,8 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
             self.att_awareness_labels_csv_path is not None
         ), "Please provide the full path to the awareness labels csv file"
 
+        self.awareness_annotations_labels = ["no_definitely", "no_probably", "unsure", "yes_probably", "yes_definitely"]
+
         # read in the att awareness labels csv as a pandas dataframe
         df = pd.read_csv(self.att_awareness_labels_csv_path, delimiter=",")
 
@@ -38,8 +40,10 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         # filter those entries for which full snippets cannot be extracted
         df_filtered = df_filtered[df_filtered["query_frame"] >= self.first_query_frame]
 
-        self.awareness_annotations_labels = ["no_definitely", "no_probably", "unsure", "yes_probably", "yes_definitely"]
+        # filter those entries in which the anno_is_aware is NA. Need valid labels for supervision
+        import IPython
 
+        IPython.embed(banner1="check NA in anno_is_aware")
         self.att_awareness_labels = copy.deepcopy(df_filtered)
 
         self.metadata_list = []

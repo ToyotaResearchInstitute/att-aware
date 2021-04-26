@@ -18,7 +18,7 @@ from chm.utils.trainer_utils import (
 
 class ModelWrapper(torch.nn.Module):
     """
-    Top-level torch.nn.Module wrapper around a CHM modesl.
+    Top-level torch.nn.Module wrapper around a CHM model.
     Designed to use models with high-level Trainer classes (cf. trainers/).
 
     Parameters
