@@ -44,6 +44,7 @@ class CognitiveHeatNetLoss(object):
 
         # main cost term coeffs
         self.gaze_data_coeff = self.params_dict.get("gaze_data_coeff", 1.2)
+        self.logprob_gap = self.params_dict.get("logprob_gap", 10)
         self.awareness_at_gaze_points_loss_coeff = self.params_dict.get("awareness_at_gaze_points_loss_coeff", 1)
 
         # temporal and spatial regularizations
@@ -58,19 +59,18 @@ class CognitiveHeatNetLoss(object):
         self.awareness_decay_coeff = self.params_dict.get("awareness_decay_coeff", 1.0)
         self.awareness_decay_alpha = self.params_dict.get("awareness_decay_alpha", 1.0)
 
+        self.awareness_steady_state_coeff = self.params_dict.get("awareness_steady_state_coeff", 0.01)
+
         self.consistency_coeff_gaze = self.params_dict.get("consistency_coeff_gaze", 10)
         self.consistency_coeff_awareness = self.params_dict.get("consistency_coeff_awareness", 10)
 
         self.awareness_loss_type = self.params_dict.get("awareness_loss_type", "huber_loss")
         self.awareness_label_loss_patch_half_size = self.params_dict.get("awareness_label_loss_patch_half_size", 4)
-
         self.awareness_label_loss = AwarenessPointwiseLabelLoss(type=self.awareness_loss_type)
         self.awareness_label_coeff = self.params_dict.get("awareness_label_coeff", 1.0)
 
         self.optic_flow_temporal_smoothness_decay = self.params_dict.get("optic_flow_temporal_smoothness_decay", 1.0)
         self.optic_flow_temporal_smoothness_coeff = self.params_dict.get("optic_flow_temporal_smoothness_coeff", 10.0)
-
-        self.logprob_gap = self.params_dict.get("logprob_gap", 10)
 
         self.gt_prior_loss = gt_prior_loss
         self.gt_prior_loss_coeff = self.params_dict.get("gt_prior_loss_coeff", 0.0)
