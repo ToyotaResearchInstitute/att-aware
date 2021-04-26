@@ -66,7 +66,11 @@ class CognitiveHeatNetLoss(object):
 
         self.awareness_loss_type = self.params_dict.get("awareness_loss_type", "huber_loss")
         self.awareness_label_loss_patch_half_size = self.params_dict.get("awareness_label_loss_patch_half_size", 4)
-        self.awareness_label_loss = AwarenessPointwiseLabelLoss(type=self.awareness_loss_type)
+        self.awareness_label_loss = AwarenessPointwiseLabelLoss(
+            loss_type=self.awareness_loss_type,
+            patch_half_size=self.awareness_label_loss_patch_half_size,
+            annotation_image_size=self.ORIG_ROAD_IMG_DIMS,
+        )
         self.awareness_label_coeff = self.params_dict.get("awareness_label_coeff", 1.0)
 
         self.optic_flow_temporal_smoothness_decay = self.params_dict.get("optic_flow_temporal_smoothness_decay", 1.0)
