@@ -23,7 +23,7 @@ class CHMTrainer(object):
         for epoch in range(self.max_epochs):
             if self.is_training_done:
                 break
-            self.cumulative_batch_cost = torch.tensor(0.0)
+            self.cumulative_batch_loss = torch.tensor(0.0)
             self.train(
                 gaze_dataloaders,
                 awareness_dataloaders,
@@ -44,14 +44,14 @@ class CHMTrainer(object):
         scheduler,
         grad_scaler,
     ):
-        module.train()  # self.model.train()?
+        module.train()
         dataloader_tqdm = tqdm.tqdm(
             enumerate(
                 zip(gaze_dataloaders["train"], awareness_dataloaders["train"], pairwise_gaze_dataloaders["train"])
             ),
             desc="train",
         )
-        for i, data_batch in dataloader_tqdm:
+        for i, data_batch in dataloader_tqdm:  # iterate through batches
             if (self.overall_batch_num + 1) % self.lr_update_num == 0 and optimizer.param_groups[0][
                 "lr"
             ] > self.lr_min_bound:
@@ -81,7 +81,10 @@ class CHMTrainer(object):
 
             # Training step data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
             output = module.training_step(data_batch, self.overall_batch_num)
+
+            # Perform back prop
             loss = output["loss"]
+            self.cumulative_batch_loss += loss.sum().cpu().detach()
             loss = loss.mean()
             if self.overall_batch_num % self.batch_aggregation_size == 0:
                 optimizer.zero_grad()
@@ -91,14 +94,12 @@ class CHMTrainer(object):
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
 
-            # if self.overall_batch_num % self.visualize_frequency == 0:
-            #     if not (self.params["no_maps_visualize"]):
-            #         module.visualization(
-            #             global_step=self.overall_batch_num,
-            #             number_of_examples=self.params["num_visualization_examples"],
-            #             force_values=[1, None],
-            #         )  # During training visualize examples with and without dropout of children network
-            #         self.model.train(True)
+            loss = loss.detach()
+            # check for nan loss
+            if torch.isnan(loss).sum() or loss.numel() == 0:
+                print("skipped: " + str(loss))
+            else:
+                dataloader_tqdm.set_description("train" + ": {}".format(self.cumulative_batch_loss.detach() / (i + 1)))
 
     def test(self, gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module):
         # set model to eval mode

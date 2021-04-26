@@ -205,9 +205,6 @@ class ModelWrapper(torch.nn.Module):
                 pairwise_gaze_batch_input_tp1,
                 pairwise_gaze_batch_target_tp1,
             )
-            import IPython
-
-            IPython.embed(banner1="check after loss")
 
         if self.output_process_dict is not None:
             output_process_functor = self.output_process_dict["functor"]
