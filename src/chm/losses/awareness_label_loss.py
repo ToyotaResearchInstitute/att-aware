@@ -7,4 +7,6 @@ class AwarenessPointwiseLabelLoss:
         pass
 
     def loss(self):
-        pass
+        import IPython
+
+        IPython.embed(banner1="in awareness label loss")

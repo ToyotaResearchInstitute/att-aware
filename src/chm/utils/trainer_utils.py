@@ -194,6 +194,10 @@ def create_model_and_loss_fn(params_dict):
 
     loss_fn = CognitiveHeatNetLoss(params_dict, gt_prior_loss=partial(gaze_transform_prior_loss))
 
+    import IPython
+
+    IPython.embed(banner1="check loss fn")
+
     load_model_path = params_dict["load_model_path"]
     if load_model_path is not None:
         model.load_state_dict(torch.load(load_model_path))

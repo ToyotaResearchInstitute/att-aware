@@ -6,7 +6,9 @@ class EPSpatialRegularization(torch.nn.Module):
         super(EPSpatialRegularization, self).__init__()
 
     def forward(self):
-        pass
+        import IPython
+
+        IPython.embed(banner1="in EP spatial")
 
 
 class EPTemporalRegularization(torch.nn.Module):
@@ -14,4 +16,6 @@ class EPTemporalRegularization(torch.nn.Module):
         super(EPTemporalRegularization, self).__init__()
 
     def forward(self):
-        pass
+        import IPython
+
+        IPython.embed(banner1="in EP temp")
