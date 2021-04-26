@@ -3,7 +3,7 @@ import numpy as np
 
 
 class AwarenessPointwiseLabelLoss:
-    def __init__(self):
+    def __init__(self, type="huber_loss"):
         pass
 
     def loss(self):
