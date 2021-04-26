@@ -139,7 +139,7 @@ class ModelWrapper(torch.nn.Module):
         # parse all the batches properly.
         overall_batch_num = args[0]
         individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
-            data_batch, self.gaze_corruption, self.gaze_correction, self.input_process_dict
+            data_batch, self.gaze_corruption, self.gaze_correction, self.input_process_dict, self.device
         )
         (
             gaze_batch_input,
