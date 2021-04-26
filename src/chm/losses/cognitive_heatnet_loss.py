@@ -24,14 +24,14 @@ class CognitiveHeatNetLoss(object):
 
         # spatial and temporal regularization
         self.spatial_regularization = EPSpatialRegularization(
-            image_width=image_width,
-            image_height=image_height,
+            image_width=self.image_width,
+            image_height=self.image_height,
             eps=regularization_eps,
             sig_scale_factor=sig_scale_factor,
         )
         self.temporal_regularization = EPTemporalRegularization(
-            image_width=image_width,
-            image_height=image_height,
+            image_width=self.image_width,
+            image_height=self.image_height,
             eps=regularization_eps,
             sig_scale_factor=sig_scale_factor,
         )
