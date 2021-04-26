@@ -98,7 +98,7 @@ class ModelWrapper(torch.nn.Module):
             for p in road_facing_network.encoder.parameters():
                 p.requires_grad = False
 
-            if not self.params_dict["use_s3d_encoder"]:
+            if not self.params_dict["use_s3d"]:
                 # for full conv2d only layer3 and layer4 (last two layers) are unfrozen
                 for p in road_facing_network.encoder.layered_outputs.layer4.parameters():
                     p.requires_grad = True
