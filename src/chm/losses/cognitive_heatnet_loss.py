@@ -519,7 +519,7 @@ class CognitiveHeatNetLoss(object):
 
         # total loss
         loss = (
-            negative_logprob
+            gaze_ds_negative_logprob
             + gaze_ds_gaze_spatial_reg_loss
             + gaze_ds_gaze_temporal_reg_loss
             + gaze_ds_awareness_spatial_reg_loss
