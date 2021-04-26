@@ -10,7 +10,7 @@ def create_fusion_net(params_dict, network_out_height, network_out_width):
     use_s3d = params_dict.get("use_s3d", False)
     add_optic_flow = params_dict.get("add_optic_flow", False)
     # num_of_features in the decoder units. [Last...last-1,..,first]
-    decoder_layer_features = params_dict.get("decoder_layer_features", [8, 32, 64, 128])
+    decoder_layer_features = params_dict.get("decoder_layer_features", [16, 32, 64, 128, 256])
     reduced_middle_layer_size = params_dict.get("reduced_middle_layer_size", 512)
 
     if not use_s3d:

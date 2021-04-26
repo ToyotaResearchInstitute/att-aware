@@ -111,7 +111,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--batch_size",
         action="store",
         type=int,
-        default=8,
+        default=4,
         help="Batch size used for the gaze dataset and the overlap dataset",
     )
     parser.add_argument(
@@ -133,7 +133,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--batch_aggregation_size",
         action="store",
         type=int,
-        default=4,
+        default=8,
         help="Number of batches for which the gradients are accumulated before performing backprop",
     )
 
@@ -141,7 +141,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--learning_rate",
         action="store",
         type=float,
-        default=5e-4,
+        default=5e-3,
         help="Initial learning rate used for the main training",
     )
 
@@ -502,25 +502,12 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     # )
 
     ################################### NETWORK ARGS #########################################3
-    parser.add_argument(
-        "--use_separable",
-        action="store_true",
-        default=False,
-        help="Flag for opting for separable convolutions in the decoder units. When False, full conv3ds will be used",
-    )
 
     parser.add_argument(
-        "--use_s3d_encoder",
+        "--use_s3d",
         action="store_true",
         default=False,
         help="Flag for opting for separable 3d convolutions in the encoder. When False, the encoder will consist of only Conv2D from ResNet",
-    )
-
-    parser.add_argument(
-        "--use_relu",
-        action="store_true",
-        default=False,
-        help="Flag for opting for using relu as the nonlinearity. When False, the nonlinearity used with Tanh",
     )
 
     parser.add_argument(
@@ -543,7 +530,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--decoder_layer_features",
         nargs="*",
         type=int,
-        default=[8, 32, 64, 128],
+        default=[16, 32, 64, 128, 256],
         help="Number of features in each of the decoder units in the Decoder. When using s3D, the list should contain 5 elements, otherwise 4",
     )
     ########################################## LOSS FUNCTION ARGS #######################################
@@ -552,7 +539,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--gt_prior_loss_coeff",
         action="store",
         type=float,
-        default=100.0,
+        default=0.0,
         help="Coefficient on gaze transform prior loss",
     )
 
@@ -591,7 +578,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--consistency_coeff_gaze",
         action="store",
         type=float,
-        default=1e10,
+        default=1e7,
         help="Coeff for consistency smoothness coeff for gaze. ",
     )
 
@@ -599,7 +586,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--consistency_coeff_awareness",
         action="store",
         type=float,
-        default=1000,
+        default=10,
         help="Coeff for consistency smoothness coeff for awareness. ",
     )
 
@@ -614,14 +601,14 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--gaze_data_coeff",
         action="store",
         type=float,
-        default=1.0,
+        default=1.2,
         help="Coefficient on main loss term gaze log-probability",
     )
     parser.add_argument(
         "--gaze_spatial_regularization_coeff",
         action="store",
         type=float,
-        default=2000.0,
+        default=5e10,
         help="Coefficient for road image based spatial regularization coefficient for gaze",
     )
     parser.add_argument(
@@ -656,7 +643,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--awareness_label_coeff",
         action="store",
         type=float,
-        default=0.0,
+        default=1.0,
         help="Coefficient for loss computed on the attended awareness annotations",
     )
     parser.add_argument(
@@ -689,29 +676,29 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--awareness_steady_state_coeff",
         action="store",
         type=float,
-        default=1000,
+        default=0.01,
         help="Regularization on awareness steady state",
     )
-    parser.add_argument(
-        "--awareness_of_gaze_coeff",
-        action="store",
-        type=float,
-        default=5.0e2,
-        help="Regularization on awareness of gaze",
-    )
+    # parser.add_argument(
+    #     "--awareness_of_gaze_coeff",
+    #     action="store",
+    #     type=float,
+    #     default=0.0,
+    #     help="Regularization on awareness of gaze",
+    # )
 
     parser.add_argument(
         "--awareness_spatial_regularization_coeff",
         action="store",
         type=float,
-        default=50.0,
+        default=100.0,
         help="Spatial regularization coefficient for awarensss",
     )
     parser.add_argument(
         "--awareness_temporal_regularization_coeff",
         action="store",
         type=float,
-        default=50.0,
+        default=0.0,
         help="Temporal regularization coefficient for awarensss",
     )
     parser.add_argument(
@@ -725,7 +712,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--negative_difference_coeff",
         action="store",
         type=float,
-        default=10.0,
+        default=20.0,
         help="Negative difference coeff for asymmetric nonlinearity used in the awareness temporal regularization",
     )
     parser.add_argument(
@@ -739,28 +726,28 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--awareness_decay_coeff",
         action="store",
         type=float,
-        default=1000,
+        default=1500000,
         help="Coefficient for the decay loss term used for awareness",
     )
     parser.add_argument(
         "--awareness_decay_alpha",
         action="store",
         type=float,
-        default=0.05,
+        default=0.2,
         help="The decay coefficient used in the decay loss term for awareness",
     )
     parser.add_argument(
         "--optic_flow_temporal_smoothness_coeff",
         action="store",
         type=float,
-        default=1000,
+        default=600,
         help="Coeff for optic flow based smoothness",
     )
     parser.add_argument(
         "--optic_flow_temporal_smoothness_decay",
         action="store",
         type=float,
-        default=0.6,
+        default=0.5,
         help="The decay coefficient between steps",
     )
 

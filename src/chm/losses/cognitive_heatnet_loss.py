@@ -37,7 +37,7 @@ class CognitiveHeatNetLoss(object):
         # Cost coeffs and parameters
 
         # main cost term coeffs
-        self.gaze_data_coeff = self.params_dict.get("gaze_data_coeff", 1.0)
+        self.gaze_data_coeff = self.params_dict.get("gaze_data_coeff", 1.2)
         self.awareness_at_gaze_points_loss_coeff = self.params_dict.get("awareness_at_gaze_points_loss_coeff", 1)
 
         # temporal and spatial regularizations
@@ -70,7 +70,7 @@ class CognitiveHeatNetLoss(object):
         self.logprob_gap = self.params_dict.get("logprob_gap", 10)
 
         self.gt_prior_loss = gt_prior_loss
-        self.gt_prior_loss_coeff = self.params_dict.get("gt_prior_loss_coeff", 1.0)
+        self.gt_prior_loss_coeff = self.params_dict.get("gt_prior_loss_coeff", 0.0)
         self.unnormalized_gaze_loss_coeff = self.params_dict.get("unnormalized_gaze_loss_coeff", 1e-5)
         self.common_predictor_map_loss_coeff = self.params_dict.get("common_predictor_map_loss_coeff", 1e-5)
 
