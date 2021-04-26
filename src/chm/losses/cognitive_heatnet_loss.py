@@ -155,7 +155,7 @@ class CognitiveHeatNetLoss(object):
         # gaze transform prior loss. Unnormalized gaze loss, common predictor loss.
         # Regularizations to ensure that these modules don't blow up
         gaze_transform_prior_loss = self.gt_prior_loss_coeff * self.gt_prior_loss()
-        unnormalized_gaze_loss = self.unnormalized_gaze_loss_coeff * (torch.mean(unnormalized_gaze)) ** 2
+        unnormalized_gaze_loss = self.unnormalized_gaze_loss_coeff * (torch.mean(unnormalized_gaze_map)) ** 2
         common_predictor_map_loss = self.common_predictor_map_loss_coeff * torch.mean(common_predictor_map ** 2)
 
         return (
