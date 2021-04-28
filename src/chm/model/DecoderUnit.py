@@ -28,7 +28,7 @@ class DecoderUnit(torch.nn.Module):
                 padding=1,
             )
 
-        self.upsm = torch.nn.Upsample(mode="bilinear")
+        self.upsm = torch.nn.Upsample(mode="bilinear", align_corners=False)
 
         # create conv3d module for processing skip connections
         if skip_dim != 0:

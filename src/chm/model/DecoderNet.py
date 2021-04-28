@@ -99,7 +99,7 @@ class DecoderNet(torch.nn.Module):
         super().__init__()
         self.decoder_layers = decoder_layers  # these are the DecoderUnits.
         self.skip_layers_keys = skip_layers_keys
-        self.upsm = torch.nn.Upsample(mode="bilinear")
+        self.upsm = torch.nn.Upsample(mode="bilinear", align_corners=False)
 
     def forward(self, encoder_output_dict, side_channel_input, enc_input_shape):
         """
