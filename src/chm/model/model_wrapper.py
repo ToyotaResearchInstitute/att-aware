@@ -304,7 +304,7 @@ class ModelWrapper(torch.nn.Module):
             self.model.fusion_net.force_input_dropout = {}
             for key in self.model.fusion_net.side_channel_modules:
                 if key in self.force_dropout_list:
-                    self.model.fusion_net.force_input_dropout[key] = force_value_str
+                    self.model.fusion_net.force_input_dropout[key] = 1
 
     # getters:
     def get_dataloaders(self):
