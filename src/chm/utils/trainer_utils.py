@@ -243,7 +243,9 @@ def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correct
 
 
 # Data batch parsing functions.
-def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict, device, has_pairwise_item=True):
+def process_and_extract_data_batch(
+    data_batch, gaze_corruption, gaze_correction, input_process_dict, device, has_pairwise_item=True
+):
     (
         gaze_data_batch,
         awareness_data_batch,
@@ -254,7 +256,7 @@ def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction,
         gaze_corruption=gaze_corruption,
         gaze_correction=gaze_correction,
         input_process_dict=input_process_dict,
-        has_pairwise_item=has_pairwise_item
+        has_pairwise_item=has_pairwise_item,
     )
 
     # move input and target to appropriate device.
@@ -275,7 +277,7 @@ def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction,
         awareness_data_batch,
         pairwise_gaze_data_batch_t,
         pairwise_gaze_data_batch_tp1,
-        has_pairwise_item=has_pairwise_item
+        has_pairwise_item=has_pairwise_item,
     )
 
     # extract annotation info
@@ -397,7 +399,11 @@ def sample_to_device(data_batch_list, device):
 
 
 def extract_individual_batch_input(
-    gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1, has_pairwise_item
+    gaze_data_batch,
+    awareness_data_batch,
+    pairwise_gaze_data_batch_t,
+    pairwise_gaze_data_batch_tp1,
+    has_pairwise_item=True,
 ):
     # extract chm input from each batch
     gaze_batch_input = gaze_data_batch["batch_input"]
@@ -406,17 +412,15 @@ def extract_individual_batch_input(
     # extract aux_info list from each batch
     gaze_aux_info_list = gaze_data_batch["aux_info_list"]
     awareness_aux_info_list = awareness_data_batch["aux_info_list"]
-    
 
     # extract target from each batch
     gaze_batch_target = gaze_data_batch["batch_target"]
     awareness_batch_target = awareness_data_batch["batch_target"]
-    
 
     # extract should_use_batch
     gaze_batch_should_use_batch = gaze_data_batch["should_use_batch"]
     awareness_batch_should_use_batch = awareness_data_batch["should_use_batch"]
-    
+
     if has_pairwise_item:
         pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
         pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
@@ -456,7 +460,7 @@ def extract_individual_batch_input(
     )
 
 
-def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dictm has_pairwise_item=True):
+def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict, has_pairwise_item=True):
     # post process input before model forward (typically used in controlled experiments to modify input)
     (
         gaze_batch_input,
