@@ -170,7 +170,7 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
                 drop_last=True,
                 num_workers=num_dl_workers,
             )
-            return dataloaders
+        return dataloaders
 
     # train and test data loaders for each gaze, awareness and pairwise-gaze dataset
     print("Creating gaze ds dataloaders")

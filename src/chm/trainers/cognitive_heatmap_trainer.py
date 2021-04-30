@@ -127,9 +127,6 @@ class CHMTrainer(object):
             module.train(True)
 
         # create data loader for gaze and awareness
-        import IPython
-
-        IPython.embed(banner1="check data loader")
         dataloader_tqdm = tqdm.tqdm(
             enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
             desc="test",
