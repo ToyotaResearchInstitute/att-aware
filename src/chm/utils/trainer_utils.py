@@ -402,8 +402,6 @@ def extract_individual_batch_input(
     # extract chm input from each batch
     gaze_batch_input = gaze_data_batch["batch_input"]
     awareness_batch_input = awareness_data_batch["batch_input"]
-    if pairwise_gaze_data_batch_t is not None:
-    
 
     # extract aux_info list from each batch
     gaze_aux_info_list = gaze_data_batch["aux_info_list"]
