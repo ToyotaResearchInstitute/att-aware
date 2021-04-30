@@ -13,6 +13,7 @@ class CHMTrainer(object):
         self.save_interval = self.params_dict.get("save_interval", 1000)
         self.checkpoint_frequency = self.params_dict.get("checkpoint_frequency", 800)
         self.batch_aggregation_size = self.params_dict.get("batch_aggregation_size", 8)
+        self.force_value_strs = ["with_dropout", "with_no_dropout"]
 
     def fit(self, module):
         module.trainer = self
@@ -119,8 +120,8 @@ class CHMTrainer(object):
 
     def test(self, gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module):
         # set model to eval mode
-        assert "driver_facing" in self.params["dropout_ratio"]
-        if self.params["dropout_ratio"]["driver_facing"] < (1 - 5e-2):
+        assert "driver_facing" in self.params_dict["dropout_ratio"]
+        if self.params_dict["dropout_ratio"]["driver_facing"] < (1 - 5e-2):
             module.train(False)
         else:
             module.train(True)
@@ -130,10 +131,10 @@ class CHMTrainer(object):
             enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
             desc="test",
         )
-        force_value_strs = ["with_dropout", "with_no_dropout"]
+
         for j, data_batch in dataloader_tqdm:
             # Testing step data_batch is a tuple consisting of (gaze_item, awareness_item)
-            for force_value_str in force_value_strs:  # do one pass each for with and without dropout
+            for force_value_str in self.force_value_strs:  # do one pass each for with and without dropout
                 output = module.testing_step(data_batch, self.overall_batch_num, force_value_str)
                 loss = output["loss"]
                 stats = output["stats"]
