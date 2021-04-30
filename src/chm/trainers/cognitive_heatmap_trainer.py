@@ -70,7 +70,7 @@ class CHMTrainer(object):
                 module.save_model(self.overall_batch_num)
 
             # Test phase during training.
-            if (self.overall_batch_num % self.checkpoint_frequency == 1) and not self.params["no_run_test"]:
+            if (self.overall_batch_num % self.checkpoint_frequency == 1) and not self.params_dict["no_run_test"]:
                 self.test(
                     gaze_dataloaders,
                     awareness_dataloaders,
@@ -125,6 +125,7 @@ class CHMTrainer(object):
         else:
             module.train(True)
 
+        # create data loader for gaze and awareness
         dataloader_tqdm = tqdm.tqdm(
             enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
             desc="test",

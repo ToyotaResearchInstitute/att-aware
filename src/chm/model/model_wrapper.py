@@ -298,9 +298,9 @@ class ModelWrapper(torch.nn.Module):
         pass
 
     def set_force_dropout(self, force_value_str):
-        if force_value_str is "with_no_dropout":
+        if force_value_str == "with_no_dropout":
             self.model.fusion_net.force_input_dropout = {}
-        elif force_value_str is "with_dropout":
+        elif force_value_str == "with_dropout":
             self.model.fusion_net.force_input_dropout = {}
             for key in self.model.fusion_net.side_channel_modules:
                 if key in self.force_dropout_list:
