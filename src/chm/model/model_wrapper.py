@@ -252,16 +252,16 @@ class ModelWrapper(torch.nn.Module):
         (
             gaze_batch_input,
             awareness_batch_input,
-            _,_
+            _,_,
             gaze_aux_info_list,
             awareness_aux_info_list,
-            _,_
+            _,_,
             gaze_batch_target,
             awareness_batch_target,
-            _,_
+            _,_,
             gaze_batch_should_use_batch,
             awareness_batch_should_use_batch,
-            _, _
+            _,_,
         ) = individual_batch_inputs
         
         output = {}

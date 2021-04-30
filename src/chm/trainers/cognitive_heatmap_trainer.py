@@ -156,6 +156,10 @@ class CHMTrainer(object):
 
                 del loss
 
+            import IPython
+
+            IPython.embed(banner1="check test loop")
+
             self.overall_batch_num += 1
 
         # set model back to train mode
