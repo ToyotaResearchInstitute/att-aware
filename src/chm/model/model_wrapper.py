@@ -38,9 +38,12 @@ class ModelWrapper(torch.nn.Module):
         if not self.log_dir is None:
             if self.training_hash is None:
                 self.training_hash = self.log_dir
-            logger = tensorboardX.SummaryWriter(log_dir=self.log_dir + self.training_hash, comment=self.training_hash)
+            self.logger = tensorboardX.SummaryWriter(
+                log_dir=self.log_dir + self.training_hash, comment=self.training_hash
+            )
+        else:
+            self.logger = None
 
-        self.logger = logger
         # create directory for saving the model
         self.save_model_dir = os.path.join(os.path.expanduser("~"), "cognitive_heatmap", "models", self.training_hash)
         os.makedirs(self.save_model_dir, exist_ok=True)
@@ -55,6 +58,7 @@ class ModelWrapper(torch.nn.Module):
         self.gaze_correction = self.params_dict.get("gaze_correction", None)
         self.input_process_dict = self.params_dict.get("input_process_dict", None)
         self.output_process_dict = self.params_dict.get("output_process_dict", None)
+        self.force_dropout_list = self.params_dict.get("force_dropout_list", ["driver_facing"])
         self.results_aggregator = {}
 
         # create model and loss function and put it on the correct device.
@@ -232,11 +236,72 @@ class ModelWrapper(torch.nn.Module):
         output = {"loss": loss, "stats": stats}
         return output
 
-    def testing_step(self):
-        pass
+    def testing_step(self, data_batch, *args):
+        # parse all the batches properly.
+        overall_batch_num = args[0]
+        force_value_str = args[1]
+
+        individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
+            data_batch,
+            self.gaze_corruption,
+            self.gaze_correction,
+            self.input_process_dict,
+            self.device,
+            has_pairwise_item=False,
+        )
+        (
+            gaze_batch_input,
+            awareness_batch_input,
+            _,_
+            gaze_aux_info_list,
+            awareness_aux_info_list,
+            _,_
+            gaze_batch_target,
+            awareness_batch_target,
+            _,_
+            gaze_batch_should_use_batch,
+            awareness_batch_should_use_batch,
+            _, _
+        ) = individual_batch_inputs
+        
+        output = {}
+        self.set_force_dropout(force_value_str)
+        with torch.no_grad():  # save memory. no grad computation needed during test time.
+            predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
+            predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+            
+            loss, stats = self.loss_fn.loss(
+            predicted_gaze_output,
+            gaze_batch_input,
+            gaze_batch_target,
+            predicted_awareness_output,
+            awareness_batch_input,
+            awareness_batch_target,
+            awareness_batch_annotation_data,
+            None,
+            None,
+            None
+            None,
+            None, None
+        )
+        output['loss'] = loss
+        output['stats'] = stats
+
+        return output
+
 
     def visualization_step(self):
         pass
+    
+    def set_force_dropout(self, force_value_str):
+        if force_value_str is 'with_no_dropout':
+            self.model.fusion_net.force_input_dropout = {}
+        elif force_value_str is 'with_dropout':
+            self.model.fusion_net.force_input_dropout = {}
+            for key in self.model.fusion_net.side_channel_modules:
+                if key in self.force_dropout_list:
+                    self.model.fusion_net.force_input_dropout[
+                        key] = force_value_str
 
     # getters:
     def get_dataloaders(self):
@@ -259,9 +324,10 @@ class ModelWrapper(torch.nn.Module):
             if p.requires_grad:
                 params_require_grad_names.append(p.name)
 
-        self.logger.add_text(tag="model_param_counts", text_string=str(params_elements))
-        self.logger.add_text(tag="require_grad_param_counts", text_string=str(params_require_grad_elements))
-        self.logger.add_text(tag="require_grad_param_names", text_string=str(params_require_grad_names))
+        if self.logger is not None:
+            self.logger.add_text(tag="model_param_counts", text_string=str(params_elements))
+            self.logger.add_text(tag="require_grad_param_counts", text_string=str(params_require_grad_elements))
+            self.logger.add_text(tag="require_grad_param_names", text_string=str(params_require_grad_names))
 
     def save_model(self, overall_batch_num):
         try:

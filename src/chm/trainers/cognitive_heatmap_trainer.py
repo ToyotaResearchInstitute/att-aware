@@ -70,20 +70,20 @@ class CHMTrainer(object):
                 module.save_model(self.overall_batch_num)
 
             # Test phase during training.
-            if (self.overall_batch_num % self.checkpoint_frequency == 0) and not self.params["no_run_test"]:
+            if (self.overall_batch_num % self.checkpoint_frequency == 1) and not self.params["no_run_test"]:
                 self.test(
                     gaze_dataloaders,
                     awareness_dataloaders,
                     pairwise_gaze_dataloaders,
                     module,
                 )
-                module.train()
 
             # Training step data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
             output = module.training_step(data_batch, self.overall_batch_num)
 
             # Perform back prop
             loss = output["loss"]
+            stats = output["stats"]
             self.cumulative_batch_loss += loss.sum().cpu().detach()
             loss = loss.mean()
             if self.overall_batch_num % self.batch_aggregation_size == 0:
@@ -101,12 +101,62 @@ class CHMTrainer(object):
             else:
                 dataloader_tqdm.set_description("train" + ": {}".format(self.cumulative_batch_loss.detach() / (i + 1)))
 
+            if module.logger is not None:
+                module.logger.add_scalar(
+                    tag="train" + "/batch_loss", scalar_value=loss.cpu().detach(), global_step=self.overall_batch_num
+                )
+                for key in stats.keys():
+                    if type(stats[key]) is dict:
+                        continue
+                    else:
+                        module.logger.add_scalar(
+                            tag="train" + "/batch_" + key,
+                            scalar_value=stats[key].cpu().detach(),
+                            global_step=self.overall_batch_num,
+                        )
+
+            del loss
+
     def test(self, gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module):
         # set model to eval mode
-        module.eval()
+        assert "driver_facing" in self.params["dropout_ratio"]
+        if self.params["dropout_ratio"]["driver_facing"] < (1 - 5e-2):
+            module.train(False)
+        else:
+            module.train(True)
+
         dataloader_tqdm = tqdm.tqdm(
-            enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"], pairwise_gaze_dataloaders["test"])),
+            enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
             desc="test",
         )
+        force_value_strs = ["with_dropout", "with_no_dropout"]
+        for j, data_batch in dataloader_tqdm:
+            # Testing step data_batch is a tuple consisting of (gaze_item, awareness_item)
+            for force_value_str in force_value_strs:  # do one pass each for with and without dropout
+                output = module.testing_step(data_batch, self.overall_batch_num, force_value_str)
+                loss = output["loss"]
+                stats = output["stats"]
+                loss = loss.mean()
+                loss = loss.detach()
+                if module.logger is not None:
+                    module.logger.add_scalar(
+                        tag="test" + "/batch_loss_" + force_value_str,
+                        scalar_value=loss.cpu().detach(),
+                        global_step=self.overall_batch_num,
+                    )
+                    for key in stats.keys():
+                        if type(stats[key]) is dict:
+                            continue
+                        else:
+                            module.logger.add_scalar(
+                                tag="test" + "/batch_" + key + "_" + force_value_str,
+                                scalar_value=stats[key].cpu().detach(),
+                                global_step=self.overall_batch_num,
+                            )
+
+                del loss
+
+            self.overall_batch_num += 1
+
         # set model back to train mode
-        module.train()
+        module.train(True)

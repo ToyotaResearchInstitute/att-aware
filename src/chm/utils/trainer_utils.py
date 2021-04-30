@@ -180,9 +180,12 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
         awareness_datasets, num_test_samples, awareness_batch_size, num_dl_workers
     )
     print("Creating pairwise-gaze ds dataloaders")
-    pairwise_gaze_dataloaders = individual_data_loaders(
-        pairwise_gaze_datasets, num_test_samples, batch_size, num_dl_workers
-    )
+    if pairwise_gaze_datasets is not None:
+        pairwise_gaze_dataloaders = individual_data_loaders(
+            pairwise_gaze_datasets, num_test_samples, batch_size, num_dl_workers
+        )
+    else:
+        pairwise_gaze_dataloaders = None
 
     return gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders
 
@@ -240,7 +243,7 @@ def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correct
 
 
 # Data batch parsing functions.
-def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict, device):
+def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict, device, has_pairwise_item=True):
     (
         gaze_data_batch,
         awareness_data_batch,
@@ -251,6 +254,7 @@ def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction,
         gaze_corruption=gaze_corruption,
         gaze_correction=gaze_correction,
         input_process_dict=input_process_dict,
+        has_pairwise_item=has_pairwise_item
     )
 
     # move input and target to appropriate device.
@@ -271,6 +275,7 @@ def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction,
         awareness_data_batch,
         pairwise_gaze_data_batch_t,
         pairwise_gaze_data_batch_tp1,
+        has_pairwise_item=has_pairwise_item
     )
 
     # extract annotation info
@@ -281,18 +286,23 @@ def process_and_extract_data_batch(data_batch, gaze_corruption, gaze_correction,
     }
     # post process and separate the individual batch inputs
     individual_batch_inputs = post_process_individual_batch_inputs(
-        individual_batch_inputs, input_process_dict=input_process_dict
+        individual_batch_inputs, input_process_dict=input_process_dict, has_pairwise_item=has_pairwise_item
     )
 
     return individual_batch_inputs, awareness_batch_annotation_data
 
 
-def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict):
-    (gaze_item, awareness_item, pairwise_gaze_item) = data_batch
+def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process_dict, has_pairwise_item=True):
+    if has_pairwise_item:
+        (gaze_item, awareness_item, pairwise_gaze_item) = data_batch
+    else:
+        (gaze_item, awareness_item) = data_batch
+
     (gaze_data_dict, gaze_aux_info_list) = gaze_item
     (awareness_data_dict, awareness_aux_info_list) = awareness_item
-    (pairwise_gaze_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
-    (pairwise_gaze_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
+    if has_pairwise_item:
+        (pairwise_gaze_data_dict_t, pairwise_gaze_aux_info_list_t) = pairwise_gaze_item["data_t"]
+        (pairwise_gaze_data_dict_tp1, pairwise_gaze_aux_info_list_tp1) = pairwise_gaze_item["data_tp1"]
 
     # parse gaze data items
     gaze_batch_input, gaze_batch_target, gaze_aux_info_list, gaze_should_use_batch = parse_data_item(
@@ -332,81 +342,101 @@ def parse_data_batch(data_batch, gaze_corruption, gaze_correction, input_process
     awareness_data_batch["batch_annotation_query_y"] = awareness_data_dict["att_annotation"]["query_y"]
 
     # parse pairwise data item at t
-    (
-        pairwise_gaze_batch_input_t,
-        pairwise_gaze_batch_target_t,
-        pairwise_gaze_aux_info_list_t,
-        pairwise_gaze_should_use_batch_t,
-    ) = parse_data_item(
-        pairwise_gaze_data_dict_t,
-        pairwise_gaze_aux_info_list_t,
-        gaze_corruption=gaze_corruption,
-        gaze_correction=gaze_correction,
-        input_process_dict=input_process_dict,
-    )
-    pairwise_gaze_data_batch_t = {}
-    pairwise_gaze_data_batch_t["batch_input"] = pairwise_gaze_batch_input_t
-    pairwise_gaze_data_batch_t["batch_target"] = pairwise_gaze_batch_target_t
-    pairwise_gaze_data_batch_t["aux_info_list"] = pairwise_gaze_aux_info_list_t
-    pairwise_gaze_data_batch_t["should_use_batch"] = pairwise_gaze_should_use_batch_t
-    # parse pairwise data item at tp1
-    (
-        pairwise_gaze_batch_input_tp1,
-        pairwise_gaze_batch_target_tp1,
-        pairwise_gaze_aux_info_list_tp1,
-        pairwise_gaze_should_use_batch_tp1,
-    ) = parse_data_item(
-        pairwise_gaze_data_dict_tp1,
-        pairwise_gaze_aux_info_list_tp1,
-        gaze_corruption=gaze_corruption,
-        gaze_correction=gaze_correction,
-        input_process_dict=input_process_dict,
-    )
-    pairwise_gaze_data_batch_tp1 = {}
-    pairwise_gaze_data_batch_tp1["batch_input"] = pairwise_gaze_batch_input_tp1
-    pairwise_gaze_data_batch_tp1["batch_target"] = pairwise_gaze_batch_target_tp1
-    pairwise_gaze_data_batch_tp1["aux_info_list"] = pairwise_gaze_aux_info_list_tp1
-    pairwise_gaze_data_batch_tp1["should_use_batch"] = pairwise_gaze_should_use_batch_tp1
+    if has_pairwise_item:
+        (
+            pairwise_gaze_batch_input_t,
+            pairwise_gaze_batch_target_t,
+            pairwise_gaze_aux_info_list_t,
+            pairwise_gaze_should_use_batch_t,
+        ) = parse_data_item(
+            pairwise_gaze_data_dict_t,
+            pairwise_gaze_aux_info_list_t,
+            gaze_corruption=gaze_corruption,
+            gaze_correction=gaze_correction,
+            input_process_dict=input_process_dict,
+        )
+        pairwise_gaze_data_batch_t = {}
+        pairwise_gaze_data_batch_t["batch_input"] = pairwise_gaze_batch_input_t
+        pairwise_gaze_data_batch_t["batch_target"] = pairwise_gaze_batch_target_t
+        pairwise_gaze_data_batch_t["aux_info_list"] = pairwise_gaze_aux_info_list_t
+        pairwise_gaze_data_batch_t["should_use_batch"] = pairwise_gaze_should_use_batch_t
+        # parse pairwise data item at tp1
+        (
+            pairwise_gaze_batch_input_tp1,
+            pairwise_gaze_batch_target_tp1,
+            pairwise_gaze_aux_info_list_tp1,
+            pairwise_gaze_should_use_batch_tp1,
+        ) = parse_data_item(
+            pairwise_gaze_data_dict_tp1,
+            pairwise_gaze_aux_info_list_tp1,
+            gaze_corruption=gaze_corruption,
+            gaze_correction=gaze_correction,
+            input_process_dict=input_process_dict,
+        )
+        pairwise_gaze_data_batch_tp1 = {}
+        pairwise_gaze_data_batch_tp1["batch_input"] = pairwise_gaze_batch_input_tp1
+        pairwise_gaze_data_batch_tp1["batch_target"] = pairwise_gaze_batch_target_tp1
+        pairwise_gaze_data_batch_tp1["aux_info_list"] = pairwise_gaze_aux_info_list_tp1
+        pairwise_gaze_data_batch_tp1["should_use_batch"] = pairwise_gaze_should_use_batch_tp1
+    else:
+        pairwise_gaze_data_batch_t = None
+        pairwise_gaze_data_batch_tp1 = None
 
     return gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1
 
 
 def sample_to_device(data_batch_list, device):
     for data_batch in data_batch_list:
-        for key in data_batch["batch_input"].keys():
-            data_batch["batch_input"][key] = data_batch["batch_input"][key].to(device)
+        if data_batch is not None:
+            for key in data_batch["batch_input"].keys():
+                data_batch["batch_input"][key] = data_batch["batch_input"][key].to(device)
 
-        data_batch["batch_target"] = data_batch["batch_target"].to(device)
-        if "batch_annotation_target" in data_batch:
-            data_batch["batch_annotation_target"] = data_batch["batch_annotation_target"].to(device)
+            data_batch["batch_target"] = data_batch["batch_target"].to(device)
+            if "batch_annotation_target" in data_batch:
+                data_batch["batch_annotation_target"] = data_batch["batch_annotation_target"].to(device)
 
 
 def extract_individual_batch_input(
-    gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1
+    gaze_data_batch, awareness_data_batch, pairwise_gaze_data_batch_t, pairwise_gaze_data_batch_tp1, has_pairwise_item
 ):
     # extract chm input from each batch
     gaze_batch_input = gaze_data_batch["batch_input"]
     awareness_batch_input = awareness_data_batch["batch_input"]
-    pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
-    pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
+    if pairwise_gaze_data_batch_t is not None:
+    
 
     # extract aux_info list from each batch
     gaze_aux_info_list = gaze_data_batch["aux_info_list"]
     awareness_aux_info_list = awareness_data_batch["aux_info_list"]
-    pairwise_gaze_aux_info_list_t = pairwise_gaze_data_batch_t["aux_info_list"]
-    pairwise_gaze_aux_info_list_tp1 = pairwise_gaze_data_batch_tp1["aux_info_list"]
+    
 
     # extract target from each batch
     gaze_batch_target = gaze_data_batch["batch_target"]
     awareness_batch_target = awareness_data_batch["batch_target"]
-    pairwise_gaze_batch_target_t = pairwise_gaze_data_batch_t["batch_target"]
-    pairwise_gaze_batch_target_tp1 = pairwise_gaze_data_batch_tp1["batch_target"]
+    
 
     # extract should_use_batch
     gaze_batch_should_use_batch = gaze_data_batch["should_use_batch"]
     awareness_batch_should_use_batch = awareness_data_batch["should_use_batch"]
-    pairwise_gaze_batch_should_use_batch_t = pairwise_gaze_data_batch_t["should_use_batch"]
-    pairwise_gaze_batch_should_use_batch_tp1 = pairwise_gaze_data_batch_tp1["should_use_batch"]
+    
+    if has_pairwise_item:
+        pairwise_gaze_batch_input_t = pairwise_gaze_data_batch_t["batch_input"]
+        pairwise_gaze_batch_input_tp1 = pairwise_gaze_data_batch_tp1["batch_input"]
+        pairwise_gaze_aux_info_list_t = pairwise_gaze_data_batch_t["aux_info_list"]
+        pairwise_gaze_aux_info_list_tp1 = pairwise_gaze_data_batch_tp1["aux_info_list"]
+        pairwise_gaze_batch_target_t = pairwise_gaze_data_batch_t["batch_target"]
+        pairwise_gaze_batch_target_tp1 = pairwise_gaze_data_batch_tp1["batch_target"]
+        pairwise_gaze_batch_should_use_batch_t = pairwise_gaze_data_batch_t["should_use_batch"]
+        pairwise_gaze_batch_should_use_batch_tp1 = pairwise_gaze_data_batch_tp1["should_use_batch"]
+    else:
+        pairwise_gaze_batch_input_t = None
+        pairwise_gaze_batch_input_tp1 = None
+        pairwise_gaze_aux_info_list_t = None
+        pairwise_gaze_aux_info_list_tp1 = None
+        pairwise_gaze_batch_target_t = None
+        pairwise_gaze_batch_target_tp1 = None
+        pairwise_gaze_batch_should_use_batch_t = None
+        pairwise_gaze_batch_should_use_batch_tp1 = None
 
     return (
         gaze_batch_input,
@@ -428,7 +458,7 @@ def extract_individual_batch_input(
     )
 
 
-def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict):
+def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dictm has_pairwise_item=True):
     # post process input before model forward (typically used in controlled experiments to modify input)
     (
         gaze_batch_input,
@@ -470,27 +500,28 @@ def post_process_individual_batch_inputs(individual_batch_inputs, input_process_
                     input_process_dict["post_parse_data_item"]["params"],
                 )
 
-                (
-                    pairwise_gaze_batch_input_t,
-                    pairwise_gaze_aux_info_list_t,
-                    pairwise_gaze_should_use_batch_t,
-                ) = post_parse_data_item_functor(
-                    pairwise_gaze_batch_input_t,
-                    pairwise_gaze_aux_info_list_t,
-                    pairwise_gaze_should_use_batch_t,
-                    input_process_dict["post_parse_data_item"]["params"],
-                )
+                if has_pairwise_item:
+                    (
+                        pairwise_gaze_batch_input_t,
+                        pairwise_gaze_aux_info_list_t,
+                        pairwise_gaze_should_use_batch_t,
+                    ) = post_parse_data_item_functor(
+                        pairwise_gaze_batch_input_t,
+                        pairwise_gaze_aux_info_list_t,
+                        pairwise_gaze_should_use_batch_t,
+                        input_process_dict["post_parse_data_item"]["params"],
+                    )
 
-                (
-                    pairwise_gaze_batch_input_tp1,
-                    pairwise_gaze_aux_info_list_tp1,
-                    pairwise_gaze_should_use_batch_tp1,
-                ) = post_parse_data_item_functor(
-                    pairwise_gaze_batch_input_tp1,
-                    pairwise_gaze_aux_info_list_tp1,
-                    pairwise_gaze_should_use_batch_tp1,
-                    input_process_dict["post_parse_data_item"]["params"],
-                )
+                    (
+                        pairwise_gaze_batch_input_tp1,
+                        pairwise_gaze_aux_info_list_tp1,
+                        pairwise_gaze_should_use_batch_tp1,
+                    ) = post_parse_data_item_functor(
+                        pairwise_gaze_batch_input_tp1,
+                        pairwise_gaze_aux_info_list_tp1,
+                        pairwise_gaze_should_use_batch_tp1,
+                        input_process_dict["post_parse_data_item"]["params"],
+                    )
 
     return (
         gaze_batch_input,
