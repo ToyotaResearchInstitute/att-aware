@@ -336,27 +336,27 @@ class ModelWrapper(torch.nn.Module):
 
             # visualize gaze heatmap overlay from the gaze dataset
             visualize_overlaid_images(
-                predicted_gaze_output,
-                gaze_batch_input,
-                gaze_batch_target,
-                num_visualization_examples,
-                self.logger,
+                predicted_output=predicted_gaze_output,
+                batch_input=gaze_batch_input,
+                batch_target=gaze_batch_target,
+                logger=self.logger,
                 is_gaze=True,
                 force_value_str=force_value_str,
                 dl_key="test",
                 global_step=overall_batch_num,
+                num_visualization_examples=num_visualization_examples,
             )
             # visualize awareness heatmap overlay from the gaze dataset
             visualize_overlaid_images(
-                predicted_gaze_output,
-                gaze_batch_input,
-                gaze_batch_target,
-                num_visualization_examples,
-                self.logger,
+                predicted_output=predicted_gaze_output,
+                batch_input=gaze_batch_input,
+                batch_target=gaze_batch_target,
+                logger=self.logger,
                 is_gaze=False,
                 force_value_str=force_value_str,
                 dl_key="test",
                 global_step=overall_batch_num,
+                num_visualization_examples=num_visualization_examples,
                 color_range=[0, 1],
             )
             # visualize awareness labels

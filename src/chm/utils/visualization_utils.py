@@ -9,8 +9,8 @@ def visualize_overlaid_images(
     predicted_output,
     batch_input,
     batch_target,
-    num_visualization_examples=5,
     global_step,
+    num_visualization_examples=5,
     logger=None,
     is_gaze=True,
     normalize_scale=255,
@@ -42,19 +42,19 @@ def visualize_overlaid_images(
 
             if is_gaze:
                 # accumulate gaze heatmap
-                img = predicted_gaze["gaze_density_map"][instance_idx, 0, 0, :, :].cpu().detach().numpy()
-                seq_len = predicted_gaze["gaze_density_map"].shape[1]
+                img = predicted_output["gaze_density_map"][instance_idx, 0, 0, :, :].cpu().detach().numpy()
+                seq_len = predicted_output["gaze_density_map"].shape[1]
                 if cumulative:
                     for i in range(1, seq_len):  # accumulate the heatmaps for each timestep in the timeslice.
-                        img += predicted_gaze["gaze_density_map"][instance_idx, i, 0, :, :].cpu().detach().numpy()
+                        img += predicted_output["gaze_density_map"][instance_idx, i, 0, :, :].cpu().detach().numpy()
                     num_images_fused = seq_len
             else:
                 # accumulate awareness heatmap
-                img = predicted_gaze["awareness_map"][instance_idx, 0, 0, :, :].cpu().detach().numpy()
-                seq_len = predicted_gaze["awareness_map"].shape[1]
+                img = predicted_output["awareness_map"][instance_idx, 0, 0, :, :].cpu().detach().numpy()
+                seq_len = predicted_output["awareness_map"].shape[1]
                 if cumulative:
                     for i in range(1, seq_len):  # accumulate the heatmaps for each timestep in the timeslice.
-                        img += predicted_gaze["awareness_map"][instance_idx, i, 0, :, :].cpu().detach().numpy()
+                        img += predicted_output["awareness_map"][instance_idx, i, 0, :, :].cpu().detach().numpy()
                     num_images_fused = seq_len
 
             img /= num_images_fused
