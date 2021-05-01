@@ -188,10 +188,6 @@ class ModelWrapper(torch.nn.Module):
             )
             should_drop_indices_dict_tp1, should_drop_entire_channel_dict_tp1 = should_drop_dicts_tp1
 
-            import IPython
-
-            IPython.embed(banner1="check trainig batch in training")
-
             # these asserts are to make sure that both tp and tp1 used the same dropout indices.
             assert (
                 should_drop_indices_dict.keys()

@@ -183,3 +183,5 @@ class CHMTrainer(object):
                     )
 
                 break
+
+            module.train(False)
