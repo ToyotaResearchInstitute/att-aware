@@ -5,8 +5,8 @@ import numpy as np
 from chm.dataset.chm_gaze_dataset import CHMGazeDataset
 from chm.dataset.chm_att_awareness_dataset import CHMAttAwarenessDataset
 from chm.dataset.chm_pairwise_gaze_dataset import CHMPairwiseGazeDataset
-from chm.model.cognitive_heatnet import CognitiveHeatNet
-from chm.losses.cognitive_heatnet_loss import CognitiveHeatNetLoss
+from chm.model.chm_net import CHMNet
+from chm.losses.chm_loss import CHMLoss
 from torch.utils.data import DataLoader, Subset, sampler
 from utils.chm_consts import *
 from functools import partial
@@ -192,10 +192,10 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
 
 def create_model_and_loss_fn(params_dict):
 
-    model = CognitiveHeatNet(params_dict)
+    model = CHMNet(params_dict)
     _, _, gaze_transform_prior_loss = model.get_modules()  # handle to prior_loss()
 
-    loss_fn = CognitiveHeatNetLoss(params_dict, gt_prior_loss=partial(gaze_transform_prior_loss))
+    loss_fn = CHMLoss(params_dict, gt_prior_loss=partial(gaze_transform_prior_loss))
 
     load_model_path = params_dict["load_model_path"]
     if load_model_path is not None:

@@ -24,7 +24,7 @@ def create_identity_gaze_transform(scale_factor=1.0):
     return gaze_transform
 
 
-class CognitiveHeatNet(torch.nn.Module):
+class CHMNet(torch.nn.Module):
     def __init__(self, params_dict):
         """
         Model class encapsulating Fusion Net (encoder, decoder, side-channel) and MapPredictor networks for CHM

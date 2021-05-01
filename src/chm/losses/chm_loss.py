@@ -6,9 +6,18 @@ from chm.losses.regularizations import EPSpatialRegularization, EPTemporalRegula
 from chm.losses.awareness_label_loss import AwarenessPointwiseLabelLoss
 
 
-class CognitiveHeatNetLoss(object):
+class CHMLoss(object):
     def __init__(self, params_dict, gt_prior_loss=None):
+        """
+        Class for computing the total loss for CHM.
+        Parameters:
+        ----------
+        params_dict: dict
+            params dict containing the args from args_file.py
+        gt_prior_loss: functools.partial
+            function handle to compute the loss term on the gaze transform module
 
+        """
         self.params_dict = params_dict
 
         self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ratio_reduction_factor", 8)
@@ -82,6 +91,9 @@ class CognitiveHeatNetLoss(object):
         self.common_predictor_map_loss_coeff = self.params_dict.get("common_predictor_map_loss_coeff", 1e-5)
 
     def _compute_common_loss(self, predicted_output, batch_input, batch_target):
+        """
+        Computes common loss terms and regularization costs
+        """
         # extract the gaze and awareness maps from the output dictionary
         normalized_gaze_map = predicted_output["gaze_density_map"]
         log_normalized_gaze_map = predicted_output["log_gaze_density_map"]
@@ -95,7 +107,7 @@ class CognitiveHeatNetLoss(object):
         # main gaze cost term
         negative_logprob = self._compute_nll(normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target)
 
-        # aware at gaze points
+        # aware at gaze points loss
         (
             awareness_at_gaze_points_loss,
             awareness_at_gaze_points_loss_pre_mult,
@@ -345,6 +357,9 @@ class CognitiveHeatNetLoss(object):
         return optic_flow_awareness_temporal_smoothness
 
     def _compute_consistency_smoothness(self, predicted_gaze_t, predicted_gaze_tp1):
+        """
+        Compute consistency loss between predicted two sequences offset by one hopsize (temporal_downsample_factor)
+        """
         normalized_gaze_map_t = predicted_gaze_t["gaze_density_map"]  # (B, T, 1, H, W)
         awareness_map_t = predicted_gaze_t["awareness_map"]  # (B, T, 1, H, W)
 
@@ -394,7 +409,7 @@ class CognitiveHeatNetLoss(object):
         Computes the total network loss for CHM
         Parameters:
         ---------
-        In the following * is in [gaze, awareness, pairwise_gaze]. Pairwise gaze is also for time t and t+1 (tp1)
+        In the following * is in [gaze, awareness, pairwise_gaze]. Pairwise gaze is also for time t and t+1 (tp1), appended to the variable name.
         predicted_*_output: dict
             dict containing the output heatmaps
         *_batch_input: dict

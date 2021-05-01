@@ -11,6 +11,8 @@ class AwarenessPointwiseLabelLoss:
             string indicating the type of loss to be computed. ['huber_loss', 'squared_loss']
         patch_half_size: int
             half size of the patch around the label to be considered for computing loss
+        annotation_image_size: list
+            list containing channel, height, weight information of the full size videos used for annotations
         """
         assert loss_type == "huber_loss" or loss_type == "squared_loss"
         self.loss_type = loss_type
