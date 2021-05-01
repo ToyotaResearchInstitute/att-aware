@@ -55,6 +55,7 @@ class CHMTrainer(object):
             desc="train",
         )
         for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
+            continue
             if (training_batch_i + 1) % self.lr_update_num == 0 and optimizer.param_groups[0]["lr"] > self.lr_min_bound:
                 print("Update lr")
                 scheduler.step()
