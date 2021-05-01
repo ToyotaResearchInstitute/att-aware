@@ -97,5 +97,6 @@ class CHMGazeDataset(CHMBaseDataset):
             List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
         """
         (video_id, subject, task), query_frame = self.metadata_list[idx]
+        print("Gaze", (video_id, subject, task, query_frame))
         data_dict, auxiliary_info_list = self._get_sequence(video_id, subject, task, query_frame)
         return data_dict, auxiliary_info_list

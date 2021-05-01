@@ -77,6 +77,7 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
         """
         data_dict = {}
         (video_id, subject, task), query_frame_t, query_frame_tp1 = self.metadata_list[idx]
+        print("Pairwise", (video_id, subject, task, query_frame_t, query_frame_tp1))
         # get gaze data for sequence at t
         data_dict_t, auxiliary_info_list_t = self._get_sequence(video_id, subject, task, query_frame_t)
         # get gaze data for sequence at t+self.temporal_downsample_factor
