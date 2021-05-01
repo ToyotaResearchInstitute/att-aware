@@ -98,7 +98,9 @@ class CHMTrainer(object):
             if torch.isnan(loss).sum() or loss.numel() == 0:
                 print("skipped: " + str(loss))
             else:
-                dataloader_tqdm.set_description("train" + ": {}".format(self.cumulative_batch_loss.detach() / (i + 1)))
+                dataloader_tqdm.set_description(
+                    "train" + ": {}".format(self.cumulative_batch_loss.detach() / (training_batch_i + 1))
+                )
 
             if module.logger is not None:
                 module.logger.add_scalar(

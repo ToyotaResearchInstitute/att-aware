@@ -28,7 +28,6 @@ def visualize_overlaid_images(
     assert logger is not None
     for instance_idx in range(num_visualization_examples):
         # if the instance idx is greater than the batch size break this loop
-        print("VIS INSTANCE", instance_idx)
         if instance_idx >= batch_target.shape[0]:
             break
 
@@ -87,6 +86,8 @@ def visualize_overlaid_images(
             num_ticks = np.size(cb.get_ticks())  # number of tick marks on the color bar
             # make the tick mark labels to be the true probabilities and not the normalized probabilities
             cb.ax.set_yticklabels(np.around(np.linspace(img_qs[0], img_qs[1], num=num_ticks), decimals=7))
+
+            # plot gaze points
             if cumulative:
                 target = batch_target[instance_idx, :, :, :].cpu().detach()  # (T, L, 2)
             else:
@@ -163,9 +164,16 @@ def visualize_overlaid_images(
                         # plotting lines when cumulative is just too messy.
                         plt.plot([target_np[i, 0], noisy_gaze[i, 0]], [target_np[i, 1], noisy_gaze[i, 1]], "y")
 
+            # log the visualized heatmaps on tensorboard
             if is_gaze:
                 logger.add_figure(
                     tag=dl_key + "/gaze_heatmap" + postfix_str + str(instance_idx) + "_" + force_value_str,
+                    figure=fg,
+                    global_step=global_step,
+                )
+            else:
+                logger.add_figure(
+                    tag=dl_key + "/awareness_heatmap" + postfix_str + str(instance_idx) + "_" + force_value_str,
                     figure=fg,
                     global_step=global_step,
                 )
