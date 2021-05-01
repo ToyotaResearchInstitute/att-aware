@@ -15,6 +15,8 @@ from chm.utils.trainer_utils import (
     process_and_extract_data_batch,
 )
 
+from chm.utils.visualization_utils import visualize_overlaid_images, visualize_awareness_labels
+
 
 class ModelWrapper(torch.nn.Module):
     """
@@ -294,8 +296,78 @@ class ModelWrapper(torch.nn.Module):
 
         return output
 
-    def visualization_step(self):
-        pass
+    def visualization_step(self, data_batch, *args):
+        # parse all the batches properly.
+        overall_batch_num = args[0]
+        force_value_str = args[1]
+        num_visualization_examples = args[2]
+
+        individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
+            data_batch,
+            self.gaze_corruption,
+            self.gaze_correction,
+            self.input_process_dict,
+            self.device,
+            has_pairwise_item=False,
+        )
+        (
+            gaze_batch_input,
+            awareness_batch_input,
+            _,
+            _,
+            gaze_aux_info_list,
+            awareness_aux_info_list,
+            _,
+            _,
+            gaze_batch_target,
+            awareness_batch_target,
+            _,
+            _,
+            gaze_batch_should_use_batch,
+            awareness_batch_should_use_batch,
+            _,
+            _,
+        ) = individual_batch_inputs
+
+        self.set_force_dropout(force_value_str)
+        with torch.no_grad():  # save memory. no grad computation needed during test time.
+            predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
+            predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+
+            # visualize gaze heatmap overlay from the gaze dataset
+            visualize_overlaid_images(
+                predicted_gaze_output,
+                gaze_batch_input,
+                gaze_batch_target,
+                num_visualization_examples,
+                self.logger,
+                is_gaze=True,
+                force_value_str=force_value_str,
+                dl_key="test",
+                global_step=overall_batch_num,
+            )
+            # visualize awareness heatmap overlay from the gaze dataset
+            visualize_overlaid_images(
+                predicted_gaze_output,
+                gaze_batch_input,
+                gaze_batch_target,
+                num_visualization_examples,
+                self.logger,
+                is_gaze=False,
+                force_value_str=force_value_str,
+                dl_key="test",
+                global_step=overall_batch_num,
+                color_range=[0, 1],
+            )
+            # visualize awareness labels
+            visualize_awareness_labels(
+                predicted_awareness_output,
+                awareness_batch_input,
+                awareness_batch_target,
+                awareness_batch_annotation_data,
+                num_visualization_examples,
+                self.logger,
+            )
 
     def set_force_dropout(self, force_value_str):
         if force_value_str == "with_no_dropout":

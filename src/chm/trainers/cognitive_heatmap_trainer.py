@@ -12,6 +12,8 @@ class CHMTrainer(object):
         self.max_overall_batch_during_training = self.params_dict.get("max_overall_batch_during_training", None)
         self.save_interval = self.params_dict.get("save_interval", 1000)
         self.checkpoint_frequency = self.params_dict.get("checkpoint_frequency", 800)
+        self.visualize_frequency = self.params_dict.get("visualize_frequency", 250)
+        self.num_visualization_examples = self.params_dict.get("num_visualization_examples", 5)
         self.batch_aggregation_size = self.params_dict.get("batch_aggregation_size", 8)
         self.force_value_strs = ["with_dropout", "with_no_dropout"]
 
@@ -52,32 +54,28 @@ class CHMTrainer(object):
             ),
             desc="train",
         )
-        for i, data_batch in dataloader_tqdm:  # iterate through batches
-            if (self.overall_batch_num + 1) % self.lr_update_num == 0 and optimizer.param_groups[0][
-                "lr"
-            ] > self.lr_min_bound:
+        for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
+            if (training_batch_i + 1) % self.lr_update_num == 0 and optimizer.param_groups[0]["lr"] > self.lr_min_bound:
                 print("Update lr")
                 scheduler.step()
 
             if self.max_overall_batch_during_training is not None:
-                if self.overall_batch_num > self.max_overall_batch_during_training:
+                if training_batch_i > self.max_overall_batch_during_training:
                     self.is_training_done = True
                     break
 
             self.overall_batch_num += 1
+            # visualize output occasionally
+            if (training_batch_i + 1) % self.visualize_frequency == 0:
+                self.visualize(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
 
             # save model occasionally
-            if (self.overall_batch_num % self.save_interval == 0) and not self.params_dict["no_save_model"]:
+            if ((training_batch_i + 1) % self.save_interval == 0) and not self.params_dict["no_save_model"]:
                 module.save_model(self.overall_batch_num)
 
             # Test phase during training.
-            if (self.overall_batch_num % self.checkpoint_frequency == 1) and not self.params_dict["no_run_test"]:
-                self.test(
-                    gaze_dataloaders,
-                    awareness_dataloaders,
-                    pairwise_gaze_dataloaders,
-                    module,
-                )
+            if ((training_batch_i + 1) % self.checkpoint_frequency == 0) and not self.params_dict["no_run_test"]:
+                self.test(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
 
             # Training step data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
             output = module.training_step(data_batch, self.overall_batch_num)
@@ -87,11 +85,11 @@ class CHMTrainer(object):
             stats = output["stats"]
             self.cumulative_batch_loss += loss.sum().cpu().detach()
             loss = loss.mean()
-            if self.overall_batch_num % self.batch_aggregation_size == 0:
+            if training_batch_i % self.batch_aggregation_size == 0:
                 optimizer.zero_grad()
 
             grad_scaler.scale(loss).backward()
-            if self.overall_batch_num % self.batch_aggregation_size == (self.batch_aggregation_size - 1):
+            if training_batch_i % self.batch_aggregation_size == (self.batch_aggregation_size - 1):
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
 
@@ -158,11 +156,29 @@ class CHMTrainer(object):
 
                 del loss
 
-            import IPython
-
-            IPython.embed(banner1="check test loop")
-
             self.overall_batch_num += 1
 
         # set model back to train mode
         module.train(True)
+
+    def visualize(self, gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module):
+        if module.logger is not None:
+            assert "driver_facing" in self.params_dict["dropout_ratio"]
+            if self.params_dict["dropout_ratio"]["driver_facing"] < (1 - 5e-2):
+                module.train(False)
+            else:
+                module.train(True)
+
+            # visualize testing data create data loader for gaze and awareness
+            dataloader_tqdm = tqdm.tqdm(
+                enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
+                desc="test",
+            )
+            for j, data_batch in dataloader_tqdm:
+                # Testing step data_batch is a tuple consisting of (gaze_item, awareness_item)
+                for force_value_str in self.force_value_strs:  # do one pass each for with and without dropout
+                    output = module.visualization_step(
+                        data_batch, self.overall_batch_num, force_value_str, self.num_visualization_examples
+                    )
+
+                break
