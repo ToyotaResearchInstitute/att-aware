@@ -348,7 +348,7 @@ class ModelWrapper(torch.nn.Module):
                 logger=self.logger,
                 is_gaze=True,
                 force_value_str=force_value_str,
-                dl_key="test",
+                dl_key="gaze_ds_test",
                 global_step=overall_batch_num,
                 num_visualization_examples=num_visualization_examples,
             )
@@ -361,19 +361,22 @@ class ModelWrapper(torch.nn.Module):
                 logger=self.logger,
                 is_gaze=False,
                 force_value_str=force_value_str,
-                dl_key="test",
+                dl_key="gaze_ds_test",
                 global_step=overall_batch_num,
                 num_visualization_examples=num_visualization_examples,
                 color_range=[0, 1],
             )
             # visualize awareness labels
             visualize_awareness_labels(
-                predicted_awareness_output,
-                awareness_batch_input,
-                awareness_batch_target,
-                awareness_batch_annotation_data,
-                num_visualization_examples,
-                self.logger,
+                predicted_awareness_output=predicted_awareness_output,
+                awareness_batch_input=awareness_batch_input,
+                awareness_batch_target=awareness_batch_target,
+                awareness_batch_annotation_data=awareness_batch_annotation_data,
+                global_step=global_step,
+                logger=self.logger,
+                num_visualization_examples=num_visualization_examples,
+                dl_key="awareness_ds_test",
+                force_value_str=force_value_str,
             )
 
     def set_force_dropout(self, force_value_str):

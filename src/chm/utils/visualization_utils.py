@@ -184,7 +184,103 @@ def visualize_awareness_labels(
     awareness_batch_input,
     awareness_batch_target,
     awareness_batch_annotation_data,
-    num_visualization_examples,
-    logger,
+    global_step,
+    normalize_scale=255,
+    alpha=0.6,
+    num_visualization_examples=5,
+    logger=None,
+    annotation_image_size=[3, 1080, 1920],
+    dl_key="awareness_test",
+    force_value_str=None,
 ):
-    pass
+    """
+    Logs awareness heatmaps with labels visualizes on tensorboard.
+    """
+    assert logger is not None
+    for instance_idx in range(num_visualization_examples):
+        # if the instance idx is greater than the batch size break this loop
+        if instance_idx >= batch_target.shape[0]:
+            break
+
+        fg = plt.figure()
+        ax = fg.subplots()
+        road_img = (
+            awareness_batch_input["road_image"][instance_idx, -1, :, :, :].cpu().detach().numpy() / normalize_scale
+        )
+        road_img_t = road_img.transpose([1, 2, 0])  # {H, W, C}
+        img = predicted_awareness_training_output["awareness_map"][instance_idx, -1, 0, :, :].cpu().detach().numpy()
+
+        img_cv_bgr = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_JET)
+        img_cv_bgr = np.float32(img_cv_bgr) / 255  # Normalize to 0 to 1
+        img_cv_rgb = cv2.cvtColor(img_cv_bgr, cv2.COLOR_BGR2RGB)
+        overlaid_img = alpha * road_img_t + (1 - alpha) * img_cv_rgb
+
+        plt.imshow(overlaid_img, cmap="jet")
+        plt.colorbar()
+
+        x = (awareness_batch_annotation_data["query_x"][instance_idx] / annotation_image_size[2] * img.shape[-1]).int()
+        y = (awareness_batch_annotation_data["query_y"][instance_idx] / annotation_image_size[1] * img.shape[-2]).int()
+
+        true_label = float(awareness_batch_annotation_data["annotation_target"][instance_idx])
+        predicted_label = float(img[y, x])
+        title = "PredictedL = " + "{0:.3f}".format(predicted_label) + ", TrueL = " + str(true_label)
+        ax.set_title(title)  # presented the predicted and true label as heading.
+        ax.scatter(x, y, s=140, color="r", marker="x", linewidth=6)  # plot the annotation cross hair
+
+        noisy_gaze = (
+            awareness_batch_input["normalized_input_gaze"][instance_idx, :, :, :].cpu().detach().numpy()
+        )  # (T, L, 2)
+        # (TL, 2) All gaze points are within [0, 1]
+        noisy_gaze = noisy_gaze.reshape(noisy_gaze.shape[0] * noisy_gaze.shape[1], -1)
+        # scale noisy gaze to network image dimensions
+        road_img_height, road_img_width = road_img_t.shape[:2]
+        road_img_dim = np.array((road_img_width, road_img_height))
+        # (TL, 2) of (width, height) Tile it so that each of the gaze points in noisy gaze can be scaled to the correct network dimensions
+        road_img_dim = np.tile(road_img_dim, reps=(noisy_gaze.shape[0], 1))
+        # scale noisy gaze to proper network dimensions
+        noisy_gaze = np.multiply(noisy_gaze, road_img_dim)
+        # awareness_batch_target is of dim, B x T x L x 2
+        # (T, L=3, 2) #get gaze points from the frames. To get a sense of what type of gaze patterns preceded the cross hair in annotation
+        target = awareness_batch_target[instance_idx, :, :, :].cpu().detach()
+        gaze_list_length = target.shape[1]
+        seq_len = target.shape[0]
+        # (TL, 2) accumulate all gaze points from the last two frames in this time slice (L=2)
+        target = target.reshape(target.shape[0] * target.shape[1], -1)
+        target_np = target.numpy()
+        assert target_np.shape[0] == noisy_gaze.shape[0]
+
+        t = 0
+        for i in range(target_np.shape[0]):
+            if i % gaze_list_length == 0:
+                t += 1
+                mrkrsize = (t / seq_len) * 13 + 0.5
+            if (
+                noisy_gaze[i, 0] < 0.0
+                or noisy_gaze[i, 0] > road_img_width
+                or noisy_gaze[i, 1] < 0.0
+                or noisy_gaze[i, 1] > road_img_height
+            ):
+                continue
+            else:
+                plt.plot(
+                    target_np[i, 0],
+                    target_np[i, 1],
+                    marker="+",
+                    color="lime",
+                    markersize=mrkrsize,
+                    linewidth=mrkrsize / 4,
+                )
+                # white is noisy, lime is true
+                plt.plot(
+                    noisy_gaze[i, 0],
+                    noisy_gaze[i, 1],
+                    marker="+",
+                    color="w",
+                    markersize=mrkrsize,
+                    linewidth=mrkrsize / 4,
+                )
+        self.writer.add_figure(
+            tag=dl_key + "/overlaid_awareness_label_map" + str(instance_idx) + "_force_value_" + force_value_str,
+            figure=fg,
+            global_step=global_step,
+        )
