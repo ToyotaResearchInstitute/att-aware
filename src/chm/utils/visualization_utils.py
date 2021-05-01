@@ -199,7 +199,7 @@ def visualize_awareness_labels(
     assert logger is not None
     for instance_idx in range(num_visualization_examples):
         # if the instance idx is greater than the batch size break this loop
-        if instance_idx >= batch_target.shape[0]:
+        if instance_idx >= awareness_batch_target.shape[0]:
             break
 
         fg = plt.figure()
