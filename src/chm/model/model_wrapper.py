@@ -367,6 +367,7 @@ class ModelWrapper(torch.nn.Module):
                 color_range=[0, 1],
             )
             # visualize awareness labels
+            print("VIS AWARENESS DS, AWARENESS LABEL")
             visualize_awareness_labels(
                 predicted_awareness_output=predicted_awareness_output,
                 awareness_batch_input=awareness_batch_input,
