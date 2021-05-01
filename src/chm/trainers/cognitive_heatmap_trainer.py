@@ -66,7 +66,7 @@ class CHMTrainer(object):
 
             self.overall_batch_num += 1
             # visualize output occasionally
-            if (training_batch_i + 1) % self.visualize_frequency == 0:
+            if (training_batch_i + 1) % self.visualize_frequency == 1:
                 self.visualize(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
 
             # save model occasionally
