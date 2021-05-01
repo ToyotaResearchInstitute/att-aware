@@ -145,7 +145,12 @@ class ModelWrapper(torch.nn.Module):
         # parse all the batches properly.
         overall_batch_num = args[0]
         individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
-            data_batch, self.gaze_corruption, self.gaze_correction, self.input_process_dict, self.device
+            data_batch,
+            self.gaze_corruption,
+            self.gaze_correction,
+            self.input_process_dict,
+            self.device,
+            has_pairwise_item=True,
         )
         (
             gaze_batch_input,
@@ -165,6 +170,10 @@ class ModelWrapper(torch.nn.Module):
             pairwise_gaze_batch_should_use_batch_t,
             pairwise_gaze_batch_should_use_batch_tp1,
         ) = individual_batch_inputs
+
+        import IPython
+
+        IPython.embed(banner1="check trainig batch in training")
 
         # ensure force dropout dict is empty during training
         self.model.fusion_net.force_input_dropout = {}
