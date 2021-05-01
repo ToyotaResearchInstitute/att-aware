@@ -25,6 +25,7 @@ def visualize_overlaid_images(
     assert logger is not None
     for instance_idx in range(num_visualization_examples):
         # if the instance idx is greater than the batch size break this loop
+        print("VIS INSTANCE", instance_idx)
         if instance_idx >= batch_target.shape[0]:
             break
 
@@ -73,7 +74,7 @@ def visualize_overlaid_images(
 
             # Create blended image
             img_cv_rgb = cv2.cvtColor(img_cv_bgr, cv2.COLOR_BGR2RGB)  # (H, W, 3) #RGB
-            road_img_t = cv2.cvtColor(road_img_t, cv2.COLOR_BGR2RGB)  # (H, W, 3, RGB)
+            road_img_t = cv2.cvtColor(road_img_t, cv2.COLOR_BGR2RGB)  # (H, W, 3, RGB
             # to ensure that the the heatmap and the road image can be properly blended
             assert road_img_t.shape == img_cv_rgb.shape
             overlaid_img = alpha * road_img_t + (1 - alpha) * img_cv_rgb  # (H, W, 3, RGB)

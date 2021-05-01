@@ -172,11 +172,12 @@ class CHMTrainer(object):
             # visualize testing data create data loader for gaze and awareness
             dataloader_tqdm = tqdm.tqdm(
                 enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
-                desc="test",
+                desc="visualize",
             )
             for j, data_batch in dataloader_tqdm:
                 # Testing step data_batch is a tuple consisting of (gaze_item, awareness_item)
                 for force_value_str in self.force_value_strs:  # do one pass each for with and without dropout
+                    print("VISUALIZATION ", force_value_str)
                     output = module.visualization_step(
                         data_batch, self.overall_batch_num, force_value_str, self.num_visualization_examples
                     )

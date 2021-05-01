@@ -335,6 +335,7 @@ class ModelWrapper(torch.nn.Module):
             predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
 
             # visualize gaze heatmap overlay from the gaze dataset
+            print("VIS GAZE HEATMAP FROM GAZE DS")
             visualize_overlaid_images(
                 predicted_output=predicted_gaze_output,
                 batch_input=gaze_batch_input,
@@ -347,6 +348,7 @@ class ModelWrapper(torch.nn.Module):
                 num_visualization_examples=num_visualization_examples,
             )
             # visualize awareness heatmap overlay from the gaze dataset
+            print("VIS AWARENESS HEATMAP FROM GAZE DS")
             visualize_overlaid_images(
                 predicted_output=predicted_gaze_output,
                 batch_input=gaze_batch_input,
