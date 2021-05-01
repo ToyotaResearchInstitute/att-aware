@@ -17,6 +17,7 @@ def visualize_overlaid_images(
     color_range=None,
     alpha=0.6,
     dl_key="test",
+    force_value_str=None,
 ):
     """
     Log heatmaps on tensorboard. Supports both cumulative as well as single frame heatmap logging
@@ -162,7 +163,7 @@ def visualize_overlaid_images(
 
             if is_gaze:
                 logger.add_figure(
-                    tag=dl_key + "/gaze_heatmap" + postfix_str + str(instance_idx) + "_force_value_" + force_value_str,
+                    tag=dl_key + "/gaze_heatmap" + postfix_str + str(instance_idx) + "_" + force_value_str,
                     figure=fg,
                     global_step=global_step,
                 )
