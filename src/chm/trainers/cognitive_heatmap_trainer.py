@@ -177,7 +177,7 @@ class CHMTrainer(object):
                 desc="visualize",
             )
             for j, data_batch in dataloader_tqdm:
-                # Testing step data_batch is a tuple consisting of (gaze_item, awareness_item)
+                # Visualization step data_batch is a tuple consisting of (gaze_item, awareness_item)
                 for force_value_str in self.force_value_strs:  # do one pass each for with and without dropout
                     print("VISUALIZATION ", force_value_str)
                     output = module.visualization_step(
@@ -186,4 +186,5 @@ class CHMTrainer(object):
 
                 break
 
+            # after visualization put the model back in training mode.
             module.train(True)

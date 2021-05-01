@@ -208,7 +208,7 @@ def visualize_awareness_labels(
             awareness_batch_input["road_image"][instance_idx, -1, :, :, :].cpu().detach().numpy() / normalize_scale
         )
         road_img_t = road_img.transpose([1, 2, 0])  # {H, W, C}
-        img = predicted_awareness_training_output["awareness_map"][instance_idx, -1, 0, :, :].cpu().detach().numpy()
+        img = predicted_awareness_output["awareness_map"][instance_idx, -1, 0, :, :].cpu().detach().numpy()
 
         img_cv_bgr = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_JET)
         img_cv_bgr = np.float32(img_cv_bgr) / 255  # Normalize to 0 to 1
