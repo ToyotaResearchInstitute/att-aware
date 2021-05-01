@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import cv2
 import os
 
+plt.switch_backend("agg")
+
 
 def visualize_overlaid_images(
     predicted_output,
