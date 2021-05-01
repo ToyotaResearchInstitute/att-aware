@@ -373,7 +373,7 @@ class ModelWrapper(torch.nn.Module):
                 awareness_batch_input=awareness_batch_input,
                 awareness_batch_target=awareness_batch_target,
                 awareness_batch_annotation_data=awareness_batch_annotation_data,
-                global_step=global_step,
+                global_step=overall_batch_num,
                 logger=self.logger,
                 num_visualization_examples=num_visualization_examples,
                 dl_key="awareness_ds_test",
