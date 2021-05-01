@@ -279,7 +279,7 @@ def visualize_awareness_labels(
                     markersize=mrkrsize,
                     linewidth=mrkrsize / 4,
                 )
-        self.writer.add_figure(
+        logger.add_figure(
             tag=dl_key + "/overlaid_awareness_label_map" + str(instance_idx) + "_force_value_" + force_value_str,
             figure=fg,
             global_step=global_step,
