@@ -130,8 +130,6 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         task = att_label_item["cognitive_modifier"]
         query_frame = att_label_item["query_frame"]
 
-        print("Awareness", (video_id, subject, task, query_frame))
-
         # get sequence data dict for the annotation label.
         data_dict, auxiliary_info_dict = self._get_sequence(video_id, subject, task, query_frame)
 
@@ -140,4 +138,5 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         # convert awareness annotation into a float
         annotation_dict["anno_is_aware"] = self.convert_awareness_annotation_to_float(annotation_dict["anno_is_aware"])
         data_dict["att_annotation"] = annotation_dict
+        print("Awareness", (video_id, subject, task, query_frame), annotation_dict)
         return data_dict, auxiliary_info_dict
