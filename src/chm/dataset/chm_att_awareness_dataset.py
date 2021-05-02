@@ -137,5 +137,9 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         annotation_dict = att_label_item.to_dict()
         # convert awareness annotation into a float
         annotation_dict["anno_is_aware"] = self.convert_awareness_annotation_to_float(annotation_dict["anno_is_aware"])
-        data_dict["att_annotation"] = {"anno_is_aware": annotation_dict["anno_is_aware"]}
+        data_dict["att_annotation"] = {
+            "anno_is_aware": annotation_dict["anno_is_aware"],
+            "query_x": annotation_dict["query_x"],
+            "query_y": annotation_dict["query_y"],
+        }
         return data_dict, auxiliary_info_dict

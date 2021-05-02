@@ -203,7 +203,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--save_interval",
         action="store",
         type=int,
-        default=100,
+        default=1000,
         help="Interval (in number of batches) at which the model is saved",
     )
     parser.add_argument(
