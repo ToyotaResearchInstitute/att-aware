@@ -9,6 +9,7 @@ class CHMTrainer(object):
         self.overall_batch_num = 0
         self.max_epochs = self.params_dict.get("max_epochs", 50)
         self.lr_update_num = self.params_dict.get("lr_update_num", 1000)
+        self.lr_min_bound = self.params_dict.get("lr_min_bound", 1e-4)
         self.max_overall_batch_during_training = self.params_dict.get("max_overall_batch_during_training", None)
         self.save_interval = self.params_dict.get("save_interval", 1000)
         self.checkpoint_frequency = self.params_dict.get("checkpoint_frequency", 800)
@@ -46,14 +47,27 @@ class CHMTrainer(object):
         optimizer,
         scheduler,
         grad_scaler,
+        ds_type="train",
     ):
         module.train()
-        dataloader_tqdm = tqdm.tqdm(
-            enumerate(
-                zip(gaze_dataloaders["train"], awareness_dataloaders["train"], pairwise_gaze_dataloaders["train"])
-            ),
-            desc="train",
-        )
+
+        if ds_type == "train":
+            dataloader_tqdm = tqdm.tqdm(
+                enumerate(
+                    zip(gaze_dataloaders["train"], awareness_dataloaders["train"], pairwise_gaze_dataloaders["train"])
+                ),
+                desc="train",
+            )
+        elif ds_type == "test":
+            """
+            This is used for calibration experiment, in which the training is done on th
+            """
+            dataloader_tqdm = tqdm.tqdm(
+                enumerate(
+                    zip(gaze_dataloaders["test"], awareness_dataloaders["test"], pairwise_gaze_dataloaders["test"])
+                ),
+                desc="train",
+            )
         for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
             if (training_batch_i + 1) % self.lr_update_num == 0 and optimizer.param_groups[0]["lr"] > self.lr_min_bound:
                 print("Update lr")
