@@ -380,10 +380,99 @@ class ModelWrapper(torch.nn.Module):
                 force_value_str=force_value_str,
             )
 
+    def inference_step(self, data_batch, *args):
+        overall_batch_num = args[0]
+        force_value_strs = args[1]
+        is_compute_loss = args[2]
+        individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
+            data_batch,
+            self.gaze_corruption,
+            self.gaze_correction,
+            self.input_process_dict,
+            self.device,
+            has_pairwise_item=False,
+        )
+        (
+            gaze_batch_input,
+            awareness_batch_input,
+            _,
+            _,
+            gaze_aux_info_list,
+            awareness_aux_info_list,
+            _,
+            _,
+            gaze_batch_target,
+            awareness_batch_target,
+            _,
+            _,
+            gaze_batch_should_use_batch,
+            awareness_batch_should_use_batch,
+            _,
+            _,
+        ) = individual_batch_inputs
+
+        inference_output_dict = {}
+        inference_output_dict["gaze_batch_input"] = gaze_batch_input
+        inference_output_dict["gaze_aux_info_list"] = gaze_aux_info_list
+        inference_output_dict["gaze_batch_target"] = gaze_batch_target
+
+        inference_output_dict["awareness_batch_input"] = awareness_batch_input
+        inference_output_dict["awareness_aux_info_list"] = awareness_aux_info_list
+        inference_output_dict["awareness_batch_target"] = awareness_batch_target
+        inference_output_dict["awareness_batch_annotation_data"] = awareness_batch_annotation_data
+        # results on gaze ds
+        inference_output_dict["predicted_gaze_with_gaze"] = None
+        inference_output_dict["predicted_gaze_without_gaze"] = None
+        inference_output_dict["cost_with_gaze"] = None
+        inference_output_dict["cost_without_gaze"] = None
+        inference_output_dict["stats_with_gaze"] = None
+        inference_output_dict["stats_without_gaze"] = None
+        # outputs using the awareness ds
+        inference_output_dict["predicted_awareness_output_with_gaze"] = None
+        inference_output_dict["predicted_awareness_output_without_gaze"] = None
+
+        for force_value_str in force_value_strs:
+            self.set_force_dropout(force_value_str)
+            predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
+            predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+
+            inference_output_dict["predicted_gaze_" + force_value_str] = predicted_gaze_output
+            inference_output_dict["predicted_awareness_output_" + force_value_str] = predicted_awareness_output
+
+            if is_compute_loss:
+                loss, stats = self.loss_fn.loss(
+                    predicted_gaze_output,
+                    gaze_batch_input,
+                    gaze_batch_target,
+                    predicted_awareness_output,
+                    awareness_batch_input,
+                    awareness_batch_target,
+                    awareness_batch_annotation_data,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+
+            inference_output_dict["cost_" + force_value_str] = loss
+            inference_output_dict["stats_" + force_value_str] = stats
+
+        if self.output_process_dict is not None:
+            output_process_functor = self.output_process_dict["functor"]
+            self.results_aggregator = output_process_functor(
+                inference_output_dict,
+                self.output_process_dict["params"],
+                self.overall_batch_num,
+                model=self.model,
+                experiment_results_aggregator=self.results_aggregator,
+            )
+
     def set_force_dropout(self, force_value_str):
-        if force_value_str == "with_no_dropout":
+        if force_value_str == "with_gaze":
             self.model.fusion_net.force_input_dropout = {}
-        elif force_value_str == "with_dropout":
+        elif force_value_str == "without_gaze":
             self.model.fusion_net.force_input_dropout = {}
             for key in self.model.fusion_net.side_channel_modules:
                 if key in self.force_dropout_list:

@@ -29,6 +29,7 @@ def train(args, session_hash):
     model_wrapper = ModelWrapper(params_dict, session_hash)
 
     # instantiate trainer class
+
     trainer = CHMTrainer(params_dict)
 
     # start training

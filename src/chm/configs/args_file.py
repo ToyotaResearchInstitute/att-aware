@@ -44,14 +44,14 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         "--dataset_type",
         dest="dataset_type",
         default="train",
-        help="Argument indicating the dataset type when creating dataset instances during training. [train, test, vis, video]",
+        help="Argument indicating the dataset type when creating dataset instances during training. [train, test]",
     )
 
     parser.add_argument(
         "--inference_ds_type",
         dest="inference_ds_type",
         default="test",
-        help="Argument indicating the dataset type when creating dataset instances during inference. [train, test, vis, video]",
+        help="Argument indicating the dataset type when creating dataset instances during inference. [train, test]",
     )
 
     parser.add_argument(

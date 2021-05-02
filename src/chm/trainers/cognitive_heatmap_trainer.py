@@ -16,9 +16,9 @@ class CHMTrainer(object):
         self.visualize_frequency = self.params_dict.get("visualize_frequency", 250)
         self.num_visualization_examples = self.params_dict.get("num_visualization_examples", 5)
         self.batch_aggregation_size = self.params_dict.get("batch_aggregation_size", 8)
-        self.force_value_strs = ["with_dropout", "with_no_dropout"]
+        self.force_value_strs = ["with_gaze", "without_gaze"]
 
-    def fit(self, module):
+    def fit(self, module, ds_type="train"):
         module.trainer = self
 
         optimizer, scheduler, grad_scaler = module.configure_optimizers()
@@ -36,6 +36,7 @@ class CHMTrainer(object):
                 optimizer,
                 scheduler,
                 grad_scaler,
+                ds_type=ds_type,
             )
 
     def train(
@@ -51,6 +52,7 @@ class CHMTrainer(object):
     ):
         module.train()
 
+        assert ds_type == "train" or ds_type == "test", "The dataset type has to be either train or test"
         if ds_type == "train":
             dataloader_tqdm = tqdm.tqdm(
                 enumerate(
@@ -68,6 +70,7 @@ class CHMTrainer(object):
                 ),
                 desc="train",
             )
+
         for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
             if (training_batch_i + 1) % self.lr_update_num == 0 and optimizer.param_groups[0]["lr"] > self.lr_min_bound:
                 print("Update lr")

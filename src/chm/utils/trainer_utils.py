@@ -1,6 +1,8 @@
 import collections
 import torch
 import numpy as np
+import pickle
+import os
 
 from chm.dataset.chm_gaze_dataset import CHMGazeDataset
 from chm.dataset.chm_att_awareness_dataset import CHMAttAwarenessDataset
@@ -44,14 +46,29 @@ def load_datasets(params_dict):
         """
         splits are according to query frame id.
         """
-        # Create train and test split indices according to where the query frames are for gaze, awareness and pairwise-gaze datasets
-        awareness_train_idx, awareness_test_idx = generate_train_test_split_indices(
-            awareness_datasets["train"], params_dict
-        )
-        gaze_train_idx, gaze_test_idx = generate_train_test_split_indices(gaze_datasets["train"], params_dict)
-        pairwise_gaze_train_idx, pairwise_gaze_test_idx = generate_train_test_split_indices(
-            pairwise_gaze_datasets["train"], params_dict
-        )
+        if params_dict["load_indices_dict_path"] is None:
+            # Create train and test split indices according to where the query frames are for gaze, awareness and pairwise-gaze datasets
+            awareness_train_idx, awareness_test_idx = generate_train_test_split_indices(
+                awareness_datasets["train"], params_dict
+            )
+            gaze_train_idx, gaze_test_idx = generate_train_test_split_indices(gaze_datasets["train"], params_dict)
+            pairwise_gaze_train_idx, pairwise_gaze_test_idx = generate_train_test_split_indices(
+                pairwise_gaze_datasets["train"], params_dict
+            )
+        else:
+            assert os.path.exists(
+                params_dict["load_indices_dict_path"]
+            ), "Valid path to train/test split indices required."
+            print("Loading train test split indices from file")
+            with open(params_dict["load_indices_dict_path"], "rb") as fp:
+                indices_dict = pickle.load(fp)
+
+            gaze_train_idx = indices_dict["gaze_train_idx"]
+            gaze_test_idx = indices_dict["gaze_test_idx"]
+            awareness_train_idx = indices_dict["awareness_train_idx"]
+            awareness_test_idx = indices_dict["awareness_test_idx"]
+            pairwise_gaze_train_idx = indices_dict["pairwise_gaze_train_idx"]
+            pairwise_gaze_test_idx = indices_dict["pairwise_gaze_test_idx"]
 
         print("Creating Awareness Test DS")
         awareness_datasets["test"] = Subset(awareness_datasets["train"], awareness_test_idx)
