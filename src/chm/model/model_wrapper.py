@@ -393,6 +393,9 @@ class ModelWrapper(torch.nn.Module):
     def get_dataloaders(self):
         return self.gaze_dataloaders, self.awareness_dataloaders, self.pairwise_gaze_dataloaders
 
+    def get_results_aggregator(self):
+        return self.results_aggregator
+
     #### logging and saving functions
     def log_params_info(self):
         """
