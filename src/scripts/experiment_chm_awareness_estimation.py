@@ -2,6 +2,7 @@ import uuid
 import copy
 import functools
 import numpy as np
+import torch
 
 from collections import OrderedDict
 
