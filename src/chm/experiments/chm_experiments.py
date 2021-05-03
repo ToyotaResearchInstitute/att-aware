@@ -43,6 +43,7 @@ class ChmExperiment(ABC):
         # init variables
         self.results_aggregator = {}  # this is a dictionary that saves results on the ENTIRE dataset
         self.training_experiment = training_experiment
+        self.save_model_dir = os.path.join(os.path.expanduser("~"), "cognitive_heatmap", "results")
 
         # create model wrapper instance
         self.model_wrapper = ModelWrapper(self.params_dict, session_hash)
