@@ -23,7 +23,7 @@ class CHMInferenceEngine(object):
             self.force_value_strs = ["without_gaze"]
 
     def infer(self, module):
-        
+
         module.inference_engine = self
         # update max_batch_num pull from module.input_process_dict
         if "max_batch_num" in module.input_process_dict and module.input_process_dict["max_batch_num"] is not None:
@@ -67,10 +67,7 @@ class CHMInferenceEngine(object):
             if not self.max_batch_num is None:
                 if self.overall_batch_num > self.max_batch_num:
                     break
-            module.inference_step(
-                data_batch,
-                self.overall_batch_num
-                self.force_value_strs,
-                self.is_compute_loss
-            )
+            module.inference_step(data_batch, self.overall_batch_num, self.force_value_strs, self.is_compute_loss)
             self.overall_batch_num += 1
+
+        print("END OF INFERENCE")
