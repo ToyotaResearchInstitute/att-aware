@@ -8,7 +8,7 @@ class CHMInferenceEngine(object):
         self.params_dict = params_dict
 
         self.overall_batch_num = 0
-        self.inference_ds_type = self.params_dict("inference_ds_type", "test")
+        self.inference_ds_type = self.params_dict.get("inference_ds_type", "test")
         self.max_batch_num = None
         self.inference_mode = InferenceMode.BOTH
         self.is_compute_loss = False
