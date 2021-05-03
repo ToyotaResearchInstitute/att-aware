@@ -7,6 +7,7 @@ import os
 from abc import ABC, abstractmethod
 from chm.model.model_wrapper import ModelWrapper
 from chm.trainers.cognitive_heatmap_trainer import CHMTrainer
+from chm.experiments.chm_inference_engine import CHMInferenceEngine
 from collections import OrderedDict
 
 
