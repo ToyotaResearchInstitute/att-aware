@@ -47,6 +47,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
     """
 
     def __init__(
+        self,
         gaze_inputs,
         should_train_bit_sequence,
         optic_flow_sequence,

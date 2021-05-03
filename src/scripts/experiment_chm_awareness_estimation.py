@@ -142,8 +142,8 @@ class AwarenessEstimationExperiment(ChmExperiment):
                 spatio_temporal_gaussian_filter_with_of_estimator = (
                     SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(
                         gaze_inputs=gaze_inputs,
-                        optic_flow_sequence=optic_flow_sequence,
                         should_train_bit_sequence=should_train_bit_sequence,
+                        optic_flow_sequence=optic_flow_sequence,
                         sigma_kernel=self.sigma_kernel,
                         spatial_scale=self.gaussian_estimator_spatial_scale,
                         temporal_scale=self.gaussian_estimator_temporal_scale,
