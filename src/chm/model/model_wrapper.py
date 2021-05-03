@@ -263,25 +263,25 @@ class ModelWrapper(torch.nn.Module):
             self.gaze_correction,
             self.input_process_dict,
             self.device,
-            has_pairwise_item=False,  # no pairwise items during testing
+            has_pairwise_item=True,  #
         )
         (
             gaze_batch_input,
             awareness_batch_input,
-            _,
-            _,
+            pairwise_gaze_batch_input_t,
+            pairwise_gaze_batch_input_tp1,
             gaze_aux_info_list,
             awareness_aux_info_list,
-            _,
-            _,
+            pairwise_gaze_aux_info_list_t,
+            pairwise_gaze_aux_info_list_tp1,
             gaze_batch_target,
             awareness_batch_target,
-            _,
-            _,
+            pairwise_gaze_batch_target_t,
+            pairwise_gaze_batch_target_tp1,
             gaze_batch_should_use_batch,
             awareness_batch_should_use_batch,
-            _,
-            _,
+            pairwise_gaze_batch_should_use_batch_t,
+            pairwise_gaze_batch_should_use_batch_tp1,
         ) = individual_batch_inputs
 
         output = {}
@@ -289,6 +289,15 @@ class ModelWrapper(torch.nn.Module):
         with torch.no_grad():  # save memory. no grad computation needed during test time.
             predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
             predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+
+            predicted_pairwise_gaze_t, _, _, should_drop_dicts = self.model.forward(pairwise_gaze_batch_input_t)
+            should_drop_indices_dict, should_drop_entire_channel_dict = should_drop_dicts
+            predicted_pairwise_gaze_tp1, _, _, should_drop_dicts_tp1 = self.model.forward(
+                pairwise_gaze_batch_input_tp1,
+                should_drop_indices_dict=should_drop_indices_dict,
+                should_drop_entire_channel_dict=should_drop_entire_channel_dict,
+            )
+            should_drop_indices_dict_tp1, should_drop_entire_channel_dict_tp1 = should_drop_dicts_tp1
 
             loss, stats = self.loss_fn.loss(
                 predicted_gaze_output,
@@ -298,12 +307,12 @@ class ModelWrapper(torch.nn.Module):
                 awareness_batch_input,
                 awareness_batch_target,
                 awareness_batch_annotation_data,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                predicted_pairwise_gaze_t,
+                pairwise_gaze_batch_input_t,
+                pairwise_gaze_batch_target_t,
+                predicted_pairwise_gaze_tp1,
+                pairwise_gaze_batch_input_tp1,
+                pairwise_gaze_batch_target_tp1,
             )
         output["loss"] = loss
         output["stats"] = stats

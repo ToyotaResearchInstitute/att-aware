@@ -71,7 +71,7 @@ class CHMTrainer(object):
                 enumerate(
                     zip(gaze_dataloaders["test"], awareness_dataloaders["test"], pairwise_gaze_dataloaders["test"])
                 ),
-                desc="train",
+                desc="train_using_test",
             )
 
         for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
@@ -151,7 +151,7 @@ class CHMTrainer(object):
 
         # create data loader for gaze and awareness
         dataloader_tqdm = tqdm.tqdm(
-            enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"])),
+            enumerate(zip(gaze_dataloaders["test"], awareness_dataloaders["test"], pairwise_gaze_dataloaders["test"])),
             desc="test",
         )
 

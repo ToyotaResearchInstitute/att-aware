@@ -79,6 +79,8 @@ def load_datasets(params_dict):
         gaze_datasets["test"] = Subset(gaze_datasets["train"], gaze_test_idx)
         gaze_datasets["train"] = Subset(gaze_datasets["train"], gaze_train_idx)
 
+        print("Creating Pairwise Test DS")
+        pairwise_gaze_datasets["test"] = Subset(pairwise_gaze_datasets["train"], pairwise_gaze_test_idx)
         pairwise_gaze_datasets["train"] = Subset(pairwise_gaze_datasets["train"], pairwise_gaze_train_idx)
 
         # Store the train and test indices in a dict. Will be cached for a particular training run.
@@ -197,8 +199,8 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
     awareness_dataloaders = individual_data_loaders(
         awareness_datasets, num_test_samples, awareness_batch_size, num_dl_workers
     )
-    print("Creating pairwise-gaze ds dataloaders")
     if pairwise_gaze_datasets is not None:
+        print("Creating pairwise-gaze ds dataloaders")
         pairwise_gaze_dataloaders = individual_data_loaders(
             pairwise_gaze_datasets, num_test_samples, batch_size, num_dl_workers
         )
