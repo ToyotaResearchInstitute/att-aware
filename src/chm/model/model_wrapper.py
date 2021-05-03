@@ -429,8 +429,8 @@ class ModelWrapper(torch.nn.Module):
         # results on gaze ds
         inference_output_dict["predicted_gaze_with_gaze"] = None
         inference_output_dict["predicted_gaze_without_gaze"] = None
-        inference_output_dict["cost_with_gaze"] = None
-        inference_output_dict["cost_without_gaze"] = None
+        inference_output_dict["loss_with_gaze"] = None
+        inference_output_dict["loss_without_gaze"] = None
         inference_output_dict["stats_with_gaze"] = None
         inference_output_dict["stats_without_gaze"] = None
         # outputs using the awareness ds
@@ -461,9 +461,8 @@ class ModelWrapper(torch.nn.Module):
                     None,
                     None,
                 )
-
-            inference_output_dict["cost_" + force_value_str] = loss
-            inference_output_dict["stats_" + force_value_str] = stats
+                inference_output_dict["loss_" + force_value_str] = loss
+                inference_output_dict["stats_" + force_value_str] = stats
 
         if self.output_process_dict is not None:
             output_process_functor = self.output_process_dict["functor"]
