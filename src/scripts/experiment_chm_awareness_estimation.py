@@ -84,20 +84,25 @@ class AwarenessEstimationExperiment(ChmExperiment):
             # (B, H, W), -1 for T dim because the label is only for the last time stamp. 0 for the C dimension because, awareness heatmap is single channel image
             awareness_map = predicted_awareness_training_output["awareness_map"][:, -1, 0, :, :]
             awareness_x = awareness_map.new_tensor(
-                awareness_batch_annotation_data["query_x"] / self.annotation_image_size[2] * awareness_map.shape[-1]
+                (awareness_batch_annotation_data["query_x"] / self.annotation_image_size[2] * awareness_map.shape[-1])
+                .clone()
+                .detach()
+                .numpy()
             ).int()  # (B)
             awareness_y = awareness_map.new_tensor(
-                awareness_batch_annotation_data["query_y"] / self.annotation_image_size[1] * awareness_map.shape[-2]
+                (awareness_batch_annotation_data["query_y"] / self.annotation_image_size[1] * awareness_map.shape[-2])
+                .clone()
+                .detach()
+                .numpy()
             ).int()  # (B)
 
             # list of [0,1,2....aB]
             awareness_b = awareness_x.new_tensor(list(range(awareness_x.shape[0])))
 
-            # Read awareness from the annotation coordinates using SpatioTemporal
             of_st_awareness_estimates = []
             chm_awareness_estimates = []
 
-            # error lists
+            # init error lists
             awareness_sq_err_chm = []
             awareness_abs_err_chm = []
             awareness_sq_err_of_spatiotemporal_gaussian = []
