@@ -470,7 +470,7 @@ class ModelWrapper(torch.nn.Module):
             self.results_aggregator = output_process_functor(
                 inference_output_dict,
                 self.output_process_dict["params"],
-                self.overall_batch_num,
+                overall_batch_num,
                 model=self.model,
                 experiment_results_aggregator=self.results_aggregator,
             )
