@@ -74,6 +74,7 @@ class CHMBaseDataset(Dataset):
         # list of query frames used for each video. Each query frame idx corresponds to the last frame of the snippet used.
         self.query_frame_idxs_list = list(range(self.first_query_frame, MAX_NUM_VIDEO_FRAMES))
 
+        # full size road dimensions.
         self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_image_dims")
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
@@ -86,7 +87,6 @@ class CHMBaseDataset(Dataset):
         self.new_image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
 
         self.all_videos_subject_task_list = []
-        print("Loading all gaze data from cached pkl file")
         with open(self.all_videos_subjects_tasks_gaze_data_dict_path, "rb") as fp:
             self.all_videos_subjects_tasks_gaze_data_dict, self.all_videos_subject_task_list = pickle.load(fp)
             self.all_videos_subject_task_list = sorted(self.all_videos_subject_task_list)
@@ -366,6 +366,9 @@ class CHMBaseDataset(Dataset):
         return self.metadata_len
 
     def get_metadata_list(self):
+        """
+        Getter for self.metadata_list. To be implemented by the derived classes
+        """
         raise NotImplementedError
 
     def _get_sequence(self, video_id, subject, task, query_frame):

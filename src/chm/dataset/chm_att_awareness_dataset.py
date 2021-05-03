@@ -81,7 +81,7 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
 
         Returns
         -------
-        None. Results in populating the self.metadata_list
+        None. Results in populating the self.metadata_len and self.metadata_list if needed
         """
         self.metadata_len = len(self.metadata_list)  # number of rows in the filtered data frame
 
@@ -137,6 +137,8 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         annotation_dict = att_label_item.to_dict()
         # convert awareness annotation into a float
         annotation_dict["anno_is_aware"] = self.convert_awareness_annotation_to_float(annotation_dict["anno_is_aware"])
+
+        # add annotation info to the data dict
         data_dict["att_annotation"] = {
             "anno_is_aware": annotation_dict["anno_is_aware"],
             "query_x": annotation_dict["query_x"],

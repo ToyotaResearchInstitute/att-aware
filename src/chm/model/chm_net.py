@@ -93,7 +93,13 @@ class CHMNet(torch.nn.Module):
 
         Returns:
         --------
+        chm_output: dict
+            Dictionary containing the gaze maps, awareness maps. Output of the CHMPredictorNet
 
+        fusion_output:
+        side_channel_output:
+        should_drop_dicts: tuple, (should_drop_indices_dict, should_drop_entire_channel_dict)
+            Tuple containing two dictionaries containing the batch indices that were dropped out.
         """
         road_image = batch_input["road_image"] / 255.0  # normalized road image
         normalized_input_gaze = batch_input["normalized_input_gaze"].clone().detach()  # (B, T, L, 2)
@@ -130,19 +136,19 @@ class CHMNet(torch.nn.Module):
             print(fusion_net_input["driver_facing"])
             IPython.embed(banner1="CHM::Forward, fusion_net_input[driver_facing] has nans")
 
-        (decoder_output, side_channel_output, should_drop_dicts) = self.fusion_net(
+        (fusion_output, side_channel_output, should_drop_dicts) = self.fusion_net(
             fusion_net_input, should_drop_indices_dict, should_drop_entire_channel_dict
         )
 
         # predictor input
-        chm_predictor_input = decoder_output["road_facing"]
+        chm_predictor_input = fusion_output["road_facing"]
         if (torch.isnan(chm_predictor_input)).sum():  # check if there is any nans in the encoder-decoder pass
             import IPython
 
             print(chm_predictor_input)
-            IPython.embed(header="CHM:forward. Output of the decoder decoder_output[0][road_facing] has nans")
+            IPython.embed(header="CHM:forward. Output of the decoder fusion_output[0][road_facing] has nans")
 
         # gaze and awareness density maps
         chm_output = self.chm_predictor(chm_predictor_input)
 
-        return chm_output, decoder_output, side_channel_output, should_drop_dicts
+        return chm_output, fusion_output, side_channel_output, should_drop_dicts

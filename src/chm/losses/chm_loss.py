@@ -16,14 +16,17 @@ class CHMLoss(object):
             params dict containing the args from args_file.py
         gt_prior_loss: functools.partial
             function handle to compute the loss term on the gaze transform module
-
         """
         self.params_dict = params_dict
 
         self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ratio_reduction_factor", 8)
+
+        # full size road image dimensions
         self.ORIG_ROAD_IMG_DIMS = self.params_dict.get("orig_road_image_dims")
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
+
+        # network image dimensions
         self.image_width = int(round(self.ORIG_ROAD_IMAGE_WIDTH / self.aspect_ratio_reduction_factor))
         self.image_height = int(round(self.ORIG_ROAD_IMAGE_HEIGHT / self.aspect_ratio_reduction_factor))
         self.add_optic_flow = self.params_dict.get("add_optic_flow", False)
@@ -56,7 +59,7 @@ class CHMLoss(object):
         self.logprob_gap = self.params_dict.get("logprob_gap", 10)
         self.awareness_at_gaze_points_loss_coeff = self.params_dict.get("awareness_at_gaze_points_loss_coeff", 1)
 
-        # temporal and spatial regularizations
+        # temporal and spatial regularizations parameters
         self.gaze_spatial_regularization_coeff = self.params_dict.get("gaze_spatial_regularization_coeff", 1.0)
         self.gaze_temporal_regularization_coeff = self.params_dict.get("gaze_temporal_regularization_coeff", 1.0)
         self.awareness_spatial_regularization_coeff = self.params_dict.get(
@@ -65,14 +68,18 @@ class CHMLoss(object):
         self.awareness_temporal_regularization_coeff = self.params_dict.get(
             "awareness_temporal_regularization_coeff", 1.0
         )
+        # decay loss parameters
         self.awareness_decay_coeff = self.params_dict.get("awareness_decay_coeff", 1.0)
         self.awareness_decay_alpha = self.params_dict.get("awareness_decay_alpha", 1.0)
 
+        # steady state loss parameters
         self.awareness_steady_state_coeff = self.params_dict.get("awareness_steady_state_coeff", 0.01)
 
+        # consistency loss parameters
         self.consistency_coeff_gaze = self.params_dict.get("consistency_coeff_gaze", 10)
         self.consistency_coeff_awareness = self.params_dict.get("consistency_coeff_awareness", 10)
 
+        # annotation label loss parameters
         self.awareness_loss_type = self.params_dict.get("awareness_loss_type", "huber_loss")
         self.awareness_label_loss_patch_half_size = self.params_dict.get("awareness_label_loss_patch_half_size", 4)
         self.awareness_label_loss = AwarenessPointwiseLabelLoss(
@@ -82,9 +89,11 @@ class CHMLoss(object):
         )
         self.awareness_label_coeff = self.params_dict.get("awareness_label_coeff", 1.0)
 
+        # optic flow based temporal regularization parameters
         self.optic_flow_temporal_smoothness_decay = self.params_dict.get("optic_flow_temporal_smoothness_decay", 1.0)
         self.optic_flow_temporal_smoothness_coeff = self.params_dict.get("optic_flow_temporal_smoothness_coeff", 10.0)
 
+        # auxiliary loss parameters
         self.gt_prior_loss = gt_prior_loss
         self.gt_prior_loss_coeff = self.params_dict.get("gt_prior_loss_coeff", 0.0)
         self.unnormalized_gaze_loss_coeff = self.params_dict.get("unnormalized_gaze_loss_coeff", 1e-5)
@@ -93,6 +102,20 @@ class CHMLoss(object):
     def _compute_common_loss(self, predicted_output, batch_input, batch_target):
         """
         Computes common loss terms and regularization costs
+
+        Parameters:
+        -----------
+        predicted_output: dict
+            Dictionary containing the outputs from CHMPredictor
+        batch_input: dict
+            Dictionary containing the tensor inputs to CHM
+        batch_target: dict
+            Dictionary containing the network training target (ground truth)
+
+        Returns:
+        --------
+        loss_tuple_and_stats: tuple
+            ((individual cost terms....), stats)
         """
         # extract the gaze and awareness maps from the output dictionary
         normalized_gaze_map = predicted_output["gaze_density_map"]
@@ -174,7 +197,7 @@ class CHMLoss(object):
         unnormalized_gaze_loss = self.unnormalized_gaze_loss_coeff * (torch.mean(unnormalized_gaze_map)) ** 2
         common_predictor_map_loss = self.common_predictor_map_loss_coeff * torch.mean(common_predictor_map ** 2)
 
-        return (
+        loss_tuple_and_stats = (
             (
                 negative_logprob,
                 gaze_spatial_reg_loss,
@@ -192,10 +215,27 @@ class CHMLoss(object):
             ),
             stats,
         )
+        return loss_tuple_and_stats
 
     def _compute_nll(self, normalized_gaze_map, log_normalized_gaze_map, batch_input, batch_target):
         """
-        Compute the negative log probability at each of the gaze points
+        Compute the negative log probability at each of the gaze points.
+
+        Parameters:
+        ----------
+        normalized_gaze_map: torch.Tensor
+            Gaze heatmap predicted by CHMNet
+        log_normalized_gaze_map: torch.Tensor
+            Logarithm of the gaze heatmap predicted by CHMNet
+        batch_input: dict
+            Dictionary containing the tensor inputs to CHM
+        batch_target: dict
+            Dictionary containing the network training target (ground truth)
+
+        Returns:
+        --------
+        negative_logprob: torch.Tensor 0-d
+            Total negative log probability computed at the target gaze points that are valid.
         """
         logprob = normalized_gaze_map.new_zeros([1, 1])
         should_train_input_gaze = batch_input["should_train_input_gaze"]  # (B, T, L, 1)
@@ -221,6 +261,22 @@ class CHMLoss(object):
         """
         Compute awareness at the gaze points. Applies a gaussian filter around the gaze points to compute expected awareness estimates
         around the gaze points
+
+        Parameters:
+        ----------
+        awareness_map: torch.Tensor
+            Awareness heatmap predicted by CHMNet
+        batch_input: dict
+            Dictionary containing the tensor inputs to CHM
+        batch_target: dict
+            Dictionary containing the network training target (ground truth)
+
+        Returns:
+        --------
+        awareness_at_gaze_points_loss: torch.Tensor 0-d
+            Total awareness computed at target gaze points (with gaussian kernel) that are valid. Post multiplication with coeff.
+        awareness_at_gaze_points_loss_pre_mult: torch.Tensor 0-d
+            Total awareness computed at target gaze points (with gaussian kernel) that are valid. Pre multiplication with coeff.
         """
         awareness_at_gaze_points_loss = awareness_map.new_zeros([1, 1])
         sig = 3  # std range for the gaussian kernel size
@@ -281,6 +337,18 @@ class CHMLoss(object):
     def _compute_optic_flow_based_temp_regularization(self, awareness_map, batch_input):
         """
         Compute temporal regularization loss for awareness map using optic flow.
+
+        Parameters:
+        ----------
+        awareness_map: torch.Tensor
+            Awareness heatmap predicted by CHMNet
+        batch_input: dict
+            Dictionary containing the tensor inputs to CHM
+
+        Returns:
+        -------
+        optic_flow_awareness_temporal_smoothness: torch.Tensor
+            Temporal smoothness cost computed on awareness map (post multiplying with coeff)
         """
         optic_flow_awareness_temporal_smoothness = awareness_map.new_zeros([1, 1])
         # scaled optic flow image (B, T, C=2, H, W), C=0 channel is ux and C=1 is uy, channel
@@ -359,6 +427,23 @@ class CHMLoss(object):
     def _compute_consistency_smoothness(self, predicted_gaze_t, predicted_gaze_tp1):
         """
         Compute consistency loss between predicted two sequences offset by one hopsize (temporal_downsample_factor)
+
+        Parameters:
+        ----------
+        predicted_gaze_t: dict
+            Dictionary containing the output from CHMPredictor computed on gaze sequence at t
+
+        predicted_gaze_tp1: dict
+            Dictionary containing the outputs from CHMPredictor computed on gaze sequence at t+self.temporal_downsample_factor
+
+        Returns:
+        --------
+        consistency_smoothness_awareness: torch.Tensor
+            Consistency smoothness cost computed on awareness map (post multiplying with coeff)
+
+        consistency_smoothness_gaze: torch.Tensor
+            Consistency smoothness cost computed on gaze map (post multiplying with coeff)
+
         """
         normalized_gaze_map_t = predicted_gaze_t["gaze_density_map"]  # (B, T, 1, H, W)
         awareness_map_t = predicted_gaze_t["awareness_map"]  # (B, T, 1, H, W)
@@ -407,6 +492,7 @@ class CHMLoss(object):
     ):
         """
         Computes the total network loss for CHM
+
         Parameters:
         ---------
         In the following * is in [gaze, awareness, pairwise_gaze]. Pairwise gaze is also for time t and t+1 (tp1), appended to the variable name.
@@ -417,6 +503,12 @@ class CHMLoss(object):
         *_batch_target: dict
             dict containing the network target ground truth gaze points
 
+        Returns:
+        -------
+        loss: torch.Tensor
+            Total network loss
+        stats: dict
+            Dictionary containing the individual loss terms and other stats
         """
         # compute loss terms on the gaze_batch
         gaze_loss_tuple, stats = self._compute_common_loss(predicted_gaze_output, gaze_batch_input, gaze_batch_target)
@@ -554,5 +646,8 @@ class CHMLoss(object):
         return loss, stats
 
     def to(self, device):
+        """
+        Moves the regularization variables onto the device
+        """
         self.spatial_regularization.to(device)
         self.temporal_regularization.to(device)

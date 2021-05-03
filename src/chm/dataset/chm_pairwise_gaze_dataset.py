@@ -26,7 +26,7 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
 
         Parameters
         ----------
-        None
+        kwargs: dictionary of named arguments.
 
         Returns
         -------

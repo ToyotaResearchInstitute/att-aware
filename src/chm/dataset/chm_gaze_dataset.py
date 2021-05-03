@@ -28,7 +28,8 @@ class CHMGazeDataset(CHMBaseDataset):
 
         Parameters
         ----------
-        None
+        kwargs: dictionary of named arguments. Contains 'skip_list' which is the set of (video_id, subject, task, query_frame)
+                tuples that need to be excluded from this dataset
 
         Returns
         -------
@@ -48,7 +49,7 @@ class CHMGazeDataset(CHMBaseDataset):
 
         Returns
         -------
-        None. Only Results in populating the self.metadata_list
+        None. Results in populating the self.metadata_list
         """
 
         # create all combinations of video, subject, task tuples for the specified video, subject, task args

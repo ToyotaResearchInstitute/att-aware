@@ -8,6 +8,21 @@ class EPSpatialRegularization(torch.nn.Module):
     """
 
     def __init__(self, image_width, image_height, eps=1e-3, sig_scale_factor=1):
+        """
+        Parameters:
+        ----------
+        image_width: int
+            Network image width
+
+        image_height: int
+            Network image height
+
+        eps: float
+            Epsilon to avoid divide by zero error in diffusivity computation
+
+        sig_scale_factor: int
+            Scaling factor for std deviation parameter for the gaussian blur filter
+        """
         super(EPSpatialRegularization, self).__init__()
 
         self.eps = eps
@@ -38,9 +53,16 @@ class EPSpatialRegularization(torch.nn.Module):
         Parameters:
         ----------
         heatmap: torch.Tensor
-            gaze heatmap or awareness map on which spatial regularization is computed
+            Gaze heatmap or awareness map on which spatial regularization is computed
         image: torch.Tensor
-            mask image or road image used for computing diffusivity
+            Mask image or road image used for computing diffusivity
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Spatial regularization cost computed on heatmap
+        stats: dict
+            Dictionary containing diffusivity related stats
         """
         filter_c = self.conv_filter_centered  # (1,1,3,3)
         filter_c2 = self.conv_filter_centered2  # (1,1,3,3)
@@ -108,6 +130,27 @@ class EPTemporalRegularization(torch.nn.Module):
         negative_difference_coeff=20.0,
         positive_difference_coeff=1.0,
     ):
+        """
+        Parameters:
+        ----------
+        image_width: int
+            Network image width
+
+        image_height: int
+            Network image height
+
+        eps: float
+            Epsilon to avoid divide by zero error in diffusivity computation
+
+        sig_scale_factor: int
+            Scaling factor for std deviation parameter for the gaussian blur filter
+
+        negative_difference_coeff: float
+            Weighting factor for decreasing temporal awareness.
+
+        positive_difference_coeff: float
+            Weight factor for increasing temporal awareness
+        """
         super(EPTemporalRegularization, self).__init__()
 
         self.eps = eps
@@ -138,9 +181,16 @@ class EPTemporalRegularization(torch.nn.Module):
         Parameters:
         ----------
         heatmap: torch.Tensor
-            gaze heatmap or awareness map on which temporal regularization is computed
+            Gaze heatmap or awareness map on which temporal regularization is computed
         image: torch.Tensor
-            mask image or road image used for computing diffusivity
+            Mask image or road image used for computing diffusivity
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Temporal regularization cost computed on heatmap
+        stats: dict
+            Dictionary containing diffusivity related stats
         """
 
         filter_c = self.conv_filter_centered  # (1,1,3,3)

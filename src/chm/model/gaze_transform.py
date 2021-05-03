@@ -12,15 +12,20 @@ def compute_inverted_affine_tform(linear_mtx, trans_vec):
 class GazeTransform(torch.nn.Module):
     def __init__(self, scale_factor=1.0, linear_transform=None, translation=None, pad_gaze_vector=True):
         """
-        A module to capture the transformation of the gaze. This should be used either to correct the transformation,
+        A module to capture the affine transformation of the gaze modeled as y=Ax + b
+        This should be used either to correct the transformation,
         or to corrupt it.
+
         Parameters
         ----------
         scale_factor: float
+            Factor by which the A matrix is stretched/compressed along the main diagonal
 
-        linear_transform:
+        linear_transform: np.matrix
+            2 by 2 matrix containing the linear part of transform
 
-        translation:
+        translation: np.array
+            2 by 1 array containing the bias part of the transform
 
         pad_gaze_vector: bool
             Bool indicating whether the should_train_bit and the dropout bit should be added to the gaze tensor
@@ -52,8 +57,17 @@ class GazeTransform(torch.nn.Module):
 
     def forward(self, input, should_train_input_gaze=False):
         """
-        input dimension = (B, T, L, 2). L is the number of gaze points per frame
-        output dimension = (B, T, L, 4 or 2), affine transformed (representing miscalibration) gaze points.
+        Parameters:
+        -----------
+        input: torch.Tensor
+            Tensor of shape (B, T, L, 2) containing the gaze points
+        should_train_input_gaze: bool
+            Flag indicating whether the should train input gaze bit be set after transformation
+
+        Returns:
+        --------
+        output: torch.Tensor
+            Transform gaze tensor. (B, T, L, 2) without should train and dropout bits, (B, T, L, 4) otherwise
         """
 
         # Change from (B, T, L, 2) ---> (B, TL, 2)
@@ -70,6 +84,18 @@ class GazeTransform(torch.nn.Module):
             return output
 
     def prior_loss(self):
+        """
+        Function that computes the regularization term for the gaze transform.
+
+        Parameters:
+        ----------
+        None
+
+        Returns:
+        -------
+        gaze_transform_loss: float
+            Computed element-wise squared error on the weights and biases of the gaze transform module
+        """
         gaze_transform_loss = 0.0
         if not (self.linear_transform is None):
             for i in range(2):
