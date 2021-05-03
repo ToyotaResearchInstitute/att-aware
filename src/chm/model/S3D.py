@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import torch
 
 
@@ -18,7 +19,7 @@ class STConv3d(torch.nn.Module):
             number of output features for the spatial conv3d. This is also used as the number of
             input and output features for the temporal conv3d
         kernel_size: int
-            Convolution kernel size.
+            Convolution kernel size
         stride: int
             Convolution stride length
         padding: int

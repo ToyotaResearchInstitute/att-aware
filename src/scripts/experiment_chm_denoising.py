@@ -17,10 +17,26 @@ from chm.model.gaze_corruption import GazeCorruption
 
 
 class CHMDenoisingExperiment(ChmExperiment):
+    """
+    Denoising Experiment
+
+    Class to perform gaze denoising using predicted output (with and without gaze),as well as meanshift to nearest object using the segmentation masks
+    """
+
     def __init__(self, args, session_hash):
+        """
+        Parameters:
+        -----------
+        args: argparse.Namespace
+            Contains all args specified in the args_file and any additional arg_setter (specified in the derived classes)
+
+        session_hash: str
+            Unique string indicating the sessions id.
+        """
         super().__init__(args, session_hash, training_experiment=False)
         self.args = args
 
+        # init params for GazeTransform to be used by GazeCorruption
         self.gaze_linear_mtx = np.identity(2, dtype=np.float32)  # 2 by 2  identity matrix
         for i in range(2):
             # add some low level noise to the diagonal elements.
@@ -31,6 +47,7 @@ class CHMDenoisingExperiment(ChmExperiment):
             linear_transform=self.gaze_linear_mtx, translation=self.gaze_translation_vec, pad_gaze_vector=False
         )
 
+        # init gaze corruption modules
         self.gaze_corruption = GazeCorruption(
             bias_std=self.args.gaze_bias_std,
             noise_std=self.args.gaze_noise_std,
@@ -39,6 +56,8 @@ class CHMDenoisingExperiment(ChmExperiment):
             y_weight_factor=self.args.weight_factor[1],
             is_spatially_varying=self.args.is_spatially_varying,
         )
+
+        # list of dict keys used for logging results
         self.result_keys = [
             GAZE_ERROR_CHM_KEY_WITH_GAZE,
             GAZE_ERROR_CHM_KEY_WITHOUT_GAZE,
@@ -55,6 +74,9 @@ class CHMDenoisingExperiment(ChmExperiment):
 
         # initialize input process dict
         def chm_denoising_input_functor(batch_input, aux_info_list, input_process_params):
+            """
+            Functor to corrupt side-channel gaze according to different noise levels
+            """
             should_use_batch = True
             gaze_key = "normalized_input_gaze"
             gaze_key_before_corruption = gaze_key + "_before_corruption"
@@ -68,7 +90,6 @@ class CHMDenoisingExperiment(ChmExperiment):
         self.model_wrapper.input_process_dict = {}  # init empty input process dict
         self.model_wrapper.input_process_dict["functor"] = functools.partial(chm_denoising_input_functor)
         self.model_wrapper.input_process_dict["params"] = {}
-        self.model_wrapper.input_process_dict["params"]["noise_level"] = self.args.gaze_noise_std
         self.model_wrapper.input_process_dict["inference_mode"] = InferenceMode.BOTH
         self.model_wrapper.input_process_dict["max_batch_num"] = self.args.max_inference_num_batches
 
@@ -83,7 +104,7 @@ class CHMDenoisingExperiment(ChmExperiment):
             batch_mask_image = gaze_batch_input["segmentation_mask_image"]  # (B, T, 3, H, W)
             # corrupted gaze coordinate
             gaze_coordinates = gaze_batch_input["normalized_input_gaze"]
-            # introduced via the input process functor
+            # ground truth gaze before corruption introduced in the input process functor
             groundtruth_gaze_coordinates = gaze_batch_input["normalized_input_gaze_before_corruption"]
             gaze_aux_info_list = inference_output_dict["gaze_aux_info_list"]
 
@@ -95,7 +116,7 @@ class CHMDenoisingExperiment(ChmExperiment):
                 if RESULT_KEY not in experiment_results_aggregator:
                     experiment_results_aggregator[RESULT_KEY] = []
 
-            # init metrics
+            # init metric variables
             # metric accumulator for the entire batch
             coord_err_L2_noisy = 0.0  # error between the ground truth and noisy gaze
             # error between ground truth and after meanshift on gaze map with gaze

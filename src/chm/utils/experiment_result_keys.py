@@ -1,13 +1,12 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
+
 # awareness estimation keys
 AWARENESS_ERROR_CHM_KEY = "awareness_err_chm"
-AWARENESS_ERROR_GAUSSIAN_KEY = "awareness_err_gaussian"
 AWARENESS_ERROR_OF_SPATIOTEMPORAL_GAUSSIAN_KEY = "awareness_err_of_spatiotemporal_gaussian"
 AWARENESS_ABS_ERROR_CHM_KEY = "awareness_abs_err_chm"
-AWARENESS_ABS_ERROR_GAUSSIAN_KEY = "awareness_abs_err_gaussian"
 AWARENESS_ABS_ERROR_OF_SPATIOTEMPORAL_GAUSSIAN_KEY = "awareness_abs_err_of_spatiotemporal_gaussian"
 AWARENESS_TARGET_KEY = "awareness_target"
 AWARENESS_ESTIMATE_CHM_KEY = "awareness_estimate_chm"
-AWARENESS_ESTIMATE_GAUSSIAN_KEY = "awareness_estimate_gaussian"
 AWARENESS_ESTIMATE_OF_SPATIOTEMPORAL_GAUSSIAN_KEY = "awareness_estimate_of_spatiotemporal_gaussian"
 
 # chm_denoising keys

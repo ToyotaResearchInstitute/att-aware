@@ -18,13 +18,28 @@ from chm.utils.experiment_utils import SpatioTemporalGaussianWithOpticFlowAwaren
 
 
 class AwarenessEstimationExperiment(ChmExperiment):
+    """
+    Awareness Estimation Experiment.
+
+    Class for compute MSE and ABS error on awareness outputs predicted by CHM as well as Optic Flow based SpatioTemporal Gaussian Baseline.
+    """
+
     def __init__(self, args, session_hash):
+        """
+        Parameters:
+        -----------
+        args: argparse.Namespace
+            Contains all args specified in the args_file and any additional arg_setter (specified in the derived classes)
+
+        session_hash: str
+            Unique string indicating the sessions id.
+        """
+
         super().__init__(args, session_hash, training_experiment=False)
 
         self.args = args
-        self.gaze_corruption = GazeCorruption(
-            bias_std=self.args.gaze_bias_std, noise_std=self.args.gaze_noise_std
-        )  # noise to the side channel gaze
+        # noise to the side channel gaze
+        self.gaze_corruption = GazeCorruption(bias_std=self.args.gaze_bias_std, noise_std=self.args.gaze_noise_std)
 
         # filter parameters
         self.gaussian_estimator_spatial_scale = self.args.gaussian_estimator_spatial_scale
@@ -34,6 +49,7 @@ class AwarenessEstimationExperiment(ChmExperiment):
         self.temporal_filter_type = self.args.temporal_filter_type
         self.annotation_image_size = self.args.annotation_image_size
 
+        # list of dict keys used for logging results
         self.result_keys = [
             AWARENESS_ERROR_CHM_KEY,
             AWARENESS_ERROR_OF_SPATIOTEMPORAL_GAUSSIAN_KEY,
@@ -49,6 +65,9 @@ class AwarenessEstimationExperiment(ChmExperiment):
 
         # initialize input process dict and functor
         def awareness_input_functor(batch_input, aux_info_list, input_process_params):
+            """
+            Functor to corrupt side-channel gaze according to different noise levels
+            """
             should_use_batch = True
             gaze_key = "normalized_input_gaze"
             gaze_key_before_corruption = gaze_key + "_before_corruption"
@@ -69,6 +88,9 @@ class AwarenessEstimationExperiment(ChmExperiment):
         def awareness_output_functor(
             inference_output_dict, output_process_params, global_step, model=None, experiment_results_aggregator=None
         ):
+            """
+            Compute MSE and ABS error on awareness estimate from CHM as well as Optic Flow based SpatioTemporal Gaussian Baseline
+            """
             gaze_map_with_gaze = inference_output_dict["predicted_gaze_with_gaze"]["gaze_density_map"]
             predicted_awareness_training_output = inference_output_dict["predicted_awareness_output_with_gaze"]
 

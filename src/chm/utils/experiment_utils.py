@@ -210,38 +210,3 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
             st_filtered_awareness_sequence_overall[frame, coordinate[1].long(), coordinate[0].long()].cpu().numpy()
         )
         return st_filtered_awareness_sequence_overall, np.minimum(1, np.maximum(estimate, 0))
-
-
-class GaussianAwarenessEstimator(AwarenessEstimator):
-    def __init__(self, road_images, gaze_inputs, spatial_scale=0.005, temporal_scale=0.01):
-        """
-        A strawman awareness estimator, taking past inputs, and uses spatio-temporal distance to determine weights.
-        Does not use optic flow to determine the pixel displacement in subsequent frames
-
-        Parameters:
-        ----------
-        road_images: torch.Tensor
-            Tensor containing the road images used as input
-        gaze_inputs: torch.Tensor
-            Tensor containing the gaze inputs to the network
-        spatial_scale: float
-            Scale factor for the spatial component of the spatiotemporal gaussian
-        temporal_scale: float
-            Scale factor for the temporal component of the spatiotemporal gaussian
-        """
-        super().__init__(road_images, gaze_inputs)
-        self.temporal_scale = temporal_scale
-        self.spatial_scale = spatial_scale
-
-    def estimate_awareness(self, frame, coordinate, additional_info=None):
-        estimate = 0.0
-        # self.gaze_inputs are the T gaze points
-        for i, gaze_input_i in enumerate(self.gaze_inputs):
-            # i refers to the time index #expontential scaling for temporal dimension
-            w_t = np.exp(-((frame - i) ** 2) / self.temporal_scale ** 2)
-            # TODO deal with BAD gaze points in this. Invalid gaze inputs are being treated as valid.
-            w_s = np.exp(
-                -np.sum((gaze_input_i.cpu().numpy() - coordinate.cpu().numpy()) ** 2) / self.spatial_scale ** 2
-            )
-            estimate += w_s * w_t  # accumulate the spatio-temporal weights
-        return np.minimum(1, np.maximum(estimate, 0))

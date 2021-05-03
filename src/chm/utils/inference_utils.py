@@ -1,20 +1,35 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import numpy as np
 
 
 def seek_mode(img, start_x, start_y, sigma):
     """
-    Do mean-shift seeking
-    :param img: an intensity image to converge on
-    :param start_x: initial guess on location
-    :param start_y: initial guess on location
-    :param sigma: the standard deviation / scale of the gaussian filter to use
-    :return:
+    Mean shift algorithm (searches for nearest mode) on img starting from (start_x, start_y)
+
+    Parameters:
+    -----------
+    img: np.array
+        Image on which meanshift algorithm needs to be performed
+    start_x: int
+        x coordinate of starting point
+    start_y: int
+        y coordinate of starting point
+    sigma: int
+        Sigma for the gaussian centered around current x, y during meanshift
+
+    Returns:
+    --------
+    final_xy: tuple
+        Tuple containing the final point of the meanshift search. (x_coord, y_coord)
+    stats: dict
+        Dict containing the sequence of x and y points. Typically useful for visualization.
+
     """
     x = start_x  # in pixels
     y = start_y  # in pixels
     pos_x = range(img.shape[1])  # width of the image
     pos_y = range(img.shape[0])  # height of the image.
-    mesh_x, mesh_y = np.meshgrid(pos_x, pos_y)  # mesh rid for the pixel coordinate
+    mesh_x, mesh_y = np.meshgrid(pos_x, pos_y)  # meshgrid for the pixel coordinate
     sequence_x = []
     sequence_y = []
     for i in range(20):
@@ -36,4 +51,5 @@ def seek_mode(img, start_x, start_y, sigma):
     stats = {}
     stats["sequence_x"] = sequence_x
     stats["sequence_y"] = sequence_y
-    return (x, y), stats
+    final_xy = (x, y)
+    return final_xy, stats

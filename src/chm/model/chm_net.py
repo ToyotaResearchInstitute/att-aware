@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import torch
 import collections
 
@@ -72,7 +73,7 @@ class CHMNet(torch.nn.Module):
 
     def get_modules(self):
         """
-        Get individual modules in the network
+        Get individual modules and functor to compute the gaze transform loss in the network
         """
         road_facing_network = self.fusion_net.map_modules["road_facing"]
         fusion_net_network = self.fusion_net

@@ -95,7 +95,24 @@ def create_decoder(decoder_net_params=None):
 
 
 class DecoderNet(torch.nn.Module):
+    """
+    Class that encapsulates multiple DecoderUnits to form the decoder of CHM
+    """
+
     def __init__(self, decoder_layers, skip_layers_keys):
+        """
+        Parameters:
+        ----------
+        decoder_layers: dict
+            Dict containing the DecoderUnits used for the decoder
+
+        skip_layer_keys: list
+            List of encoder layers' names that will have skip connections to the decoder.
+
+        Returns:
+        -------
+        None
+        """
         super().__init__()
         self.decoder_layers = decoder_layers  # these are the DecoderUnits.
         self.skip_layers_keys = skip_layers_keys

@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import torch
 import tqdm
 
@@ -64,7 +65,7 @@ class CHMTrainer(object):
             )
         elif ds_type == "test":
             """
-            This is used for calibration experiment, in which the training is done on th
+            This is used for calibration experiment, in which the training is done on the test set
             """
             dataloader_tqdm = tqdm.tqdm(
                 enumerate(

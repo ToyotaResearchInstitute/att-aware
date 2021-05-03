@@ -20,10 +20,8 @@ RESIZED_INPUT_GAZE_TEMPLATE = "resized_input_gaze_{:d}"
 NORMALIZED_INPUT_GAZE_TEMPLATE = "normalized_input_gaze_{:d}"
 TRANSFORMED_INPUT_GAZE_TEMPLATE = "transformed_input_gaze_{:d}"  # (3 x S_max) 3 is x,y,valid_flag
 NORMALIZED_TRANSFORMED_INPUT_GAZE_TEMPLATE = "normalized_transformed_input_gaze_{:d}"
-TRANSFORM_VALIDITY_TEMPLATE = "transform_validity_{:d}"
 GROUND_TRUTH_GAZE_TEMPLATE = "ground_truth_gaze_{:d}"  # (3 x S_max)
-# confidence of the transform estimate, (1 x S_max)
-TRANSFORM_CONFIDENCE_TEMPLATE = "transform_confidence_{:d}"
+
 
 FIXATION_TYPE = "fixation_type"  # np.array(one_hot[ dim_fixation_types])
 TASK_TYPE = "task_type"
@@ -40,36 +38,6 @@ class InferenceMode(Enum):
     BOTH = 2
 
 
-class InputValidityValue(Enum):
-    VALID = 0
-    INVALID = 1
-
-
-class InputGazeType(Enum):
-    FIXATION = 0
-    BLINK = 1
-    SACCADE = 2
-    INVALID = 3
-    UNKNOWN = 4
-
-
-class TransformedInputValidityValue(Enum):
-    VALID = 0
-    POINT_OUTSIDE_IMAGE = 1
-    HOMOGRAPH_ERROR = 2
-    INVALID_GAZE_INPUT = 3
-    LOW_CONFIDENCE = 4
-    IGNORE = -1  # is this well defined?
-
-
-class TaskType(Enum):
-    CONTROL = 0
-    ROADONLY = 1
-    FLIPPED = 2
-    READINGTEXT = 3
-    BLURRED = 4
-
-
 # Auxiliary Info Structure:
 AUXILIARY_INFO_FULL_SIZE_GAZE_TEMPLATE = "full_size_gaze_{:d}"
 AUXILIARY_INFO_SEGMENTATION_SEGMENTS_TEMPLATE = "segmentation_segments_{:d}"
@@ -81,22 +49,6 @@ AUXILIARY_INFO_ROAD_FRAME_TEMPLATE = "road_frame_{:d}"
 AUXILIARY_INFO_RAW_TRACKER_INPUT_GAZE = "raw_tracker_input_gaze"
 AUXILIARY_INFO_RAW_TRANSFORMED_INPUT_GAZE_TEMPLATE = "raw_transformed_input_gaze_{:d}"
 AUXILIARY_INFO_VIDEO_TRANSFORMED_INPUT_GAZE_TEMPLATE = "video_transformed_input_gaze_{:d}"
-
-# dreyeve gaze type enum lookup
-DREYEVE_GAZE_TYPE_ENUMS = {}
-DREYEVE_GAZE_TYPE_ENUMS["Fixation"] = np.int32(InputGazeType.FIXATION.value)
-DREYEVE_GAZE_TYPE_ENUMS["Saccade"] = np.int32(InputGazeType.SACCADE.value)
-DREYEVE_GAZE_TYPE_ENUMS["Blink"] = np.int32(InputGazeType.BLINK.value)
-DREYEVE_GAZE_TYPE_ENUMS["-"] = np.int32(InputGazeType.INVALID.value)
-DREYEVE_GAZE_TYPE_ENUMS["NA"] = np.int32(InputGazeType.UNKNOWN.value)
-
-
-EYELINK_DREYEVE_TASK_TYPE_ENUMS = {}
-EYELINK_DREYEVE_TASK_TYPE_ENUMS["control"] = np.int32(TaskType.CONTROL.value)
-EYELINK_DREYEVE_TASK_TYPE_ENUMS["roadonly"] = np.int32(TaskType.ROADONLY.value)
-EYELINK_DREYEVE_TASK_TYPE_ENUMS["flipped"] = np.int32(TaskType.FLIPPED.value)
-EYELINK_DREYEVE_TASK_TYPE_ENUMS["readingtext"] = np.int32(TaskType.READINGTEXT.value)
-EYELINK_DREYEVE_TASK_TYPE_ENUMS["blurred"] = np.int32(TaskType.BLURRED.value)
 
 DISPLAY_WIDTH = 1920
 DISPLAY_HEIGHT = 1080

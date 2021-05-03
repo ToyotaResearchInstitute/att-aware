@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import collections
 import torch
 import numpy as np
@@ -209,12 +210,15 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
 
 def create_model_and_loss_fn(params_dict):
 
+    # create model
     model = CHMNet(params_dict)
-    _, _, gaze_transform_prior_loss = model.get_modules()  # handle to prior_loss()
+    _, _, gaze_transform_prior_loss = model.get_modules()  # handle to functor to compute gaze transform loss
 
+    # create loss function handle
     loss_fn = CHMLoss(params_dict, gt_prior_loss=partial(gaze_transform_prior_loss))
 
     load_model_path = params_dict["load_model_path"]
+    # if model path provided, load stored model
     if load_model_path is not None:
         model.load_state_dict(torch.load(load_model_path))
         model.eval()

@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import torch
 
 from chm.model.S3D import STConv3d
