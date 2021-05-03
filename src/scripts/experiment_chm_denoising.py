@@ -316,7 +316,7 @@ def main():
         args_copy.experiment_noise_levels = []
 
         # instantiate the experiment
-        denoising_experiment = ChmDenoisingExperiment(session_hash, args_copy)
+        denoising_experiment = CHMDenoisingExperiment(session_hash, args_copy)
         denoising_experiment.initialize_functors()
         denoising_experiment.perform_experiment()
 

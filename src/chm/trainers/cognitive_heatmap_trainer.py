@@ -7,6 +7,7 @@ class CHMTrainer(object):
         self.params_dict = params_dict
 
         self.overall_batch_num = 0
+        self.overall_training_batch_num = 0
         self.max_epochs = self.params_dict.get("max_epochs", 50)
         self.lr_update_num = self.params_dict.get("lr_update_num", 1000)
         self.lr_min_bound = self.params_dict.get("lr_min_bound", 1e-4)
@@ -25,6 +26,7 @@ class CHMTrainer(object):
         gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders = module.get_dataloaders()
         self.is_training_done = False
         for epoch in range(self.max_epochs):
+            self.epoch_num = epoch
             if self.is_training_done:
                 break
             self.cumulative_batch_loss = torch.tensor(0.0)
@@ -81,14 +83,17 @@ class CHMTrainer(object):
                     self.is_training_done = True
                     break
 
-            self.overall_batch_num += 1
+            self.overall_batch_num += (
+                1  # increments during training and testing loop, used for proper tensorboard logging
+            )
+            self.overall_training_batch_num += 1  # only increments for the training
             # visualize output occasionally
             if (training_batch_i + 1) % self.visualize_frequency == 0:
                 self.visualize(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
 
             # save model occasionally
             if ((training_batch_i + 1) % self.save_interval == 0) and not self.params_dict["no_save_model"]:
-                module.save_model(self.overall_batch_num)
+                module.save_model(self.overall_training_batch_num)
 
             # Test phase during training.
             if ((training_batch_i + 1) % self.checkpoint_frequency == 0) and not self.params_dict["no_run_test"]:
