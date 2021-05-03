@@ -23,16 +23,17 @@ class ModelWrapper(torch.nn.Module):
     """
     Top-level torch.nn.Module wrapper around a CHM model.
     Designed to use models with high-level Trainer classes (cf. trainers/).
-
-    Parameters
-    ----------
-    params_dict : dict
-        params dict containing the args from args_file.py
-    session_hash : str
-        unique hashid for creating logging folder
     """
 
     def __init__(self, params_dict, session_hash=None):
+        """
+        Parameters
+        ----------
+        params_dict : dict
+            params dict containing the args from args_file.py
+        session_hash : str
+            unique hashid for creating logging folder
+        """
         super().__init__()
         self.params_dict = params_dict
         self.log_dir = os.path.join(params_dict["log_dir"], session_hash)
@@ -51,14 +52,13 @@ class ModelWrapper(torch.nn.Module):
         self.save_model_dir = os.path.join(os.path.expanduser("~"), "cognitive_heatmap", "models", self.training_hash)
         os.makedirs(self.save_model_dir, exist_ok=True)
 
+        # set proper device
         if self.params_dict["no_cuda"] or not torch.cuda.is_available():
             self.device = torch.device("cpu")
         else:
             self.device = torch.device("cuda")
 
         self.enable_amp = self.params_dict.get("enable_amp", True)
-        self.gaze_corruption = self.params_dict.get("gaze_corruption", None)
-        self.gaze_correction = self.params_dict.get("gaze_correction", None)
         self.input_process_dict = self.params_dict.get("input_process_dict", None)
         self.output_process_dict = self.params_dict.get("output_process_dict", None)
         self.force_dropout_list = self.params_dict.get("force_dropout_list", ["driver_facing"])
@@ -69,14 +69,15 @@ class ModelWrapper(torch.nn.Module):
         self.loss_fn.to(self.device)
         self.model.to(self.device)
 
-        # create gaze corruption module
+        # create gaze corruption and correction module
         self.gaze_bias_std = self.params_dict.get("gaze_bias_std", 1e-5)
         self.gaze_noise_std = self.params_dict.get("gaze_noise_std", 0.0347222)
         self.gaze_corruption = GazeCorruption(bias_std=self.gaze_bias_std, noise_std=self.gaze_noise_std)
+        self.gaze_correction = self.params_dict.get("gaze_correction", None)
 
+        # create gaze, awareness and pairwise-gaze datasets
         self.gaze_datasets = self.awareness_datasets = self.pairwise_gaze_datasets = None
         self.gaze_dataset_indices = self.awareness_dataset_indices = self.pairwise_gaze_dataset_indices = None
-        # create gaze, awareness and pairwise-gaze datasets
         (self.gaze_datasets, self.awareness_datasets, self.pairwise_gaze_datasets), (
             self.gaze_dataset_indices,
             self.awareness_dataset_indices,
@@ -207,6 +208,7 @@ class ModelWrapper(torch.nn.Module):
                     torch.eq(should_drop_entire_channel_dict[key], should_drop_entire_channel_dict_tp1[key])
                 )
 
+            # compute loss
             loss, stats = self.loss_fn.loss(
                 predicted_gaze_output,
                 gaze_batch_input,
@@ -260,7 +262,7 @@ class ModelWrapper(torch.nn.Module):
             self.gaze_correction,
             self.input_process_dict,
             self.device,
-            has_pairwise_item=False,
+            has_pairwise_item=False,  # no pairwise items during testing
         )
         (
             gaze_batch_input,
@@ -417,6 +419,8 @@ class ModelWrapper(torch.nn.Module):
             _,
         ) = individual_batch_inputs
 
+        # Initialize dictionary that contains the inference output for this batch.
+        # Metrics on the results computed using output_process_functors in respective experiments
         inference_output_dict = {}
         inference_output_dict["gaze_batch_input"] = gaze_batch_input
         inference_output_dict["gaze_aux_info_list"] = gaze_aux_info_list
@@ -426,20 +430,20 @@ class ModelWrapper(torch.nn.Module):
         inference_output_dict["awareness_aux_info_list"] = awareness_aux_info_list
         inference_output_dict["awareness_batch_target"] = awareness_batch_target
         inference_output_dict["awareness_batch_annotation_data"] = awareness_batch_annotation_data
-        # results on gaze ds
+        # results on gaze ds. Initialize as None
         inference_output_dict["predicted_gaze_with_gaze"] = None
         inference_output_dict["predicted_gaze_without_gaze"] = None
         inference_output_dict["loss_with_gaze"] = None
         inference_output_dict["loss_without_gaze"] = None
         inference_output_dict["stats_with_gaze"] = None
         inference_output_dict["stats_without_gaze"] = None
-        # outputs using the awareness ds
+        # outputs using the awareness ds. Initialize as None
         inference_output_dict["predicted_awareness_output_with_gaze"] = None
         inference_output_dict["predicted_awareness_output_without_gaze"] = None
 
         for force_value_str in force_value_strs:
             self.set_force_dropout(force_value_str)
-            with torch.no_grad():  # save memory. no grad computation needed during test time.
+            with torch.no_grad():  # save memory. no grad computation needed during inference time.
                 predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
                 predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
 

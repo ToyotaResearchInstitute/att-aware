@@ -2,16 +2,18 @@ import uuid
 import copy
 import functools
 import numpy as np
-import os
 
 from collections import OrderedDict
+
 from chm.configs.args_file import parse_arguments
 from chm.experiments.chm_experiments import ChmExperiment
+
 from chm.utils.chm_consts import InferenceMode
 from chm.utils.experiment_result_keys import *
+from chm.utils.inference_utils import seek_mode
+
 from chm.model.gaze_transform import GazeTransform
 from chm.model.gaze_corruption import GazeCorruption
-from chm.utils.inference_utils import seek_mode
 
 
 class CHMDenoisingExperiment(ChmExperiment):
