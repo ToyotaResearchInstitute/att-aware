@@ -48,9 +48,8 @@ class CHMInferenceEngine(object):
             module.train(True)
 
         # get all dataloaders.
-        gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders = module.get_dataloaders()
+        gaze_dataloaders, awareness_dataloaders, _ = module.get_dataloaders()
 
-        # there are no epochs. So directly use the data loader loops
         # create the proper dataloader based on and on the inference_ds_type. inference only happens on the gaze and awareness ds's
         if self.inference_ds_type == "train":
             dataloader_tqdm = tqdm.tqdm(
@@ -63,6 +62,7 @@ class CHMInferenceEngine(object):
                 desc="inference_test",
             )
 
+        # go through the dataloader
         for i, data_batch in dataloader_tqdm:
             if not self.max_batch_num is None:
                 if self.overall_batch_num > self.max_batch_num:

@@ -473,33 +473,12 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Flag for only using gaze ds for inference and training",
     )
 
-    # parser.add_argument(
-    #     "--is_awareness_ds_training_only",
-    #     action="store_true",
-    #     default=False,
-    #     help="flag for just training with awareness_dataset",
-    # )
-
     parser.add_argument(
         "--add_awareness_ds_common_loss",
         action="store_true",
         default=False,
         help="Flag for adding the common loss terms from awareness_dataset as well. ",
     )
-
-    # parser.add_argument(
-    #     "--use_gaussian_blur",
-    #     action="store_true",
-    #     default=False,
-    #     help="Flag for using gaussian smoothing for loss function",
-    # )
-
-    # parser.add_argument(
-    #     "--use_gaussian_blur_for_awareness",
-    #     action="store_true",
-    #     default=False,
-    #     help="Flag for using gaussian smoothing for awareness direct supervision loss function",
-    # )
 
     ################################### NETWORK ARGS #########################################3
 
@@ -751,14 +730,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="The decay coefficient between steps",
     )
 
-    # parser.add_argument(
-    #     "--batch_num_to_begin_flatten",
-    #     action="store",
-    #     type=int,
-    #     default=2000,
-    #     help="denotes the number of batches to be processed to reach the knee of the awareness of gaze weight factor",
-    # )
-
     parser.add_argument(
         "--gaussian_kernel_size",
         action="store",
@@ -840,13 +811,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Each video will be split into chunks of length video_chunk_size before splitting into train and test indices",
     )
 
-    # parser.add_argument(
-    #     "--use_stored_gp_truth_list",
-    #     action="store_true",
-    #     default=False,
-    #     help="Flag indicating whether the gp_truth values from the frame-level metadata is to be used or not",
-    # )
-
     parser.add_argument(
         "--fixed_gaze_list_length",
         dest="fixed_gaze_list_length",
@@ -854,15 +818,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=3,
         help="Length of gaze list returned by getitem functor. Should be in [1, 10]",
     )
-    # parser.add_argument(
-    #     "--any_true_list_length",
-    #     dest="any_true_list_length",
-    #     type=int,
-    #     default=1,
-    #     help="List length requirement for any_true getitem functor",
-    # )
-
-    # parser.add_argument("--results_save_folder", type=str, default="./", help="where to save experiments results")
 
     parser.add_argument(
         "--experiment_noise_levels",

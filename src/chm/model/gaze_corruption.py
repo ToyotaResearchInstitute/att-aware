@@ -18,7 +18,7 @@ class GazeCorruption:
             List of GazeTransforms to be applied before adding noise
         x_weight_factor: float
             Weight factor for x dimension when using spatially varying noise
-        x_weight_factor: float
+        y_weight_factor: float
             Weight factor for y dimension when using spatially varying noise
         is_spatially_varying: bool
             Bool indicating whether the noise adding is spatially varying
@@ -36,7 +36,7 @@ class GazeCorruption:
 
     def corrupt_gaze(self, gaze):
         """
-        Corrupts the gaze tensor according the noise parameters
+        Corrupts the gaze tensor according the noise parameters.
 
         Parameters
         ----------

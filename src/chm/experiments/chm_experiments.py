@@ -32,16 +32,15 @@ class ChmExperiment(ABC):
             device = torch.device("cuda")
 
         # set random seed
-        # if random seed is provided use it if not create a random seed
+        # if random seed is provided use it, if not create a random seed
         random_seed = self.params_dict["random_seed"] or random.randint(1, 10000)
-        print("Random Seed used is ", random_seed)
+        print("Random seed used for experiment is ", random_seed)
         self.params_dict["random_seed"] = random_seed  # update the params dict
         np.random.seed(self.params_dict["random_seed"])
         torch.manual_seed(self.params_dict["random_seed"])
 
         # init variables
         self.results_aggregator = {}  # this is a dictionary that saves results on the ENTIRE dataset
-        self.session_hash = session_hash
         self.training_experiment = training_experiment
 
         # create model wrapper instance
@@ -50,7 +49,6 @@ class ChmExperiment(ABC):
     @abstractmethod
     def initialize_functors(self):
         pass
-        # update self.model.output_process_dict , input_process dict etc.... from the subclass initialize functor
 
     def _perform_experiment(self):
         if self.training_experiment:

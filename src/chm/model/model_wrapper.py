@@ -16,6 +16,7 @@ from chm.utils.trainer_utils import (
 )
 
 from chm.utils.visualization_utils import visualize_overlaid_images, visualize_awareness_labels
+from chm.model.gaze_corruption import GazeCorruption
 
 
 class ModelWrapper(torch.nn.Module):
@@ -67,6 +68,11 @@ class ModelWrapper(torch.nn.Module):
         self.model, self.loss_fn = create_model_and_loss_fn(self.params_dict)
         self.loss_fn.to(self.device)
         self.model.to(self.device)
+
+        # create gaze corruption module
+        self.gaze_bias_std = self.params_dict.get("gaze_bias_std", 1e-5)
+        self.gaze_noise_std = self.params_dict.get("gaze_noise_std", 0.0347222)
+        self.gaze_corruption = GazeCorruption(bias_std=self.gaze_bias_std, noise_std=self.gaze_noise_std)
 
         self.gaze_datasets = self.awareness_datasets = self.pairwise_gaze_datasets = None
         self.gaze_dataset_indices = self.awareness_dataset_indices = self.pairwise_gaze_dataset_indices = None
