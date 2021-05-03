@@ -439,30 +439,31 @@ class ModelWrapper(torch.nn.Module):
 
         for force_value_str in force_value_strs:
             self.set_force_dropout(force_value_str)
-            predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
-            predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
+            with torch.no_grad():  # save memory. no grad computation needed during test time.
+                predicted_gaze_output, _, _, _ = self.model.forward(gaze_batch_input)
+                predicted_awareness_output, _, _, _ = self.model.forward(awareness_batch_input)
 
-            inference_output_dict["predicted_gaze_" + force_value_str] = predicted_gaze_output
-            inference_output_dict["predicted_awareness_output_" + force_value_str] = predicted_awareness_output
+                inference_output_dict["predicted_gaze_" + force_value_str] = predicted_gaze_output
+                inference_output_dict["predicted_awareness_output_" + force_value_str] = predicted_awareness_output
 
-            if is_compute_loss:
-                loss, stats = self.loss_fn.loss(
-                    predicted_gaze_output,
-                    gaze_batch_input,
-                    gaze_batch_target,
-                    predicted_awareness_output,
-                    awareness_batch_input,
-                    awareness_batch_target,
-                    awareness_batch_annotation_data,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                )
-                inference_output_dict["loss_" + force_value_str] = loss
-                inference_output_dict["stats_" + force_value_str] = stats
+                if is_compute_loss:
+                    loss, stats = self.loss_fn.loss(
+                        predicted_gaze_output,
+                        gaze_batch_input,
+                        gaze_batch_target,
+                        predicted_awareness_output,
+                        awareness_batch_input,
+                        awareness_batch_target,
+                        awareness_batch_annotation_data,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                    inference_output_dict["loss_" + force_value_str] = loss
+                    inference_output_dict["stats_" + force_value_str] = stats
 
         if self.output_process_dict is not None:
             output_process_functor = self.output_process_dict["functor"]
