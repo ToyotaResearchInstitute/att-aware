@@ -1,4 +1,4 @@
-import tdqm
+import tqdm
 
 from chm.utils.chm_consts import InferenceMode
 
