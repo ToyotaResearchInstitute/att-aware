@@ -44,7 +44,7 @@ class ChmExperiment(ABC):
         self.training_experiment = training_experiment
 
         # create model wrapper instance
-        self.model_wrapper = ModelWrapper(params_dict, session_hash)
+        self.model_wrapper = ModelWrapper(self.params_dict, session_hash)
 
     @abstractmethod
     def initialize_functors(self):

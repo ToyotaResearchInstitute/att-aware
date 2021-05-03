@@ -476,6 +476,7 @@ class ModelWrapper(torch.nn.Module):
             )
 
     def set_force_dropout(self, force_value_str):
+        assert force_value_str == "with_gaze" or force_value_str == "without_gaze"
         if force_value_str == "with_gaze":
             self.model.fusion_net.force_input_dropout = {}
         elif force_value_str == "without_gaze":
