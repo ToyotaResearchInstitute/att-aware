@@ -116,6 +116,7 @@ class CHMDenoisingExperiment(ChmExperiment):
                 seek_stats_without_gaze_list_b = []
                 seek_stats_with_gaze_list_b = []
                 seek_stats_object_based_list_b = []
+                t_counter = 0
                 for t in range(gaze_coordinates.shape[1]):  # sequence length
                     gaze_info_dict = {}
                     gaze = gaze_coordinates[b, t, 0, :]
