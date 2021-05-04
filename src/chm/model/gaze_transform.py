@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 
-def compute_inverted_affine_tform(linear_mtx, trans_vec):
+def compute_inverted_affine_transform(linear_mtx, trans_vec):
     # for  y = Ax + b ---> x = A^-1( y - b) --> A' = A^-1 and b' = -(A^-1)*b
     result_mtx = np.linalg.pinv(linear_mtx)
     result_vec = -np.dot(result_mtx, trans_vec)

@@ -263,7 +263,7 @@ class ModelWrapper(torch.nn.Module):
             self.gaze_correction,
             self.input_process_dict,
             self.device,
-            has_pairwise_item=True,  #
+            has_pairwise_item=True,
         )
         (
             gaze_batch_input,

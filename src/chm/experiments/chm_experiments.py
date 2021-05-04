@@ -70,13 +70,15 @@ class ChmExperiment(ABC):
         Depending on the type of experiment, either training or inference is performed.
         """
         if self.training_experiment:
+            print("Launching training experiment")
             trainer = CHMTrainer(self.params_dict)
             trainer.fit(self.model_wrapper, ds_type=self.params_dict["inference_ds_type"])
-            self.results_aggregator = self.model_wrapper.get_results_aggregator()
         else:
+            print("Launching inference experiment")
             inference_engine = CHMInferenceEngine(self.params_dict)
             inference_engine.infer(self.model_wrapper)
-            self.results_aggregator = self.model_wrapper.get_results_aggregator()
+
+        self.results_aggregator = self.model_wrapper.get_results_aggregator()
 
     @abstractmethod
     def perform_experiment(self):
