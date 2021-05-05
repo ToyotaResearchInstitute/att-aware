@@ -7,6 +7,10 @@ import os
 
 plt.switch_backend("agg")
 
+"""
+This file contains different kinds of visualization functions used during training.
+"""
+
 
 def visualize_overlaid_images(
     predicted_output,
@@ -31,7 +35,8 @@ def visualize_overlaid_images(
         # if the instance idx is greater than the batch size break this loop
         if instance_idx >= batch_target.shape[0]:
             break
-
+        # cumulative=True, will result in combining the images from all T frames in a sequence.
+        # cumulative=False, will result in visualizing single frame heatmap
         for cumulative in [True, False]:
             postfix_str = "" if cumulative is True else "_single"
 
@@ -61,7 +66,8 @@ def visualize_overlaid_images(
                         img += predicted_output["awareness_map"][instance_idx, i, 0, :, :].cpu().detach().numpy()
                     num_images_fused = seq_len
 
-            img /= num_images_fused
+            img /= num_images_fused  # average heatmap over sequence length
+            # normalize color range
             if color_range is None:
                 img_qs = np.percentile(img, [1, 99])
                 # remove outliers
@@ -83,6 +89,7 @@ def visualize_overlaid_images(
             overlaid_img = alpha * road_img_t + (1 - alpha) * img_cv_rgb  # (H, W, 3, RGB)
 
             plt.imshow(overlaid_img, cmap="jet")  # RGB overlaid image
+            # plot colorbar
             cb = plt.colorbar()
             num_ticks = np.size(cb.get_ticks())  # number of tick marks on the color bar
             # make the tick mark labels to be the true probabilities and not the normalized probabilities
@@ -214,11 +221,13 @@ def visualize_awareness_labels(
         img_cv_bgr = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_JET)
         img_cv_bgr = np.float32(img_cv_bgr) / 255  # Normalize to 0 to 1
         img_cv_rgb = cv2.cvtColor(img_cv_bgr, cv2.COLOR_BGR2RGB)
+        # blended image
         overlaid_img = alpha * road_img_t + (1 - alpha) * img_cv_rgb
 
         plt.imshow(overlaid_img, cmap="jet")
         plt.colorbar()
 
+        # scaled annotation point
         x = (awareness_batch_annotation_data["query_x"][instance_idx] / annotation_image_size[2] * img.shape[-1]).int()
         y = (awareness_batch_annotation_data["query_y"][instance_idx] / annotation_image_size[1] * img.shape[-2]).int()
 
@@ -251,6 +260,7 @@ def visualize_awareness_labels(
         assert target_np.shape[0] == noisy_gaze.shape[0]
 
         t = 0
+        # plot gaze points
         for i in range(target_np.shape[0]):
             if i % gaze_list_length == 0:
                 t += 1

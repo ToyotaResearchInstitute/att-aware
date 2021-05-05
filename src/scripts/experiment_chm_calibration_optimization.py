@@ -17,7 +17,23 @@ from chm.model.gaze_transform import compute_inverted_affine_transform
 
 
 class CHMCalibrationOptimizationExperiment(ChmExperiment):
+    """
+    Calibration Optimization Experiment.
+
+    Class for performing the experiment which computes the corrective transform for a miscalibration. Also computes the error metric between the learned
+    corrective transform and the groundtruth inverse transform.
+    """
+
     def __init__(self, args, session_hash):
+        """
+        Parameters:
+        -----------
+        args: argparse.Namespace
+            Contains all args specified in the args_file and any additional arg_setter (specified in the derived classes)
+
+        session_hash: str
+            Unique string indicating the sessions id.
+        """
         super().__init__(args, session_hash, training_experiment=True)
         self.args = args
 
@@ -72,8 +88,10 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
         # initialize input process dict
 
         def chm_calibration_input_functor(batch_input, aux_info_list, input_process_params):
-            # batch_input is created in parse_data_item and has all necessary fields for performing model inference.
-            # use cognitive_heatmap/datasets/chm_data_names.py
+            """
+            input functor to add miscalibration to the gaze input. Also sets the flag 'no_detach_gaze' so that
+            the gradients flow all the way back into the correction transform
+            """
             should_use_batch = True
             gaze_key = "normalized_input_gaze"
             gaze_key_before_corruption = gaze_key + "_before_corruption"
@@ -81,12 +99,15 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
             gaze = batch_input[gaze_key]
             gaze = self.gaze_transform.corrupt_gaze(gaze)  # miscalibrates the gaze
             batch_input[gaze_key] = gaze
-            # add field to indicate that the gaze should NOT be detached during training (in order to ensure that gradients flow all the way back to the correction transform)
+            # add field to indicate that the gaze should NOT be detached during training
+            # (in order to ensure that gradients flow all the way back to the correction transform)
             batch_input["no_detach_gaze"] = torch.tensor([True])
             return batch_input, aux_info_list, should_use_batch
 
         def chm_gaze_correction_input_functor(batch_input, aux_info_list, input_process_params):
-            # this functor is used to apply the correction transform after parse_data_item.
+            """
+            this functor is used to apply the correction transform after parse_data_item.
+            """
             should_use_batch = True
             gaze_key = "normalized_input_gaze"
             gaze_key_before_correction = gaze_key + "_before_correction"
@@ -115,7 +136,7 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
                     output_process_params["ground_truth"]["inverted_tform"].lin_trans.weight.clone().detach().numpy()
                 )
             )
-            # error between the bias vector of the correction transform and the true ground truth inverted linear matrix.
+            # error between the bias vector of the correction transform and the true ground truth inverted linear bias vector.
             trans_error = (
                 self.gaze_correction_transform.lin_trans.bias
                 - model.gaze_transform.lin_trans.bias.new_tensor(
@@ -130,7 +151,7 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
                 "normalized_input_gaze_before_corruption"
             ]
 
-            # metrics variables
+            # init metrics variables
             combined_nll = 0.0
             gaze_info_list = []
             nll_at_ground_truth_xy_list = []
@@ -152,15 +173,18 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
                         continue
                     x_gt = int(groundtruth_gaze[0].cpu().item() * gaze_map.shape[-1])  # scale to gaze map width
                     y_gt = int(groundtruth_gaze[1].cpu().item() * gaze_map.shape[-2])  # scale to gaze map height
+                    # if gaze is out of bounds skip and continue
                     if x_gt < 0 or y_gt < 0 or x_gt >= gaze_map.shape[-1] or y_gt >= gaze_map.shape[-2]:
                         continue
 
+                    # log gaze info into dict
                     gaze_info_dict["groundtruth_coord"] = (x, y)
                     gaze_info_dict["noisy_coord"] = (x_gt, y_gt)
                     gaze_info_dict["groundtruth_gaze"] = groundtruth_gaze.detach().cpu().numpy().tolist()
                     gaze_info_dict["noisy_gaze"] = gaze.detach().cpu().numpy().tolist()
                     gaze_info_list_b.append(gaze_info_dict)
 
+                    # log negative log likelihood info
                     log_img_with_gaze = log_normalized_gaze_map[b, t, 0, :, :]
                     nll_at_ground_truth_xy = -log_img_with_gaze[y_gt, x_gt].detach().cpu().numpy().item()
                     nll_at_ground_truth_xy_list_b.append(float(nll_at_ground_truth_xy))
@@ -242,21 +266,26 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
         )
 
         def param_grad_setter(model, correction_transform=None):
+            """
+            This function is called from configure_optimizer in ModelWrapper. This functions ensures that
+            the only parameters that are being updated are the parameters of the gaze correction module. The rest of the network is frozen
+
+            """
             device = next(model.parameters()).device
             correction_transform.to(device)
             for p in correction_transform.parameters():
                 p.requires_grad = True
             params = correction_transform.parameters()
-            import IPython
-
-            IPython.embed(banner1="check params")
             return model, list(params)
 
         self.model_wrapper.param_grad_setter = functools.partial(
             param_grad_setter, correction_transform=self.gaze_correction_transform
         )
+        # set maximum number of training batches
         if self.params_dict["max_overall_batch_during_training"] is None:
             self.params_dict["max_overall_batch_during_training"] = 1000
+
+        # no model saving or testing phase during this experiment
         self.params_dict["no_save_model"] = True
         self.params_dict["no_run_test"] = True
 

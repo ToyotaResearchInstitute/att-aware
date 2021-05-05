@@ -4,30 +4,55 @@ import tqdm
 
 
 class CHMTrainer(object):
+    """
+    Trainer class that is responsible for the main training loop. Includes the testing as well as visualization phase
+    """
+
     def __init__(self, params_dict):
+        """
+        Parameters:
+        ----------
+        params_dict: dict
+            params dict containing the args from args_file.py
+        """
         self.params_dict = params_dict
 
+        # counter for training
         self.overall_batch_num = 0
         self.overall_training_batch_num = 0
+        # Maximum number of epochs to train
         self.max_epochs = self.params_dict.get("max_epochs", 50)
+        # Interval at which the learning rate is updated
         self.lr_update_num = self.params_dict.get("lr_update_num", 1000)
+        # Lower bound for learning rate
         self.lr_min_bound = self.params_dict.get("lr_min_bound", 1e-4)
+        # If not None, indicates the maximum number of batches used for training. Supersedes self.max_epochs
         self.max_overall_batch_during_training = self.params_dict.get("max_overall_batch_during_training", None)
+        # Interval at which the model is saved to disk
         self.save_interval = self.params_dict.get("save_interval", 1000)
+        # Interval at which the testing phase is activated
         self.checkpoint_frequency = self.params_dict.get("checkpoint_frequency", 800)
+        # Interval at which the visualization to tensorboard is activated
         self.visualize_frequency = self.params_dict.get("visualize_frequency", 250)
+        # Number of examples to visualize
         self.num_visualization_examples = self.params_dict.get("num_visualization_examples", 5)
+        # Number of times (batches) the gradients are accumulated before back prop happens
         self.batch_aggregation_size = self.params_dict.get("batch_aggregation_size", 8)
+        # Strings indicating whether the side channel is "with" or "without" gaze
         self.force_value_strs = ["with_gaze", "without_gaze"]
 
     def fit(self, module, ds_type="train"):
         module.trainer = self
 
+        # configure optimizer, lr scheduler and gradient scaler.
         optimizer, scheduler, grad_scaler = module.configure_optimizers()
+        # retrieve dataloaders
         gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders = module.get_dataloaders()
         self.is_training_done = False
+        # start outer training loop
         for epoch in range(self.max_epochs):
             self.epoch_num = epoch
+            print("Epoch number ", self.epoch_num)
             if self.is_training_done:
                 break
             self.cumulative_batch_loss = torch.tensor(0.0)
@@ -57,6 +82,7 @@ class CHMTrainer(object):
 
         assert ds_type == "train" or ds_type == "test", "The dataset type has to be either train or test"
         if ds_type == "train":
+            print("Using train sets for training")
             dataloader_tqdm = tqdm.tqdm(
                 enumerate(
                     zip(gaze_dataloaders["train"], awareness_dataloaders["train"], pairwise_gaze_dataloaders["train"])
@@ -67,6 +93,7 @@ class CHMTrainer(object):
             """
             This is used for calibration experiment, in which the training is done on the test set
             """
+            print("Using test sets for training")
             dataloader_tqdm = tqdm.tqdm(
                 enumerate(
                     zip(gaze_dataloaders["test"], awareness_dataloaders["test"], pairwise_gaze_dataloaders["test"])
@@ -84,10 +111,10 @@ class CHMTrainer(object):
                     self.is_training_done = True
                     break
 
-            self.overall_batch_num += (
-                1  # increments during training and testing loop, used for proper tensorboard logging
-            )
-            self.overall_training_batch_num += 1  # only increments for the training
+            # increments during training and testing loop, used for proper tensorboard logging
+            self.overall_batch_num += 1
+            # only increments for the training
+            self.overall_training_batch_num += 1
             # visualize output occasionally
             if (training_batch_i + 1) % self.visualize_frequency == 0:
                 self.visualize(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
@@ -100,7 +127,7 @@ class CHMTrainer(object):
             if ((training_batch_i + 1) % self.checkpoint_frequency == 0) and not self.params_dict["no_run_test"]:
                 self.test(gaze_dataloaders, awareness_dataloaders, pairwise_gaze_dataloaders, module)
 
-            # Training step data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
+            # Training step. data_batch is a tuple consisting of (gaze_item, awareness_item, pairwise_gaze_item)
             output = module.training_step(data_batch, self.overall_batch_num)
 
             # Perform back prop

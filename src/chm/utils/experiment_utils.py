@@ -91,7 +91,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
         Returns:
         --------
         st_filtered_awareness_sequence_overall: torch.Tensor (T, H, W)
-            Tensor containing the spatio temporall smoothed gaussian filter based awareness estimate
+            Tensor containing the spatio temporally smoothed gaussian filter based awareness estimate
 
         """
         # Grab the temporal and spatial dimensions of the OF map
@@ -204,9 +204,27 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
         return st_filtered_awareness_sequence_overall  # (T, H, W)
 
     def estimate_awareness(self, frame, coordinate, additional_info=None):
+        """
+        Parameters:
+        ----------
+        frame: int
+            Frame index at which the awareness estimation need to be performed
+        coordinate: tuple
+            (x, y) coordinate in frame at which the awareness estimation need to be performed
+        additional_info=None or valid data type
+            Any additional info to be used for estimating awareness. Derived class implementation ensure checks for correctness
+
+        Returns:
+        --------
+        st_filtered_awareness_sequence_overall: torch.Tensor
+            (T, H, W). SpatioTemporally filtered awareness maps
+        estimate: float
+            Awareness estimate at frame, coordinate
+        """
         st_filtered_awareness_sequence_overall = self.compute_spatio_temporal_filter_withOF_on_sequence()  # (T, H, W)
         assert frame < st_filtered_awareness_sequence_overall.shape[0]
         estimate = (
             st_filtered_awareness_sequence_overall[frame, coordinate[1].long(), coordinate[0].long()].cpu().numpy()
         )
-        return st_filtered_awareness_sequence_overall, np.minimum(1, np.maximum(estimate, 0))
+        estimate = np.minimum(1, np.maximum(estimate, 0))
+        return st_filtered_awareness_sequence_overall, estimate

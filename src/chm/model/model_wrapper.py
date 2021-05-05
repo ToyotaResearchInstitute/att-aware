@@ -91,10 +91,6 @@ class ModelWrapper(torch.nn.Module):
         # param grad setter
         self.param_grad_setter = self.params_dict.get("param_grad_setter", None)
 
-        import IPython
-
-        IPython.embed(banner1="check param grad setter")
-
         # create gaze, awareness and pairwise-gaze dataloaders
         self.gaze_dataloaders, self.awareness_dataloaders, self.pairwise_gaze_dataloaders = create_dataloaders(
             self.gaze_datasets, self.awareness_datasets, self.pairwise_gaze_datasets, self.params_dict

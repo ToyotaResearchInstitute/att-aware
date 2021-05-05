@@ -5,7 +5,25 @@ from chm.model.S3D import STConv3d
 
 
 class DecoderUnit(torch.nn.Module):
+    """
+    Individual spatio-temporal convolutional units used in the DecoderNet.
+    """
+
     def __init__(self, last_out_dim, output_dim, skip_dim, side_channel_input_dim, use_s3d=False):
+        """
+        Parameters:
+        ----------
+        last_out_dim: int
+            Number of output features from the previous decoder unit, if it exists.
+        output_dim: int
+            Number of output features for this decoder unit
+        skip_dim: int
+            Number of features in the skip connections from the corresponding encoder layers
+        side_channel_input_dim: int
+            Number of layers in the side channel inputs
+        use_s3d: bool
+            Flag which indicates whether the separable conv3D should be used
+        """
         super().__init__()
         self.use_s3d = use_s3d
         self.replication_pad = torch.nn.ReplicationPad3d(1)

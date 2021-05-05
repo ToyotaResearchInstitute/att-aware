@@ -1,6 +1,10 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
 import numpy as np
 
+"""
+This file contains various utility functions used during inference and experiments. 
+"""
+
 
 def seek_mode(img, start_x, start_y, sigma):
     """

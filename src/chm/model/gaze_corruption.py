@@ -5,6 +5,10 @@ from chm.model.gaze_transform import GazeTransform
 
 
 class GazeCorruption:
+    """
+    Side channel gaze input corruption
+    """
+
     def __init__(
         self, bias_std, noise_std, transforms=None, x_weight_factor=1.0, y_weight_factor=1.3, is_spatially_varying=False
     ):
@@ -39,17 +43,18 @@ class GazeCorruption:
         """
         Corrupts the gaze tensor according the noise parameters.
 
-        Parameters
+        Parameters:
         ----------
         gaze: torch.Tensor
             Gaze tensor to be corrupted (B, T, L, 2)
 
-        Returns
+        Returns:
         -------
         corrupted_gaze: torch.Tensor
             Corrupted gaze (B, T, L, 2)
         """
         if self.transforms is not None:
+            # if gaze transforms are provided, do the transforms before corruption.
             for transform in self.transforms:
                 # :2 so that the dropout indicator is not incorporated
                 gaze = transform(gaze)[:, :, :, :2]  # (B, T, L, 2)

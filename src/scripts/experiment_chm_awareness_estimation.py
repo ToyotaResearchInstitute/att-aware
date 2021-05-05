@@ -354,6 +354,8 @@ def main():
         filename_variables["gaussian_temporal_scale"] = args_copy.gaussian_estimator_temporal_scale
         filename_variables["sigma_kernel"] = args_copy.sigma_kernel
         filename_variables["filename_append"] = args_copy.filename_append
+
+        # save json after experiment
         awareness_estimation_experiment.save_experiment(name_values=filename_variables)
 
 
