@@ -16,7 +16,7 @@ from chm.model.gaze_corruption import GazeCorruption
 from chm.model.gaze_transform import compute_inverted_affine_transform
 
 
-class ChmCalibrationOptimizationExperiment(ChmExperiment):
+class CHMCalibrationOptimizationExperiment(ChmExperiment):
     def __init__(self, args, session_hash):
         super().__init__(args, session_hash, training_experiment=True)
         self.args = args
@@ -259,6 +259,10 @@ class ChmCalibrationOptimizationExperiment(ChmExperiment):
         self.params_dict["no_run_test"] = True
 
 
+def perform_experiment(self):
+    self._perform_experiment()
+
+
 def arg_setter(parser):
     parser.add_argument(
         "--miscalibration_noise_levels",
@@ -321,7 +325,7 @@ def main():
             args_copy.miscalibration_noise = miscalibration_noise_level
 
             # instantiate the experiment
-            calibration_experiment = ChmCalibrationOptimizationExperiment(args_copy, session_hash)
+            calibration_experiment = CHMCalibrationOptimizationExperiment(args_copy, session_hash)
             calibration_experiment.initialize_functors()
             calibration_experiment.perform_experiment()
 
