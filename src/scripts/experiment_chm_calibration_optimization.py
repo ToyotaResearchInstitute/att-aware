@@ -247,6 +247,7 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
             for p in correction_transform.parameters():
                 p.requires_grad = True
             params = correction_transform.parameters()
+            import IPython; IPython.embed(banner1='check params')
             return model, list(params)
 
         self.params_dict["param_grad_setter"] = functools.partial(

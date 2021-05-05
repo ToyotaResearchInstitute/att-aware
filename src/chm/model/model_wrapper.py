@@ -88,6 +88,13 @@ class ModelWrapper(torch.nn.Module):
         # if use_std_train_test_split save the indices
         self.save_train_test_indices()
 
+        # param grad setter
+        self.param_grad_setter = self.params_dict.get("param_grad_setter", None)
+
+        import IPython
+
+        IPython.embed(banner1="check param grad setter")
+
         # create gaze, awareness and pairwise-gaze dataloaders
         self.gaze_dataloaders, self.awareness_dataloaders, self.pairwise_gaze_dataloaders = create_dataloaders(
             self.gaze_datasets, self.awareness_datasets, self.pairwise_gaze_datasets, self.params_dict
@@ -132,9 +139,9 @@ class ModelWrapper(torch.nn.Module):
 
         # if param_grad_setter function handle is provided, override the default set of parameters to be optimized.
         # Used in experiments that rely on training
-        param_grad_setter = self.params_dict.get("param_grad_setter", None)
-        if param_grad_setter is not None:
-            self.model, self.optimization_params = param_grad_setter(self.model)
+
+        if self.param_grad_setter is not None:
+            self.model, self.optimization_params = self.param_grad_setter(self.model)
 
         # Check flag for automatic mixed precision
 

@@ -71,6 +71,9 @@ class ChmExperiment(ABC):
         """
         if self.training_experiment:
             print("Launching training experiment")
+            import IPython
+
+            IPython.embed(banner1="check max overall num and other params")
             trainer = CHMTrainer(self.params_dict)
             trainer.fit(self.model_wrapper, ds_type=self.params_dict["inference_ds_type"])
         else:
