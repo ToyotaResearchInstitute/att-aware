@@ -13,7 +13,7 @@ from chm.utils.experiment_result_keys import GAZE_INFO
 
 from chm.model.gaze_transform import GazeTransform
 from chm.model.gaze_corruption import GazeCorruption
-from chm.model.gaze_corruption import compute_inverted_affine_transform
+from chm.model.gaze_transform import compute_inverted_affine_transform
 
 
 class ChmCalibrationOptimizationExperiment(ChmExperiment):
