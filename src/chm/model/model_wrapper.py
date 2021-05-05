@@ -236,8 +236,8 @@ class ModelWrapper(torch.nn.Module):
 
             training_output_dict["awareness_batch_input"] = awareness_batch_input
             training_output_dict["awareness_aux_info_list"] = awareness_aux_info_list
-            training_output_dict["awareness_batch_gaze_target"] = awareness_batch_target
-            training_output_dict["awareness_batch_annotation_target_data"] = awareness_batch_label_data
+            training_output_dict["awareness_batch_target"] = awareness_batch_target
+            training_output_dict["awareness_batch_annotation_data"] = awareness_batch_annotation_data
             training_output_dict["awareness_predicted_output"] = predicted_awareness_output
 
             self.results_aggregator = output_process_functor(
