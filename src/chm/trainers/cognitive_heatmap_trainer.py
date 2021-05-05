@@ -89,6 +89,7 @@ class CHMTrainer(object):
                 ),
                 desc="train",
             )
+            description = "train"
         elif ds_type == "test":
             """
             This is used for calibration experiment, in which the training is done on the test set
@@ -100,6 +101,7 @@ class CHMTrainer(object):
                 ),
                 desc="train_using_test",
             )
+            description = "train_using_test"
 
         for training_batch_i, data_batch in dataloader_tqdm:  # iterate through batches
             if (training_batch_i + 1) % self.lr_update_num == 0 and optimizer.param_groups[0]["lr"] > self.lr_min_bound:
@@ -149,7 +151,7 @@ class CHMTrainer(object):
                 print("skipped: " + str(loss))
             else:
                 dataloader_tqdm.set_description(
-                    "train" + ": {}".format(self.cumulative_batch_loss.detach() / (training_batch_i + 1))
+                    description + ": {}".format(self.cumulative_batch_loss.detach() / (training_batch_i + 1))
                 )
 
             if module.logger is not None:
