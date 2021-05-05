@@ -258,9 +258,8 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
         self.params_dict["no_save_model"] = True
         self.params_dict["no_run_test"] = True
 
-
-def perform_experiment(self):
-    self._perform_experiment()
+    def perform_experiment(self):
+        self._perform_experiment()
 
 
 def arg_setter(parser):
