@@ -232,7 +232,6 @@ class ModelWrapper(torch.nn.Module):
             training_output_dict["gaze_batch_input"] = gaze_batch_input
             training_output_dict["gaze_aux_info_list"] = gaze_aux_info_list
             training_output_dict["gaze_batch_target"] = gaze_batch_target
-            training_output_dict["gaze_data_dict"] = gaze_data_dict
             training_output_dict["gaze_predicted_output"] = predicted_gaze_output
 
             training_output_dict["awareness_batch_input"] = awareness_batch_input
