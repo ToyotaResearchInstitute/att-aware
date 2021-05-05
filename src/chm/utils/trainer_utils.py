@@ -510,7 +510,6 @@ def post_process_individual_batch_inputs(individual_batch_inputs, input_process_
                 gaze_batch_input, gaze_aux_info_list, gaze_batch_should_use_batch = post_parse_data_item_functor(
                     gaze_batch_input,
                     gaze_aux_info_list,
-                    gaze_batch_should_use_batch,
                     input_process_dict["post_parse_data_item"]["params"],
                 )
 
@@ -521,7 +520,6 @@ def post_process_individual_batch_inputs(individual_batch_inputs, input_process_
                 ) = post_parse_data_item_functor(
                     awareness_batch_input,
                     awareness_aux_info_list,
-                    awareness_batch_should_use_batch,
                     input_process_dict["post_parse_data_item"]["params"],
                 )
 
@@ -533,7 +531,6 @@ def post_process_individual_batch_inputs(individual_batch_inputs, input_process_
                     ) = post_parse_data_item_functor(
                         pairwise_gaze_batch_input_t,
                         pairwise_gaze_aux_info_list_t,
-                        pairwise_gaze_batch_should_use_batch_t,
                         input_process_dict["post_parse_data_item"]["params"],
                     )
 
@@ -544,7 +541,6 @@ def post_process_individual_batch_inputs(individual_batch_inputs, input_process_
                     ) = post_parse_data_item_functor(
                         pairwise_gaze_batch_input_tp1,
                         pairwise_gaze_aux_info_list_tp1,
-                        pairwise_gaze_batch_should_use_batch_tp1,
                         input_process_dict["post_parse_data_item"]["params"],
                     )
 
