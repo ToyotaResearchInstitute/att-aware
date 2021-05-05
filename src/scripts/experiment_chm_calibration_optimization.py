@@ -220,7 +220,7 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
                 .tolist()
             )
 
-            print("Calibration Error", error)
+            # print("Calibration Error", error)
 
             if experiment_results_aggregator is None:
                 experiment_results_aggregator = {}
