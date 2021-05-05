@@ -247,10 +247,12 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
             for p in correction_transform.parameters():
                 p.requires_grad = True
             params = correction_transform.parameters()
-            import IPython; IPython.embed(banner1='check params')
+            import IPython
+
+            IPython.embed(banner1="check params")
             return model, list(params)
 
-        self.params_dict["param_grad_setter"] = functools.partial(
+        self.model_wrapper.param_grad_setter = functools.partial(
             param_grad_setter, correction_transform=self.gaze_correction_transform
         )
         if self.params_dict["max_overall_batch_during_training"] is None:
