@@ -212,7 +212,6 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
 
                 experiment_results_aggregator["errors"].append(
                     {
-                        "reference": output_process_params["reference"],
                         "error": error,
                         "transform_error": transform_diff.tolist(),
                         "current_correction_rotation": current_correction_rotation,
