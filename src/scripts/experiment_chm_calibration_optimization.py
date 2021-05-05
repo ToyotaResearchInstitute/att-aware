@@ -182,14 +182,14 @@ class CHMCalibrationOptimizationExperiment(ChmExperiment):
                 self.gaze_correction_transform.lin_trans.bias.detach().cpu().numpy().tolist()
             )
             ground_truth_rotation = (
-                self.output_process_dict["params"]["ground_truth"]["inverted_tform"]
+                self.model_wrapper.output_process_dict["params"]["ground_truth"]["inverted_tform"]
                 .lin_trans.weight.detach()
                 .cpu()
                 .numpy()
                 .tolist()
             )
             ground_truth_translation = (
-                self.output_process_dict["params"]["ground_truth"]["inverted_tform"]
+                self.model_wrapper.output_process_dict["params"]["ground_truth"]["inverted_tform"]
                 .lin_trans.bias.detach()
                 .cpu()
                 .numpy()
