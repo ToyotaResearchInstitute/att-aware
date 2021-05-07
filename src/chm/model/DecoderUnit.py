@@ -91,7 +91,8 @@ class DecoderUnit(torch.nn.Module):
         """
         if skip_input is None:
             joint_input = torch.cat(
-                # side_channel_input is of size (B, T, side_channel_input_dim, H, W) - Voronoi maps + dropout + train_indicator+ dx2 , dy2, dxdy, optic flow
+                # side_channel_input is of size (B, T, side_channel_input_dim, H, W)
+                # Voronoi maps + dropout + train_indicator+ dx2 , dy2, dxdy, optic flow
                 [last_out, side_channel_input],
                 2,
             )
@@ -125,10 +126,10 @@ class DecoderUnit(torch.nn.Module):
         # upsampling the output
         self.upsm.size = upsm_size  # set the upsm size
         du_output = self.upsm(du_output)  # (BC', T, H', W')
-        # (B, C, T, H', W'). Use B from joint_input and infer C dimension
+        # (B, C, T, H', W'). use B from joint_input and infer C dimension
         du_output = du_output.reshape(
             joint_input.shape[0], -1, du_output.shape[1], du_output.shape[2], du_output.shape[3]
         )
-        # (B, T, C', H', W') So that the skip connection from encoder can be added properly along C, H', W' dimensions for subsequent decoder layer
+        # (B, T, C', H', W') so that the skip connection from encoder can be added properly along C, H', W' dimensions for subsequent decoder layer
         du_output = du_output.permute(0, 2, 1, 3, 4)
         return du_output

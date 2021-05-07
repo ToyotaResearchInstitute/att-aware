@@ -135,7 +135,7 @@ class DecoderNet(torch.nn.Module):
 
     def forward(self, encoder_output_dict, side_channel_input, enc_input_shape):
         """
-        Decode an output image via Conv3d (or s3D) +upsampling + side channel information model
+        Decode an output image via Conv3d (or s3D) + upsampling + side channel information model
 
         Parameters:
         ----------
@@ -173,8 +173,7 @@ class DecoderNet(torch.nn.Module):
             if side_channel_input is not None:
                 for side_key in side_channel_input:
                     if side_key == "driver_facing":
-                        # Create Voronoi maps for gaze side channel input
-
+                        # CREATE VORONOI MAPS FOR SIDE CHANNEL GAZE INPUT
                         # side_channel_input is a tensor of sahpe (B, T, L, 4) when the driver_facing module only has linear0 module.
                         # (B, T, L, 1)
                         dropout_indicator = side_channel_input[side_key][:, :, :, 3:]
@@ -186,7 +185,7 @@ class DecoderNet(torch.nn.Module):
                         # (B,T, L, 2). Grab only the gaze points and ignore the dropout indicator
                         gaze_points = side_channel_input[side_key][:, :, :, 0:2]
 
-                        # Create meshgrid containing normalized coordinates for computing dx and dy at each pixel to the nearest gaze point
+                        # create meshgrid containing normalized coordinates for computing dx and dy at each pixel to the nearest gaze point
                         yv, xv = torch.meshgrid(
                             [
                                 torch.linspace(
@@ -238,7 +237,7 @@ class DecoderNet(torch.nn.Module):
 
                         # (B, T, H, W, L). Initialize the one-hot tensor with zeros
                         # the one hot vector for each coordinate position will be L dimensional.
-                        # This is picking the proper gaze index for dx dy coordinate corresponding to the shortest distance gaze point
+                        # this is picking the proper gaze index for dx dy coordinate corresponding to the shortest distance gaze point
                         min_indices_one_hot = torch.zeros_like(dx_dy_grid_gaze_list[:, :, :, :, :, 0])
 
                         # (B, T, H, W, L) #scatter 1 at the specified indices along the L dimension of min_indices_one_hot

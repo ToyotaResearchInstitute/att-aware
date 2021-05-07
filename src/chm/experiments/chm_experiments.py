@@ -21,10 +21,8 @@ class ChmExperiment(ABC):
         -----------
         args: argparse.Namespace
             Contains all args specified in the args_file and any additional arg_setter (specified in the derived classes)
-
         session_hash: str
             Unique string indicating the sessions id.
-
         training_experiment: bool
             Bool indicating whether the experiment require training or just inference.
         """

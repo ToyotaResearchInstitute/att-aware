@@ -8,7 +8,7 @@ import os
 from chm.dataset.chm_gaze_dataset import CHMGazeDataset
 from chm.dataset.chm_att_awareness_dataset import CHMAttAwarenessDataset
 from chm.dataset.chm_pairwise_gaze_dataset import CHMPairwiseGazeDataset
-from chm.model.chm_net import CHMNet
+from chm.model.CHMNet import CHMNet
 from chm.losses.chm_loss import CHMLoss
 from torch.utils.data import DataLoader, Subset, sampler
 from utils.chm_consts import *
@@ -109,7 +109,9 @@ def load_datasets(params_dict):
 
 def generate_train_test_split_indices(dataset, params_dict):
     """
-    Creates the train/test split according to frame_id
+    Creates the train/test split according to frame_id. The entire 5 minute video is split into
+    chunks of size "video_chunk_size". Each of these "chunks" are split into train and test indices according to
+    the train_test_split_factor.
     Parameters
     ----------
     dataset: Pytorch Dataset (CHMGazeDataset, CHMAttAwarenessDataset, CHMPairwiseGazeDataset)
@@ -168,7 +170,8 @@ def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets
     """
     Creates dataloaders for all datasets
     """
-    num_test_samples = params_dict.get("num_test_samples", 1000)  # number of test samples used for test set
+    # number of test samples used for test set
+    num_test_samples = params_dict.get("num_test_samples", 1000)
     batch_size = params_dict.get("batch_size", 8)
     awareness_batch_size = params_dict.get("awareness_batch_size", 8)
     num_dl_workers = params_dict.get("num_workers", 0)
@@ -259,7 +262,8 @@ def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correct
         # apply gaze corruption to the input gaze, if available
         batch_input["normalized_input_gaze"] = gaze_corruption.corrupt_gaze(batch_input["normalized_input_gaze"])
 
-    # This is a flag which will be used during inference to determine whether a batch needs to be ignored or not. For training, this will always be true
+    # should_use_batch is a flag which will be used during inference to determine whether a batch needs to be ignored or not.
+    # For training, this will always be true
     should_use_batch = True
     # input process dict is typically used to provide a function handle to modify the input or determine whether the batch should be used or not
     # after corruption. Used in experiments
@@ -497,7 +501,8 @@ def extract_individual_batch_input(
 
 
 def post_process_individual_batch_inputs(individual_batch_inputs, input_process_dict, has_pairwise_item=True):
-    # post process input before model forward (typically used in controlled experiments to modify input)
+    # post process input using functors in input_process_dict before model forward
+    # (typically used in controlled experiments to modify input)
     (
         gaze_batch_input,
         awareness_batch_input,

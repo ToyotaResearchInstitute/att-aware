@@ -38,7 +38,8 @@ class CHMPredictorNet(torch.nn.Module):
         self.gaze_predictor = torch.nn.Conv1d(self.predictor_output_num_features, 1, [1], padding=0)
         # awareness_predictor_output_features = 1
         self.awareness_predictor = torch.nn.Conv1d(self.predictor_output_num_features, 1, [1], padding=0)
-        # dim=3 works because before applying the softmax we flatten the 2d heatmap. The softmax makes sure the probability sums to one over the entire heatmap
+        # dim=3 works because before applying the softmax we flatten the 2d heatmap.
+        # The softmax makes sure the probability sums to one over the entire heatmap
         self.softmax = torch.nn.Softmax(dim=3)
 
     def forward(self, predictor_input):
@@ -51,7 +52,8 @@ class CHMPredictorNet(torch.nn.Module):
         Returns:
         --------
         gaze_awareness_maps_output: OrderedDict
-            Containing the gaze density map, log_gaze_density_map, awareness estimate, unnormalized_gaze, common predictor output
+            Containing the gaze density map, log_gaze_density_map, awareness estimate, unnormalized_gaze,
+            common predictor output
         """
         # initialize a zero tensor to hold the output of the common predictor
         common_predictor_output = predictor_input.new_zeros(

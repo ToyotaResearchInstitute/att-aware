@@ -343,7 +343,7 @@ class CHMBaseDataset(Dataset):
             if (
                 np.isnan(gaze_points[i, :]).sum() or event_type_list[i] != "Fixation"
             ):  # if there are nans in the gaze points or if the type is not Fixation
-                # Modify the gaze to be outside the screen dimensions and set the train bit to be False
+                # modify the gaze to be outside the screen dimensions and set the train bit to be False
                 gaze_points[i, :] = np.array([-10 * DISPLAY_WIDTH, -10 * DISPLAY_HEIGHT])
                 should_train_array[i, :] = 0.0  # set should train flag to be 0.0 (False)
 
@@ -352,7 +352,7 @@ class CHMBaseDataset(Dataset):
             full_size_gp = np.expand_dims(full_size_gp, axis=0)  # (1,2)
             full_size_gaze_points_array[i, :] = full_size_gp  # in display dim (1080, 1920)  (H, W)
 
-            # Resize gaze. Resize it to the size of the network input
+            # resize gaze. Resize it to the size of the network input
             resized_gaze_points_array[i, 0] = (full_size_gp[0, 0] / DISPLAY_WIDTH) * self.new_image_width
             resized_gaze_points_array[i, 1] = (full_size_gp[0, 1] / DISPLAY_HEIGHT) * self.new_image_height
 

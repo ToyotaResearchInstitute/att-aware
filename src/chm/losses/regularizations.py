@@ -14,13 +14,10 @@ class EPSpatialRegularization(torch.nn.Module):
         ----------
         image_width: int
             Network image width
-
         image_height: int
             Network image height
-
         eps: float
             Epsilon to avoid divide by zero error in diffusivity computation
-
         sig_scale_factor: int
             Scaling factor for std deviation parameter for the gaussian blur filter
         """
@@ -68,7 +65,7 @@ class EPSpatialRegularization(torch.nn.Module):
         filter_c = self.conv_filter_centered  # (1,1,3,3)
         filter_c2 = self.conv_filter_centered2  # (1,1,3,3)
 
-        # Pad with reflective boundary conditions
+        # pad with reflective boundary conditions
         # image of shape (B, T, C=3, H, W) (mask or road image)
         # combine B and T dimensions and pad height and width dimensions. (BT, C, H+pad, W+pad)
         padded_image = torch.nn.ReflectionPad2d(self.blur_N)(
@@ -136,19 +133,14 @@ class EPTemporalRegularization(torch.nn.Module):
         ----------
         image_width: int
             Network image width
-
         image_height: int
             Network image height
-
         eps: float
             Epsilon to avoid divide by zero error in diffusivity computation
-
         sig_scale_factor: int
             Scaling factor for std deviation parameter for the gaussian blur filter
-
         negative_difference_coeff: float
             Weighting factor for decreasing temporal awareness.
-
         positive_difference_coeff: float
             Weight factor for increasing temporal awareness
         """
@@ -197,7 +189,7 @@ class EPTemporalRegularization(torch.nn.Module):
         filter_c = self.conv_filter_centered  # (1,1,3,3)
         filter_c2 = self.conv_filter_centered2  # (1,1,3,3)
 
-        # Pad with reflective boundary conditions
+        # pad with reflective boundary conditions
         # image.view(-1, image.shape[2], image.shape[3], image.shape[4]) - (BT, C=3, H, W)
         # (BT, C=3, H+2*N, W+2*N)
         padded_image = torch.nn.ReflectionPad2d(self.blur_N)(

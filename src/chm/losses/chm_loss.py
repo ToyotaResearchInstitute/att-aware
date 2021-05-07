@@ -433,7 +433,6 @@ class CHMLoss(object):
         ----------
         predicted_gaze_t: dict
             Dictionary containing the output from CHMPredictor computed on gaze sequence at t
-
         predicted_gaze_tp1: dict
             Dictionary containing the outputs from CHMPredictor computed on gaze sequence at t+self.temporal_downsample_factor
 
@@ -441,10 +440,8 @@ class CHMLoss(object):
         --------
         consistency_smoothness_awareness: torch.Tensor
             Consistency smoothness cost computed on awareness map (post multiplying with coeff)
-
         consistency_smoothness_gaze: torch.Tensor
             Consistency smoothness cost computed on gaze map (post multiplying with coeff)
-
         """
         normalized_gaze_map_t = predicted_gaze_t["gaze_density_map"]  # (B, T, 1, H, W)
         awareness_map_t = predicted_gaze_t["awareness_map"]  # (B, T, 1, H, W)

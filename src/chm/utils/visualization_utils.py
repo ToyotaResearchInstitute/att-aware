@@ -36,7 +36,7 @@ def visualize_overlaid_images(
         if instance_idx >= batch_target.shape[0]:
             break
         # cumulative=True, will result in combining the images from all T frames in a sequence.
-        # cumulative=False, will result in visualizing single frame heatmap
+        # cumulative=False, will result in visualizing single frame [0th] heatmap
         for cumulative in [True, False]:
             postfix_str = "" if cumulative is True else "_single"
 
@@ -224,6 +224,7 @@ def visualize_awareness_labels(
         # blended image
         overlaid_img = alpha * road_img_t + (1 - alpha) * img_cv_rgb
 
+        # plot overlaid image
         plt.imshow(overlaid_img, cmap="jet")
         plt.colorbar()
 
@@ -237,10 +238,9 @@ def visualize_awareness_labels(
         ax.set_title(title)  # presented the predicted and true label as heading.
         ax.scatter(x, y, s=140, color="r", marker="x", linewidth=6)  # plot the annotation cross hair
 
-        noisy_gaze = (
-            awareness_batch_input["normalized_input_gaze"][instance_idx, :, :, :].cpu().detach().numpy()
-        )  # (T, L, 2)
-        # (TL, 2) All gaze points are within [0, 1]
+        # (T, L, 2)
+        noisy_gaze = awareness_batch_input["normalized_input_gaze"][instance_idx, :, :, :].cpu().detach().numpy()
+        # (TL, 2) all gaze points are within [0, 1]
         noisy_gaze = noisy_gaze.reshape(noisy_gaze.shape[0] * noisy_gaze.shape[1], -1)
         # scale noisy gaze to network image dimensions
         road_img_height, road_img_width = road_img_t.shape[:2]

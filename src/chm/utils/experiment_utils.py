@@ -94,7 +94,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
         st_filtered_awareness_sequence_overall: torch.Tensor (T, H, W)
             Tensor containing the spatio temporally smoothed gaussian filter based awareness estimate
         """
-        # Grab the temporal and spatial dimensions of the OF map
+        # grab the temporal and spatial dimensions of the OF map
         T = self.optic_flow_sequence.shape[0]
         H = self.optic_flow_sequence.shape[-2]
         W = self.optic_flow_sequence.shape[-1]
@@ -181,7 +181,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
                 yv_new_p[yv_new_p < 0] = 0.0
                 yv_new_p[yv_new_p >= W] = W - 1
 
-                # (grab pixels from tm1 according to the OF) (H, W)
+                # grab pixels from tm1 according to the OF (H, W)
                 inner_t_heatmap = inner_tm1_heatmap[xv_new_p.flatten().long(), yv_new_p.flatten().long()].reshape(
                     inner_tm1_heatmap.shape[0], inner_tm1_heatmap.shape[1]
                 )
