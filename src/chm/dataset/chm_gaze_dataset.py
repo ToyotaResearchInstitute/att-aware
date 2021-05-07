@@ -24,7 +24,7 @@ class CHMGazeDataset(CHMBaseDataset):
 
     def _setup_resources(self, **kwargs):
         """
-        Sets up any resources (such loading csv files etc) needed for this derived Dataset.
+        Sets up any resources (such loading csv files etc) needed for this derived dataset.
 
         Parameters
         ----------

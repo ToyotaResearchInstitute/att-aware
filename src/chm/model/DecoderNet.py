@@ -4,6 +4,21 @@ from chm.model.DecoderUnit import DecoderUnit
 
 
 def create_decoder(decoder_net_params=None):
+    """
+    Creates the encoder structure. Two possible encoders.
+    1. With only ResNet18 encoder layers. 4 layers
+    2. When use_s3d is True, then 3 layers of S3D will be stacked on top of two layers of ResNet18. Total of 5
+
+    Parameters:
+    ----------
+    decoder_net_params: dict
+        Dict containing various parameters (use_s3d, decoder_layer_features, output_dim_of_decoder, side_channel_input_dim, skip_layers) for the decoder net
+
+    Returns:
+    -------
+    DecoderNet: torch.nn.Module
+        Decoder network for CHM
+    """
     assert decoder_net_params is not None
 
     use_s3d = decoder_net_params["use_s3d"]
@@ -121,6 +136,7 @@ class DecoderNet(torch.nn.Module):
     def forward(self, encoder_output_dict, side_channel_input, enc_input_shape):
         """
         Decode an output image via Conv3d (or s3D) +upsampling + side channel information model
+
         Parameters:
         ----------
         encoder_output_dict: dict

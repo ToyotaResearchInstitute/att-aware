@@ -221,7 +221,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Number of dataloader workers used by the train, test and vis dataloaders.",
     )
     parser.add_argument(
-        "--num_epochs",
+        "--max_epochs",
         action="store",
         type=int,
         default=100,
@@ -256,30 +256,10 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Flag to add optic flow network as a side channel input",
     )
     parser.add_argument(
-        "--nograd_cognitive_map",
-        action="store_true",
-        default=False,
-        help="Flag for removing cognitive map gradients from training",
-    )
-    parser.add_argument(
         "--nograd_encoder",
         action="store_true",
         default=False,
         help="Flag for not computing the gradients for the encoder layers from training. Typically used when --use_s3d_encoders is not used",
-    )
-
-    parser.add_argument(
-        "--nograd_gazetransform",
-        action="store_true",
-        default=False,
-        help="Flag for removing gazetransform gradients from training",
-    )
-
-    parser.add_argument(
-        "--nograd_driverfacing",
-        action="store_true",
-        default=False,
-        help="Flag for removing driver_facing gradients from training",
     )
     parser.add_argument(
         "--no_maps_visualize",
@@ -301,27 +281,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store_true",
         default=False,
         help="When set, the testing phase is skipped during the training run.",
-    )
-    parser.add_argument(
-        "--no_diffusivity_visualize",
-        dest="no_diffusivity_visualize",
-        action="store_true",
-        default=False,
-        help="Saving diffusivity maps",
-    )
-    parser.add_argument(
-        "--no_dump_cost_histograms",
-        dest="no_dump_cost_histograms",
-        action="store_true",
-        default=False,
-        help="When set, the cost histograms are no longer generated",
-    )
-    parser.add_argument(
-        "--no_voronoi_visualize",
-        dest="no_voronoi_visualize",
-        action="store_true",
-        default=False,
-        help="When set, voronoi maps of side channel gaze are not visualized.",
     )
     parser.add_argument(
         "--num_visualization_examples",
@@ -456,29 +415,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=False,
         help="Flag for retrieving optic flow to be used a side channel input to the decoder",
     )
-    parser.add_argument(
-        "--optic_flow_downsample_mode",
-        type=str,
-        default="max",
-        help="filtering used for downsampling optic flow side channel inp [max, avg, median]",
-    )
-
-    ##########################
-
-    parser.add_argument(
-        "--use_only_gaze_ds",
-        dest="use_only_gaze_ds",
-        action="store_true",
-        default=False,
-        help="Flag for only using gaze ds for inference and training",
-    )
-
-    parser.add_argument(
-        "--add_awareness_ds_common_loss",
-        action="store_true",
-        default=False,
-        help="Flag for adding the common loss terms from awareness_dataset as well. ",
-    )
 
     ################################### NETWORK ARGS #########################################3
 
@@ -531,21 +467,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
     )
 
     parser.add_argument(
-        "--update_a_of_g_weight",
-        dest="update_a_of_g_weight",
-        action="store_true",
-        default=False,
-        help="Flag for updating the aware of gaze weight",
-    )
-    parser.add_argument(
-        "--awareness_of_gaze_weight_init",
-        action="store",
-        type=float,
-        default=0.0,
-        help="controls the initialization of the weight factor",
-    )
-
-    parser.add_argument(
         "--unnormalized_gaze_loss_coeff",
         action="store",
         type=float,
@@ -560,7 +481,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=1e7,
         help="Coeff for consistency smoothness coeff for gaze. ",
     )
-
     parser.add_argument(
         "--consistency_coeff_awareness",
         action="store",
@@ -568,7 +488,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=10,
         help="Coeff for consistency smoothness coeff for awareness. ",
     )
-
     parser.add_argument(
         "--common_predictor_map_loss_coeff",
         action="store",
@@ -597,26 +516,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.0,
         help="Coefficient for road image based temporal regularization coefficient for gaze",
     )
-    parser.add_argument(
-        "--use_road_image_for_gaze_reg",
-        action="store_true",
-        default=False,
-        help="Flag for choosing road image for gaze spatial regularization",
-    )
 
-    parser.add_argument(
-        "--use_constant_diffusivity_for_gaze",
-        action="store_true",
-        default=False,
-        help="Flag for choosing constant diffusivity for gaze",
-    )
-
-    parser.add_argument(
-        "--use_constant_diffusivity_for_awareness",
-        action="store_true",
-        default=False,
-        help="Flag for choosing constant diffusivity for awareness",
-    )
     ######## AWARENESS LOSS TERMS ##############
     parser.add_argument(
         "--awareness_label_coeff",
@@ -630,12 +530,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         type=str,
         default="huber_loss",
         help="type of awareness loss [huber_loss, squared_loss]",
-    )
-    parser.add_argument(
-        "--awareness_loss_is_pointwise",
-        action="store_true",
-        default=False,
-        help="Flag for specifying whether the awareness label loss is to be computed pointwise",
     )
     parser.add_argument(
         "--awareness_label_loss_patch_half_size",
@@ -658,13 +552,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.01,
         help="Regularization on awareness steady state",
     )
-    # parser.add_argument(
-    #     "--awareness_of_gaze_coeff",
-    #     action="store",
-    #     type=float,
-    #     default=0.0,
-    #     help="Regularization on awareness of gaze",
-    # )
 
     parser.add_argument(
         "--awareness_spatial_regularization_coeff",
@@ -729,7 +616,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.5,
         help="The decay coefficient between steps",
     )
-
     parser.add_argument(
         "--gaussian_kernel_size",
         action="store",
@@ -737,7 +623,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=2,
         help="Denotes the kernel size used for the gaussian filter for awareness at gaze loss function",
     )
-
     parser.add_argument(
         "--gaze_bias_std",
         action="store",
@@ -753,21 +638,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.0347222222,
         help="Std for the Gaussian noise added in the gaze corruption",
     )
-    parser.add_argument(
-        "--gaze_transform_prior_coefficient",
-        action="store",
-        type=float,
-        default=1.0,
-        help="Coefficient for transform prior of the gaze",
-    )
-
-    parser.add_argument(
-        "--weight_update_gain",
-        action="store",
-        type=float,
-        default=0.3,
-        help="Controls the gain for the awareness of gaze weight curve",
-    )
 
     parser.add_argument(
         "--sig_scale_factor",
@@ -777,32 +647,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         help="Factor by which sigma for gaussian kernel will be multiplied",
     )
 
-    parser.add_argument(
-        "--gaze_list_validity_functor",
-        dest="gaze_list_validity_functor",
-        default="cognitive_heatmap.functors.gaze_list_validity_functor",
-    )
-    parser.add_argument(
-        "--gaze_list_condition_functor",
-        dest="gaze_list_condition_functor",
-        default="cognitive_heatmap.functors.gaze_list_all_true",
-    )
-    parser.add_argument(
-        "--get_item_functor",
-        dest="get_item_functor",
-        default="cognitive_heatmap.functors.dreyeve_getitem_ignore_all_functor",
-    )
-
-    parser.add_argument(
-        "--gp_list_validity_functor",
-        dest="gp_list_validity_functor",
-        default="cognitive_heatmap.functors.gp_list_validity_functor_generic",
-    )
-    parser.add_argument(
-        "--train_test_split_functor",
-        dest="train_test_split_functor",
-        default="cognitive_heatmap.train_test_split_functors.chunked_video_train_test_split",
-    )
     parser.add_argument(
         "--video_chunk_size",
         action="store",
@@ -817,14 +661,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         type=int,
         default=3,
         help="Length of gaze list returned by getitem functor. Should be in [1, 10]",
-    )
-
-    parser.add_argument(
-        "--experiment_noise_levels",
-        action="store",
-        nargs="*",
-        default=[],
-        help="Noise levels for gaze corruption for experiments",
     )
 
     for setter in additional_argument_setters:

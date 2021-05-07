@@ -72,7 +72,7 @@ class DecoderUnit(torch.nn.Module):
 
     def forward(self, last_out, skip_input, side_channel_input, upsm_size):
         """
-        Parameters
+        Parameters:
         ----------
         last_out: torch.Tensor (B, T, C, H, W)
             output from the previous DecoderUnit in the DecoderNet
@@ -83,7 +83,7 @@ class DecoderUnit(torch.nn.Module):
         upsm_size: torch.Tensor (2, 1)
             target resolution after upsampling.
 
-        Returns
+        Returns:
         -------
         du_output: torch.Tensor  (B, T, C', H', W'),
             output of the decoder unit with proper resolution for consumption by the next

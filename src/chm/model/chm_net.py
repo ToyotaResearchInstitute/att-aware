@@ -9,7 +9,7 @@ from chm.model.CHMPredictorNet import create_chm_predictor
 
 def create_identity_gaze_transform(scale_factor=1.0):
     """
-    create_identity_gaze_transform
+    create_identity_gaze_transform creates an identity transform layer
 
     Parameters:
     ---------
@@ -18,8 +18,8 @@ def create_identity_gaze_transform(scale_factor=1.0):
 
     Returns:
     -------
-    gaze_transform: torch.nn.Module
-        gaze_transform torch module used for transforming input gaze in CognitiveHeatNeat
+    gaze_transform: torch.nn.Module (GazeTransform)
+        gaze_transform torch module used for transforming input gaze in CHMNet
     """
     gaze_transform = GazeTransform(scale_factor=scale_factor)
     return gaze_transform
@@ -30,7 +30,7 @@ class CHMNet(torch.nn.Module):
         """
         Model class encapsulating Fusion Net (encoder, decoder, side-channel) and MapPredictor networks for CHM
 
-        Parameters
+        Parameters:
         ----------
         params_dict : dict
             dict containing args for network structure
@@ -152,4 +152,7 @@ class CHMNet(torch.nn.Module):
         # gaze and awareness density maps
         chm_output = self.chm_predictor(chm_predictor_input)
 
+        import IPython
+
+        IPython.embed(banner1="check output")
         return chm_output, fusion_output, side_channel_output, should_drop_dicts

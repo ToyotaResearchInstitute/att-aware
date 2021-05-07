@@ -26,6 +26,7 @@ class CHMPredictorNet(torch.nn.Module):
         self.predictor_output_size = predictor_output_size
         self.predictor_output_num_features = self.predictor_output_size[0]
 
+        # kernel size used for conv2d
         kernel_size = 5
         self.common_predictor = torch.nn.Conv2d(
             self.predictor_input_num_features,

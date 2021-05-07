@@ -8,7 +8,7 @@ from chm.dataset.chm_base_dataset import CHMBaseDataset
 class CHMAttAwarenessDataset(CHMBaseDataset):
     def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
-        CHMAttAwarenessDataset dataset class
+        CHMAttAwarenessDataset dataset class. Dataset class that encapsulates the attended awareness annotation data.
 
         Parameters
         ----------

@@ -1,3 +1,4 @@
+# Copyright 2020 Toyota Research Institute.  All rights reserved.
 import torch
 import numpy as np
 
@@ -43,7 +44,7 @@ class AwarenessEstimator(ABC):
 
 class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
     """
-    Strawman baseline awareness estimation using a optic flow based spatio temporal gaussian filter.
+    Strawman baseline awareness estimation using optic flow based spatio temporal gaussian filter.
     """
 
     def __init__(
@@ -153,7 +154,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
                 kernel
             )
 
-            # coordinate grid. # coordinate grid. xv is the row indices, yv is the column indices
+            # coordinate grid. xv is the row indices, yv is the column indices
             xv, yv = torch.meshgrid(
                 [
                     self.optic_flow_sequence.new_tensor(torch.arange(0, H).clone().detach().numpy()),
@@ -161,14 +162,14 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
                 ]
             )
 
-            # (H, W) #init the t minus 1 heatmap
+            # (H, W) init the t-1 heatmap
             inner_tm1_heatmap = st_filtered_awareness_sequence[outer_t, :, :]
 
             # deal with the temporal propagation according to optic flow
             # inner loop controls ALL those frames that will be affected by the gaze at outer_t
             for inner_t in range(outer_t + 1, T):
                 # using the optic flow information figure out where the heat is going to be propagated
-                # Since optic flow is computed backward. That is,the optic flow at outer_t+1 can be used to compute where the flow originated in the previous frame.
+                # since optic flow is computed backward. That is,the optic flow at outer_t+1 can be used to compute where the flow originated in the previous frame.
                 # (2, H, W)
                 optic_flow_at_outer_tp1_ux_uy = self.optic_flow_sequence[inner_t, :, :, :]
                 # displaced row indices
@@ -187,7 +188,7 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
                 )
 
                 # apply temporal decay
-                # This is in terms of frames
+                # this is in terms of frames
                 if self.temporal_filter_type == "exponential":
                     temporal_weight = np.exp(-((inner_t - outer_t) ** 2) / self.temporal_scale ** 2)
                 elif self.temporal_filter_type == "geometric":

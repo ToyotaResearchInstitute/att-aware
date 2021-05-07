@@ -10,7 +10,6 @@ def run_over_images(input, net, axis):
     """
     Parameters:
     ----------
-
     input: torch.Tensor
         (B, T, C, H, W). Image sequence
     net: torch.nn.Module
@@ -121,9 +120,14 @@ def create_encoder(reduced_middle_layer_size=512, use_s3d=False):
 
 
 class EncoderNet(torch.nn.Module):
+    """
+    Class for the Encoder Net in CHMNet
+    """
+
     def __init__(self, preproc_net, layered_outputs, s3d_net=None, post_layers=None):
         """
         Parameters:
+        -----------
         preproc_net: torch.nn.Sequential
             Initialize preprocessing modules for encoder
         layered_output: torch.nn.ModuleDict
