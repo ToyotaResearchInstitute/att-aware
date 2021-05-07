@@ -5,12 +5,12 @@ from chm.dataset.chm_base_dataset import CHMBaseDataset
 
 
 class CHMPairwiseGazeDataset(CHMBaseDataset):
-    def __init__(self, dataset_type=None, params_dict=None):
+    def __init__(self, dataset_type=None, params_dict=None, **kwargs):
         """
         CHMPairwiseGazeDataset dataset class.
         Returns a pair of sequences that is used to compute the consistency cost term.
 
-        Parameters
+        Parameters:
         ----------
         dataset_type : str {'train, 'test', 'vis'}
             String indicating the type of dataset
@@ -18,19 +18,20 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
             Dictionary containing the args passed from the training script
 
         """
-        super().__init__(dataset_type=dataset_type, params_dict=params_dict)
+        super().__init__(dataset_type=dataset_type, params_dict=params_dict, **kwargs)
 
-    def _setup_resources(self):
+    def _setup_resources(self, **kwargs):
         """
         Sets up any resources (such loading csv files etc) needed for this derived Dataset.
 
-        Parameters
+        Parameters:
         ----------
-        None
+        kwargs: dict
+            dictionary of named arguments.
 
-        Returns
+        Returns:
         -------
-        None.
+        None
         """
         pass
 
@@ -38,11 +39,11 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
         """
         Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CHMBaseDataset init function
 
-        Parameters
+        Parameters:
         ----------
         None
 
-        Returns
+        Returns:
         -------
         None. Only Results in populating the self.metadata_list
         """
@@ -64,16 +65,17 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
 
     def __getitem__(self, idx):
         """
-        Required getitem() for PyTorch dataset.
+        Required getitem() for PyTorch gaze dataset.
 
-        Parameters
+        Parameters:
         ----------
-        idx: Index of the data item in self.metadata_list
+        idx: int
+            Index of the data item in self.metadata_list
 
-        Returns
+        Returns:
         -------
         data_dict: dict
-        Dictionary containing the data_dict, auxiliary_info for sequence at frame t and at t+self.temporal_downsample_factor
+            Dictionary containing the data_dict, auxiliary_info for sequence at frame t and at t+self.temporal_downsample_factor
         """
         data_dict = {}
         (video_id, subject, task), query_frame_t, query_frame_tp1 = self.metadata_list[idx]
