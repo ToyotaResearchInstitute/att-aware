@@ -45,9 +45,9 @@ class CHMBaseDataset(Dataset):
             self.precache_dir
         ), "Valid path to directory containing video_frame, segmentation and optic flow cache is necessary"
 
-        # Factor by which the full sized image needs to be rescaled before used by network for training
+        # factor by which the full sized image needs to be rescaled before used by network for training
         self.aspect_ratio_reduction_factor = self.params_dict.get("aspect_ratio_reduction_factor", 8.0)
-        # Hopsize for downsampled sequences
+        # hopsize for downsampled sequences
         self.temporal_downsample_factor = self.params_dict.get("temporal_downsample_factor", 6)
 
         self.all_videos_subjects_tasks_gaze_data_dict_path = self.params_dict.get("all_gaze_data_dict", None)
@@ -62,7 +62,7 @@ class CHMBaseDataset(Dataset):
 
         self.request_auxiliary_info = self.params_dict.get("request_auxiliary_info", True)
 
-        # Depending on the dataset type grab the corresponding
+        # depending on the dataset type grab the corresponding
         # sequence length, sequence id, subject id and task id from the params dict
         self.sequence_length = self.params_dict.get("{}_sequence_length".format(self.dataset_type), 20)
         self.sequence_ids = self.params_dict.get("{}_sequence_ids".format(self.dataset_type))
@@ -79,7 +79,7 @@ class CHMBaseDataset(Dataset):
         self.ORIG_ROAD_IMAGE_HEIGHT = self.ORIG_ROAD_IMG_DIMS[1]
         self.ORIG_ROAD_IMAGE_WIDTH = self.ORIG_ROAD_IMG_DIMS[2]
 
-        # Flag which ensures that the scaled version of the cached images are returned from the
+        # flag which ensures that the scaled version of the cached images are returned from the
         # fetch functions when aspect_ratio is smaller.
         self.return_reduced_size = False if self.aspect_ratio_reduction_factor == 1.0 else True
 
@@ -111,7 +111,7 @@ class CHMBaseDataset(Dataset):
         Assumes that the images as stored .jpg at ~/(self.precache_dir)/frame_image_cached/"{0:02d}".format(video_id)/frame_{frame_idx}.jpg
         Performs appropriate resizing if necessary and stores the resized video frame image in the same directory
 
-        Parameters
+        Parameters:
         ----------
         video_id : int
             DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
@@ -121,7 +121,7 @@ class CHMBaseDataset(Dataset):
             Flag indicating whether the returned video frame image should be rescaled to the correct resolution or not. If False, full size will be returned.
             If True and if cache doesn't exists, full sized frame image is resized and cached back in the same directory for later reuse
 
-        Returns
+        Returns:
         -------
         road_frame: numpy.array (H, W, 3) or (h, w, 3), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
@@ -161,7 +161,7 @@ class CHMBaseDataset(Dataset):
         Assumes that the optic flow is cached at ~/(self.precache_dir)/optic_flow/"{0:02d}".format(video_id)/frame_{frame_idx}.npy.
         Performs appropriate resizing if necessary and stores the resized optic flow image in the same directory
 
-        Parameters
+        Parameters:
         ----------
         video_id : int
             DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
@@ -171,7 +171,7 @@ class CHMBaseDataset(Dataset):
             Flag indicating whether the returned optic flow should be rescaled to the correct resolution or not. If False, full size will be returned.
             If True and if cache doesn't exists, full sized flow is resized and cached back in the same directory for later reuse
 
-        Returns
+        Returns:
         -------
         optic_flow_frame: numpy.array (H, W, 2) or (h, w, 2), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
@@ -204,7 +204,7 @@ class CHMBaseDataset(Dataset):
                 if OPTIC_FLOW_W_PAD > 0:
                     cached_size_frame = cached_size_frame[:, OPTIC_FLOW_W_PAD:-OPTIC_FLOW_W_PAD, :]  # (h', w', 2)
 
-                # The array has to be scaled, because the ux and uy values change according to resolution.
+                # the array has to be scaled, because the ux and uy values change according to resolution.
                 # OPTIC_FLOW_SCALE_FACTOR allows for optic flow to be cached at a lower resolution than full scale.
                 optic_flow_frame = cv2.resize(
                     cached_size_frame / (self.aspect_ratio_reduction_factor / OPTIC_FLOW_SCALE_FACTOR),
@@ -235,7 +235,7 @@ class CHMBaseDataset(Dataset):
         Assumes that the images as stored .png at ~/(self.precache_dir)/segmentations_from_video/"{0:02d}".format(video_id)/segmentations_frames/frame_{frame_idx}.jpg
         Performs appropriate resizing if necessary and stores the resized video frame image in the same directory
 
-        Parameters
+        Parameters:
         ----------
         video_id : int
             DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
@@ -245,7 +245,7 @@ class CHMBaseDataset(Dataset):
             Flag indicating whether the returned segmentation mask image should be rescaled to the correct resolution or not. If False, full size will be returned.
             If True and if cache doesn't exists, full sized segmentation mask image is resized and cached back in the same directory for later reuse
 
-        Returns
+        Returns:
         -------
         segmentation_frame: numpy.array (H, W, 3) or (h, w, 3), where H,W refers to full size image dimensions and h, w refers to resized dimensions
         """
@@ -285,7 +285,7 @@ class CHMBaseDataset(Dataset):
         """
         Get the gaze points for video_id, subject, task at frame_idx from the all_videos_subjects_tasks_gaze_data_dict
 
-        Parameters
+        Parameters:
         ----------
         video_id : int
             DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
@@ -296,7 +296,7 @@ class CHMBaseDataset(Dataset):
         task: str
             Cognitive task modifier experienced by subject during gazing ['control', 'blurred', 'flipped', 'readingtext', 'roadonly'].
 
-        Returns
+        Returns:
         -------
         full_size_gaze_points_array: numpy.array (L, 2)
             Gaze points in full screen resolution where L is the number of gaze points requested. L is fixed for a particular training run and is determined by args.fixed_gaze_list_length
@@ -328,7 +328,7 @@ class CHMBaseDataset(Dataset):
 
         gaze_points_x = gaze_df_at_frame_idx["X"].values  # np.array (L, 1) #in full size dimension
         gaze_points_y = gaze_df_at_frame_idx["Y"].values  # np.array (L, 1)
-        # Type of gaze point. [Fixation, Saccade, Blink, NA] etc
+        # type of gaze point. [Fixation, Saccade, Blink, NA] etc
         event_type_list = gaze_df_at_frame_idx["event_type"].values
 
         gaze_points = np.concatenate(
@@ -375,7 +375,7 @@ class CHMBaseDataset(Dataset):
         """
         Get the data_dict for a single sequence
 
-        Parameters
+        Parameters:
         ----------
         video_id : int
             DREYEVE VIDEO ID - [6,7,10,11,26,35,53,60]
@@ -386,7 +386,7 @@ class CHMBaseDataset(Dataset):
         task: str
             Cognitive task modifier experienced by subject during gazing - ['control', 'blurred', 'flipped', 'readingtext', 'roadonly']
 
-        Returns
+        Returns:
         -------
         data_dict: dict, data_dict containing the gaze data for the entire sequence
             ROAD_IMAGE_0: numpy.array, (T, C, h, w)
@@ -411,7 +411,6 @@ class CHMBaseDataset(Dataset):
                 subject id of the subject corresponding to the data_item
             AUXILIARY_INFO_FULL_SIZE_GAZE_0: numpy.array (L, 2)
                 Gaze points in full resolution
-
         """
         # list of frame idxs to be used for the snippet
         data_item_query_framelist = [
@@ -441,7 +440,7 @@ class CHMBaseDataset(Dataset):
         except Exception as e:
             import IPython
 
-            # Embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
+            # embed to catch the exception if something goes wrong in the conversion of the data_item_list to the data dict
             IPython.embed(header="getitem invalid: " + str(e))
 
         if not self.request_auxiliary_info:

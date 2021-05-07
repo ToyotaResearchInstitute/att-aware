@@ -94,13 +94,14 @@ class CHMNet(torch.nn.Module):
 
         Returns:
         --------
-        chm_output: dict
+        chm_output: OrderedDict
             Dictionary containing the gaze maps, awareness maps. Output of the CHMPredictorNet
-
-        fusion_output:
-        side_channel_output:
+        fusion_output: OrderedDict ['road_facing']
+            Output of the encoder-decoder backbone, before passing as input PredictorNet
+        side_channel_output: OrderedDict ['driver_facing', 'optic_flow']
+            Contains the output of the side channel modules. These are fed into the DecoderUnits as side channel information.
         should_drop_dicts: tuple, (should_drop_indices_dict, should_drop_entire_channel_dict)
-            Tuple containing two dictionaries containing the batch indices that were dropped out.
+            Tuple containing dictionaries containing the batch indices/channels that were dropped out.
         """
         road_image = batch_input["road_image"] / 255.0  # normalized road image
         normalized_input_gaze = batch_input["normalized_input_gaze"].clone().detach()  # (B, T, L, 2)
@@ -152,7 +153,4 @@ class CHMNet(torch.nn.Module):
         # gaze and awareness density maps
         chm_output = self.chm_predictor(chm_predictor_input)
 
-        import IPython
-
-        IPython.embed(banner1="check output")
         return chm_output, fusion_output, side_channel_output, should_drop_dicts

@@ -37,9 +37,9 @@ def run_over_images(input, net, axis):
 
 def create_encoder(reduced_middle_layer_size=512, use_s3d=False):
     """
-    Creates the encoder structure. Two possible encoders.
+    Creates the encoder structure. Two possible options for encoders.
     1. With only ResNet18 encoder layers. 4 layers
-    2. When use_s3d is True, then 3 layers of S3D will be stacked on top of two layers of ResNet18. Total of 5
+    2. When use_s3d is True, then 3 layers of S3D will be stacked on top of two layers of ResNet18. Total of 5.
 
     Parameters:
     ----------
@@ -136,7 +136,6 @@ class EncoderNet(torch.nn.Module):
             If use_s3d flag was true the s3d_net consists of [s3d_net_1, s3d_net_2, s3d_net_3]. else None
         post_layers: dict or None
             dict containing the various layers for post processing
-
         """
         super().__init__()
         self.preproc_net = preproc_net

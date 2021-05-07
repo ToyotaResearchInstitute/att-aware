@@ -44,7 +44,7 @@ class AwarenessEstimator(ABC):
 
 class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
     """
-    Strawman baseline awareness estimation using optic flow based spatio temporal gaussian filter.
+    Strawman baseline for awareness estimation using optic flow based spatio temporal gaussian filter.
     """
 
     def __init__(
@@ -93,7 +93,6 @@ class SpatioTemporalGaussianWithOpticFlowAwarenessEstimator(AwarenessEstimator):
         --------
         st_filtered_awareness_sequence_overall: torch.Tensor (T, H, W)
             Tensor containing the spatio temporally smoothed gaussian filter based awareness estimate
-
         """
         # Grab the temporal and spatial dimensions of the OF map
         T = self.optic_flow_sequence.shape[0]

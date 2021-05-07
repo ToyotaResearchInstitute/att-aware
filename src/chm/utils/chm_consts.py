@@ -3,7 +3,6 @@
 """
 This file details the field names used in datasets' for CHM training as well other constants. 
 """
-
 from enum import Enum
 
 MAX_NUM_VIDEO_FRAMES = 7501

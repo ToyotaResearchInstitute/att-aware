@@ -99,12 +99,14 @@ class AwarenessEstimationExperiment(ChmExperiment):
             awareness_batch_annotation_data = inference_output_dict["awareness_batch_annotation_data"]
             awareness_aux_info_list = inference_output_dict["awareness_aux_info_list"]
 
-            # (aB, T, L, 2) #the gaze points for the awareness label ds. aB refers to the awareness dataset batch size (--awareness_ds_batch_size).
+            # (aB, T, L, 2) - the gaze points for the awareness label ds. aB refers to the
+            # awareness dataset batch size (--awareness_ds_batch_size).
             noisy_gaze = awareness_batch_input["normalized_input_gaze"]
             groundtruth_gaze = awareness_batch_input["normalized_input_gaze_before_corruption"]
 
-            # Get awarenessmap and target coordinates from awareness labels batch
-            # (B, H, W), -1 for T dim because the label is only for the last time stamp. 0 for the C dimension because, awareness heatmap is single channel image
+            # get awareness map and target coordinates from awareness labels batch
+            # (B, H, W), -1 for T dim because the label is only for the last time stamp. 0 for the C dimension because,
+            # awareness heatmap is single channel image
             awareness_map = predicted_awareness_training_output["awareness_map"][:, -1, 0, :, :]
             awareness_x = awareness_map.new_tensor(
                 (awareness_batch_annotation_data["query_x"] / self.annotation_image_size[2] * awareness_map.shape[-1])
@@ -163,9 +165,8 @@ class AwarenessEstimationExperiment(ChmExperiment):
                     gaze_info_list_b.append(gaze_info_dict)
 
                 gaze_info_list.append(gaze_info_list_b)
-                should_train_bit_sequence = (
-                    awareness_batch_input["should_train_input_gaze"][b, :, 0, 0].cpu().float()
-                )  # (T)
+                # (T)
+                should_train_bit_sequence = awareness_batch_input["should_train_input_gaze"][b, :, 0, 0].cpu().float()
                 # (T, 2, H, W)
                 optic_flow_sequence = awareness_batch_input["optic_flow_image"][b, :, :, :, :].cpu()
                 spatio_temporal_gaussian_filter_with_of_estimator = (

@@ -10,7 +10,7 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         """
         CHMAttAwarenessDataset dataset class. Dataset class that encapsulates the attended awareness annotation data.
 
-        Parameters
+        Parameters:
         ----------
         dataset_type : str {'train, 'test', 'vis'}
             String indicating the type of dataset
@@ -60,13 +60,13 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         """
         Returns the metadata list (of tuples) for this dataset
 
-        Parameters
+        Parameters:
         ----------
         None
 
-        Returns
+        Returns:
         -------
-        metadata_lisr: list
+        metadata_list: list
             List of tuples containing metadata information (video_id, subject, task), query_frame for each data item
         """
         return self.metadata_list
@@ -75,11 +75,11 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         """
         Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CHMBaseDataset init function
 
-        Parameters
+        Parameters:
         ----------
         None
 
-        Returns
+        Returns:
         -------
         None. Results in populating the self.metadata_len and self.metadata_list if needed
         """
@@ -88,7 +88,8 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
     def convert_awareness_annotation_to_float(self, label):
         """
         Converts text based annotation to a float value in [0.0, 1.0]
-        Parameters
+
+        Parameters:
         -----------
         label: str
             Attended awareness annotation label ["no_definitely", "no_probably", "unsure", "yes_probably", "yes_definitely"]
@@ -107,20 +108,19 @@ class CHMAttAwarenessDataset(CHMBaseDataset):
         """
         Required getitem() for PyTorch dataset.
 
-        Parameters
+        Parameters:
         ----------
         idx: int
             Index of the data item in self.att_awareness_labels
 
-        Returns
+        Returns:
         -------
-        data_dict:  dict
+        data_dict: dict
             Same keys as the data_dict in chm_base_dataset.
             Additional key: att_annotation
 
         auxiliary_info_list: list
             Same as chm_base_dataset
-
         """
 
         att_label_item = self.att_awareness_labels.iloc[idx]

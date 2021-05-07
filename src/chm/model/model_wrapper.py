@@ -135,12 +135,10 @@ class ModelWrapper(torch.nn.Module):
 
         # if param_grad_setter function handle is provided, override the default set of parameters to be optimized.
         # Used in experiments that rely on training
-
         if self.param_grad_setter is not None:
             self.model, self.optimization_params = self.param_grad_setter(self.model)
 
-        # Check flag for automatic mixed precision
-
+        # init optimizer
         self.optimizer = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.optimization_params),
             lr=self.params_dict.get("learning_rate", 0.0005),
@@ -153,6 +151,9 @@ class ModelWrapper(torch.nn.Module):
         return self.optimizer, self.optim_lr_scheduler, self.grad_scaler
 
     def training_step(self, data_batch, *args):
+        """
+        Performs model training on a single data_batch
+        """
         # parse all the batches properly.
         overall_batch_num = args[0]
         individual_batch_inputs, awareness_batch_annotation_data = process_and_extract_data_batch(
@@ -492,6 +493,10 @@ class ModelWrapper(torch.nn.Module):
             )
 
     def set_force_dropout(self, force_value_str):
+        """
+        Helper function to set the side channel dropout mode for the model during inference, testing and visualization.
+        force_value_str in ['with_gaze', 'without_gaze']
+        """
         assert force_value_str == "with_gaze" or force_value_str == "without_gaze"
         if force_value_str == "with_gaze":
             self.model.fusion_net.force_input_dropout = {}

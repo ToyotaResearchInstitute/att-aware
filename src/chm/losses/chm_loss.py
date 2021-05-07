@@ -566,7 +566,7 @@ class CHMLoss(object):
         gaze_ds_common_predictor_map_loss += awareness_ds_common_predictor_map_loss
         gaze_ds_optic_flow_awareness_temporal_smoothness += awareness_ds_optic_flow_awareness_temporal_smoothness
 
-        # Label Loss
+        # attended awareness annotation label loss
         if predicted_awareness_output is not None and awareness_batch_annotation_data is not None:
             awareness_loss_pre_mult, awareness_loss_stats = self.awareness_label_loss.loss(
                 predicted_awareness_output, awareness_batch_annotation_data
@@ -584,7 +584,7 @@ class CHMLoss(object):
                 "awareness_predicted_label_mean": 0,
             }
 
-        # Consistency Loss
+        # temporal consistency loss
         if predicted_pairwise_gaze_t is not None and predicted_pairwise_gaze_tp1 is not None:
             (
                 consistency_smoothness_awareness,

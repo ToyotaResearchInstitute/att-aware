@@ -20,7 +20,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=os.path.join(os.path.expanduser("~"), "data", "dreyeve"),
         help="Full path to directory containing the DREYEVE videos and the gaze data",
     )
-
     parser.add_argument(
         "--precache_dir",
         dest="precache_dir",
@@ -39,21 +38,18 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=os.path.join(os.path.expanduser("~"), "data", "all_videos_subjects_tasks_gaze_data_dict.pkl"),
         help="Path to PKL file containing all the gaze data for all videos, subjects, tasks",
     )
-
     parser.add_argument(
         "--dataset_type",
         dest="dataset_type",
         default="train",
         help="Argument indicating the dataset type when creating dataset instances during training. [train, test]",
     )
-
     parser.add_argument(
         "--inference_ds_type",
         dest="inference_ds_type",
         default="test",
         help="Argument indicating the dataset type when creating dataset instances during inference. [train, test]",
     )
-
     parser.add_argument(
         "--load_model_path",
         dest="load_model_path",
@@ -72,14 +68,12 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=os.path.join(os.path.expanduser("~"), "cognitive_heatmap", "logs", session_hash),
         help="Full path to the the directory where the tensorboard logs will be written",
     )
-
     parser.add_argument(
         "--training_hash",
         dest="training_hash",
         default="chm_train",
         help="string describing meaningful descriptor string for training session",
     )
-
     parser.add_argument(
         "--orig_road_image_dims",
         type=int,
@@ -128,7 +122,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=8,
         help="Batch size used for the awareness dataset",
     )
-
     parser.add_argument(
         "--batch_aggregation_size",
         action="store",
@@ -136,7 +129,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=8,
         help="Number of batches for which the gradients are accumulated before performing backprop",
     )
-
     parser.add_argument(
         "--learning_rate",
         action="store",
@@ -144,7 +136,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=5e-3,
         help="Initial learning rate used for the main training",
     )
-
     parser.add_argument(
         "--dropout_ratio",
         action="store",
@@ -152,7 +143,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default='{"driver_facing":0.2, "optic_flow":0.0}',
         help="Dictionary specifying the the dropout ratio for the side channel inputs during training. Each value has to be in [0.0, 1.0]",
     )
-
     parser.add_argument(
         "--force_dropout_list",
         nargs="*",
@@ -160,7 +150,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=["driver_facing"],
         help="List containing the side channels to be forced to dropout during inference, visualization and testing.",
     )
-
     parser.add_argument(
         "--dropout_ratio_external_inputs",
         action="store",
@@ -168,7 +157,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.0,
         help="Dropout_ratio for ALL side channel input. When dropout is applied ALL side channel input is zeroed out. Only active raining",
     )
-
     parser.add_argument(
         "--lr_update_num",
         action="store",
@@ -183,7 +171,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.97,
         help="Learning rate decay factor for the scheduler which is activated once every lr_update_num batches.",
     )
-
     parser.add_argument(
         "--lr_min_bound",
         action="store",
@@ -191,7 +178,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=1e-4,
         help="Minimum bound for learning rate. The LR scheduler will not decay the LR below this value",
     )
-
     parser.add_argument(
         "--visualize_frequency",
         action="store",
@@ -234,7 +220,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=None,
         help="max number of batches during training experiments",
     )
-
     parser.add_argument(
         "--train_test_split_factor",
         action="store",
@@ -242,7 +227,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.2,
         help="When running training using the train/test split of a single dataset, this arg specifies the proportion used for the test set. (0.0, 1.0)",
     )
-    ##################### flags during training
+    ########################################### FLAGS USED DURING TRAINING ###########################################
     parser.add_argument(
         "--enable_amp",
         action="store_true",
@@ -333,7 +318,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=20,
         help="Length of the video snippet used for visualization in frames",
     )
-
     parser.add_argument(
         "--train_sequence_ids",
         nargs="*",
@@ -355,7 +339,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=[53, 60],
         help="List containing the dreyeve video ids used for visualization",
     )
-
     parser.add_argument(
         "--train_subject_ids",
         nargs="*",
@@ -377,7 +360,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
         help="List containing the subject ids to be considered for the test dataset",
     )
-
     parser.add_argument(
         "--train_task_ids",
         nargs="*",
@@ -399,7 +381,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=["roadonly", "control", "readingtext", "blurred", "flipped"],
         help="List containing the cognitive task modifiers to be considered for the visualization dataset",
     )
-
     parser.add_argument(
         "--retrieve_panoptic_masks",
         action="store_true",
@@ -424,7 +405,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=False,
         help="Flag for opting for separable 3d convolutions in the encoder. When False, the encoder will consist of only Conv2D from ResNet",
     )
-
     parser.add_argument(
         "--num_latent_layers",
         action="store",
@@ -432,7 +412,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=6,
         help="Number of latent layers in the common predictor used for emitting the final awareness and gaze maps.",
     )
-
     parser.add_argument(
         "--reduced_middle_layer_size",
         action="store",
@@ -440,7 +419,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=512,
         help="Size of the maximum features of the Conv3D with k=1 after encoder layer.",
     )
-
     parser.add_argument(
         "--decoder_layer_features",
         nargs="*",
@@ -455,9 +433,8 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=0.0,
-        help="Coefficient on gaze transform prior loss",
+        help="Coeff on gaze transform prior loss",
     )
-
     parser.add_argument(
         "--awareness_of_gaze_weight_factor_max",
         action="store",
@@ -465,15 +442,13 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=1.0,
         help="Max value for the awareness of gaze weight factor",
     )
-
     parser.add_argument(
         "--unnormalized_gaze_loss_coeff",
         action="store",
         type=float,
         default=1e-5,
-        help="Coefficient on unnormalized_gaze_loss",
+        help="Coeff on unnormalized_gaze_loss",
     )
-
     parser.add_argument(
         "--consistency_coeff_gaze",
         action="store",
@@ -493,28 +468,28 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=1e-5,
-        help="Coefficient on common_predictor_map_loss_coeff",
+        help="Coeff on common_predictor_map_loss_coeff",
     )
     parser.add_argument(
         "--gaze_data_coeff",
         action="store",
         type=float,
         default=1.2,
-        help="Coefficient on main loss term gaze log-probability",
+        help="Coeff on main loss term gaze log-probability",
     )
     parser.add_argument(
         "--gaze_spatial_regularization_coeff",
         action="store",
         type=float,
         default=5e10,
-        help="Coefficient for road image based spatial regularization coefficient for gaze",
+        help="Coeff for road image based spatial regularization coefficient for gaze",
     )
     parser.add_argument(
         "--gaze_temporal_regularization_coeff",
         action="store",
         type=float,
         default=0.0,
-        help="Coefficient for road image based temporal regularization coefficient for gaze",
+        help="Coeff for road image based temporal regularization coefficient for gaze",
     )
 
     ######## AWARENESS LOSS TERMS ##############
@@ -523,13 +498,13 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=1.0,
-        help="Coefficient for loss computed on the attended awareness annotations",
+        help="Coeff for loss computed on the attended awareness annotations",
     )
     parser.add_argument(
         "--awareness_loss_type",
         type=str,
         default="huber_loss",
-        help="type of awareness loss [huber_loss, squared_loss]",
+        help="Type of awareness loss [huber_loss, squared_loss]",
     )
     parser.add_argument(
         "--awareness_label_loss_patch_half_size",
@@ -543,7 +518,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=1,
-        help="weight for awareness at gaze points loss",
+        help="Coeff for awareness at gaze points loss",
     )
     parser.add_argument(
         "--awareness_steady_state_coeff",
@@ -552,7 +527,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.01,
         help="Regularization on awareness steady state",
     )
-
     parser.add_argument(
         "--awareness_spatial_regularization_coeff",
         action="store",
@@ -593,7 +567,7 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         action="store",
         type=float,
         default=1500000,
-        help="Coefficient for the decay loss term used for awareness",
+        help="Coeff for the decay loss term used for awareness",
     )
     parser.add_argument(
         "--awareness_decay_alpha",
@@ -638,7 +612,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=0.0347222222,
         help="Std for the Gaussian noise added in the gaze corruption",
     )
-
     parser.add_argument(
         "--sig_scale_factor",
         action="store",
@@ -646,7 +619,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=1,
         help="Factor by which sigma for gaussian kernel will be multiplied",
     )
-
     parser.add_argument(
         "--video_chunk_size",
         action="store",
@@ -654,7 +626,6 @@ def parse_arguments(session_hash, additional_argument_setters=[]):
         default=30.0,
         help="Each video will be split into chunks of length video_chunk_size before splitting into train and test indices",
     )
-
     parser.add_argument(
         "--fixed_gaze_list_length",
         dest="fixed_gaze_list_length",

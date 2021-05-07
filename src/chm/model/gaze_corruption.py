@@ -27,7 +27,6 @@ class GazeCorruption:
             Weight factor for y dimension when using spatially varying noise
         is_spatially_varying: bool
             Bool indicating whether the noise adding is spatially varying
-
         """
         self.bias_std = bias_std
         self.noise_std = noise_std

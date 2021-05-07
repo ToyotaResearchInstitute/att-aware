@@ -149,7 +149,6 @@ class DecoderNet(torch.nn.Module):
 
         Returns:
         --------
-
         decoder_net_output: torch.Tensor
             Output of the Decoder Net after processing through all the DecoderUnit layers
         """
@@ -161,7 +160,7 @@ class DecoderNet(torch.nn.Module):
         # s3d_net_3, s3d_net_2, s3d_net_1, layer2, layer1 in that order.
         # so [0] is layer4 or s3d_net_3
         du_key = list(self.decoder_layers)[0]
-        # Initialize the previous decoder unit output variable as the last encoder layer output. For subsequent decoder layers, this will be the output of the previous decoder unit.
+        # initialize the previous decoder unit output variable as the last encoder layer output. For subsequent decoder layers, this will be the output of the previous decoder unit.
         # encoder output dict will other wise be used for skip connections
         previous_du_out = encoder_output_dict[du_key]
         du_outs = []
@@ -208,10 +207,10 @@ class DecoderNet(torch.nn.Module):
                         xv = xv.unsqueeze(dim=2)  # (H, W, 1)
                         coord_grid = torch.cat([xv, yv], dim=2)  # (H, W, 2)
 
-                        # Create a tensor to hold the dxdy to nearest gaze point side channel information. Consists of two channels. one for dx and one for dy.
+                        # create a tensor to hold the dxdy to nearest gaze point side channel information. Consists of two channels. one for dx and one for dy.
                         # gaze_side_channel_layer = torch.zeros(gaze_points.shape[0], gaze_points.shape[1], coord_grid.shape[0], coord_grid.shape[1], 2,
                         # device=gaze_points.device) #(B,T,H,W,2), C=2 To be permuted later into B, T, C, H, W where C = 2.
-                        # First channel contains dx information and second channel contains dy information
+                        # first channel contains dx information and second channel contains dy information
                         gp_list_grid = (
                             gaze_points.unsqueeze(2)
                             .unsqueeze(2)
@@ -348,7 +347,7 @@ class DecoderNet(torch.nn.Module):
             individual_sc_inputs = torch.cat(individual_sc_inputs, dim=2)
             # skip the skip connection for layers that are not specified for skip connection
             if not du_key in self.skip_layers_keys:
-                # Forward of decoder unit
+                # forward of decoder unit
                 new_du_out = self.decoder_layers[du_key](
                     previous_du_out, None, individual_sc_inputs, upsm_size=upsm_target_size_list[i + 1]
                 )

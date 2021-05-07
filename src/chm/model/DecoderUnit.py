@@ -122,7 +122,7 @@ class DecoderUnit(torch.nn.Module):
         # (BC', T, H, W) for applying upsm on H and W, the tensor has to be 4D
         du_output = du_output.view(du_output.shape[0] * du_output.shape[1], du_output.shape[2], du_output.shape[3], -1)
 
-        # Upsampling the output
+        # upsampling the output
         self.upsm.size = upsm_size  # set the upsm size
         du_output = self.upsm(du_output)  # (BC', T, H', W')
         # (B, C, T, H', W'). Use B from joint_input and infer C dimension

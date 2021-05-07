@@ -27,7 +27,6 @@ def seek_mode(img, start_x, start_y, sigma):
         Tuple containing the final point of the meanshift search. (x_coord, y_coord)
     stats: dict
         Dict containing the sequence of x and y points. Typically useful for visualization.
-
     """
     x = start_x  # in pixels
     y = start_y  # in pixels

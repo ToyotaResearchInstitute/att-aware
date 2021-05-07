@@ -10,7 +10,7 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
         CHMPairwiseGazeDataset dataset class.
         Returns a pair of sequences that is used to compute the consistency cost term.
 
-        Parameters
+        Parameters:
         ----------
         dataset_type : str {'train, 'test', 'vis'}
             String indicating the type of dataset
@@ -24,13 +24,14 @@ class CHMPairwiseGazeDataset(CHMBaseDataset):
         """
         Sets up any resources (such loading csv files etc) needed for this derived Dataset.
 
-        Parameters
+        Parameters:
         ----------
-        kwargs: dictionary of named arguments.
+        kwargs: dict
+            dictionary of named arguments.
 
-        Returns
+        Returns:
         -------
-        None.
+        None
         """
         pass
 

@@ -10,7 +10,7 @@ class CHMGazeDataset(CHMBaseDataset):
         CHMGazeDataset dataset class/
         Dataset class for returning gaze and image data for a single sequence
 
-        Parameters
+        Parameters:
         ----------
         dataset_type : str {'train, 'test', 'vis'}
             String indicating the type of dataset
@@ -26,14 +26,15 @@ class CHMGazeDataset(CHMBaseDataset):
         """
         Sets up any resources (such loading csv files etc) needed for this derived dataset.
 
-        Parameters
+        Parameters:
         ----------
-        kwargs: dictionary of named arguments. Contains 'skip_list' which is the set of (video_id, subject, task, query_frame)
-                tuples that need to be excluded from this dataset
+        kwargs: dict
+            dictionary of named arguments. Contains 'skip_list' which is the set of (video_id, subject, task, query_frame)
+            tuples that need to be excluded from this dataset
 
-        Returns
+        Returns:
         -------
-        None.
+        None
         """
         self.skip_list = None
         if "skip_list" in kwargs:
@@ -43,11 +44,11 @@ class CHMGazeDataset(CHMBaseDataset):
         """
         Initializes the metadata_len and metadata_list if needed. The function is called at the very end of the CHMBaseDataset init function
 
-        Parameters
+        Parameters:
         ----------
         None
 
-        Returns
+        Returns:
         -------
         None. Results in populating the self.metadata_list
         """
@@ -69,11 +70,11 @@ class CHMGazeDataset(CHMBaseDataset):
         """
         Returns the metadata list (of tuples) for this dataset
 
-        Parameters
+        Parameters:
         ----------
         None
 
-        Returns
+        Returns:
         -------
         metadata_list: list
             List of tuples containing metadata information (video_id, subject, task, query_frame) for each data item
@@ -84,16 +85,15 @@ class CHMGazeDataset(CHMBaseDataset):
         """
         Required getitem() for PyTorch gaze dataset.
 
-        Parameters
+        Parameters:
         ----------
         idx: int
             Index of the data item in self.metadata_list
 
-        Returns
+        Returns:
         -------
         data_dict: dict
             Ordered dictionary containing the various data items needed for training. Each item in the dict is a tensor or numpy.array
-
         auxiliary_info_list: list
             List of auxiliary information needed for other purposes. If auxiliary info flag is set to be False, auxiliary_info_list = [].
         """

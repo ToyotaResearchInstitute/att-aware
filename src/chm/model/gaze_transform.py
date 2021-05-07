@@ -78,22 +78,30 @@ class GazeTransform(torch.nn.Module):
 
         Returns:
         --------
-        output: torch.Tensor
+        transformed_output: torch.Tensor
             Transform gaze tensor. (B, T, L, 2) without should train and dropout bits, (B, T, L, 4) otherwise
         """
 
         # Change from (B, T, L, 2) ---> (B, TL, 2)
         input_reshaped = input.reshape(input.shape[0], input.shape[1] * input.shape[2], -1)
 
-        output_reshaped = self.lin_trans(input_reshaped)  # (B, TL, 2)
-        output = output_reshaped.reshape(input.shape[0], input.shape[1], input.shape[2], -1)  # (B, T, L, 2)
+        transformed_output_reshaped = self.lin_trans(input_reshaped)  # (B, TL, 2)
+        # (B, T, L, 2)
+        transformed_output = transformed_output_reshaped.reshape(input.shape[0], input.shape[1], input.shape[2], -1)
         # adds a ones-all element to the last dim, to state the gaze input is there
         if self.pad_gaze_vector:
             # return (B, T, L, 4)
-            return torch.cat([output, should_train_input_gaze, output.new_ones(output[:, :, :, 0:1].shape)], dim=3)
+            return torch.cat(
+                [
+                    transformed_output,
+                    should_train_input_gaze,
+                    transformed_output.new_ones(transformed_output[:, :, :, 0:1].shape),
+                ],
+                dim=3,
+            )
         else:
             # return (B, T, L, 2)
-            return output
+            return transformed_output
 
     def prior_loss(self):
         """

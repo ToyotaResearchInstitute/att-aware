@@ -16,6 +16,9 @@ from functools import partial
 
 
 def load_datasets(params_dict):
+    """
+    Creates all train/test datasets
+    """
     gaze_datasets = collections.OrderedDict()
     awareness_datasets = collections.OrderedDict()
     pairwise_gaze_datasets = collections.OrderedDict()
@@ -162,7 +165,10 @@ def generate_train_test_split_indices(dataset, params_dict):
 
 
 def create_dataloaders(gaze_datasets, awareness_datasets, pairwise_gaze_datasets, params_dict):
-    num_test_samples = params_dict.get("num_test_samples", 1000)
+    """
+    Creates dataloaders for all datasets
+    """
+    num_test_samples = params_dict.get("num_test_samples", 1000)  # number of test samples used for test set
     batch_size = params_dict.get("batch_size", 8)
     awareness_batch_size = params_dict.get("awareness_batch_size", 8)
     num_dl_workers = params_dict.get("num_workers", 0)
@@ -229,13 +235,20 @@ def create_model_and_loss_fn(params_dict):
 
 
 def save_model(state_dict, save_path):
+    """
+    Save model at save_path
+    """
     torch.save(state_dict, save_path)
 
 
 def parse_data_item(data_dict, aux_info_list, gaze_corruption=None, gaze_correction=None, input_process_dict=None):
+    """
+    Parses the output of the dataset and prepares it for consumption by the network.
+    Also applies appropriate gaze corruption and gaze correction if needed
+    """
     batch_input = {}
 
-    batch_input["road_image"] = data_dict[ROAD_IMAGE_0]  # garmin image
+    batch_input["road_image"] = data_dict[ROAD_IMAGE_0]  # road image
     batch_input["segmentation_mask_image"] = data_dict[SEGMENTATION_MASK_0]  # mask image
     batch_input["optic_flow_image"] = data_dict[OPTIC_FLOW_IMAGE_0]
     batch_input["should_train_input_gaze"] = data_dict[SHOULD_TRAIN_INPUT_GAZE_0]  # (B, T, L, 1)
