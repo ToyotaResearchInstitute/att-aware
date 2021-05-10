@@ -13,7 +13,6 @@ experiment_type_gaze_denoising_EXTRA_INFO.json, the script is to be used as foll
 
 Usage:
 python parse_denoising_data.py --results_json_prefix experiment_type_gaze_denoising_
-
 """
 
 

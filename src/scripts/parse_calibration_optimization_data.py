@@ -6,6 +6,20 @@ import numpy as np
 from chm.configs.args_file import parse_arguments
 from chm.utils.experiment_result_keys import *
 
+"""
+Script to extract error stats from calibration optimization experiments. 
+The results of the experiments are expected to stored in files with the following filename convention
+
+experiment_type_gaze_calibration_miscalibration_noise_level_NOISELEVEL_optimization_run_num_OPTIMIZATIONNUM_FILENAMEAPPEND.json,
+where NOISELEVEL is in the miscalibration_noise_levels arg in experiment_chm_calibration_optimization
+OPTIMIZATIONNUM goes from 0 to num_optimization_runs-1, 
+and FILENAMEAPPEND is the 'filename_append' arg in the experiment. 
+
+Usage:
+python parse_denoising_data.py --folder_containing_results FOLDER_CONTAINING_JSONS --num_optimization_runs (same val as used in the experiment)
+--miscalibration_noise_levels (same val as used in the experiment) --filename_append (same val as used in the experiment)
+"""
+
 
 def arg_setter(parser):
     parser.add_argument(
@@ -18,12 +32,12 @@ def arg_setter(parser):
     parser.add_argument(
         "--num_optimization_runs",
         type=int,
-        default=5,
+        default=15,
         help="Number of optimizations runs performed for a given noise level for the calibration experiment",
     )
 
     parser.add_argument(
-        "--noise_levels",
+        "--miscalibration_noise_levels",
         action="store",
         nargs="*",
         type=float,
@@ -39,11 +53,11 @@ def arg_setter(parser):
 if __name__ == "__main__":
     session_hash = uuid.uuid4().hex
     args = parse_arguments(session_hash, [arg_setter])
-    noise_levels = args.noise_levels
+    miscalibration_noise_levels = args.miscalibration_noise_levels
     num_optimization_runs = args.num_optimization_runs
     filename_append = args.filename_append
     file_prefix = "experiment_type_gaze_calibration_miscalibration_noise_level_"
-    for noise_level in noise_levels:
+    for noise_level in miscalibration_noise_levels:
         starting_mse_error_list = []
         end_mse_error_list = []
         for i in range(num_optimization_runs):

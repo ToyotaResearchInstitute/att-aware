@@ -14,7 +14,6 @@ experiment_type_awareness_estimates_EXTRA_INFO.json, the script is to be used as
 
 Usage:
 python parse_awareness_estimation_data.py --results_json_prefix experiment_type_awareness_estimates_ (--display_balanced_results)
-
 """
 
 
