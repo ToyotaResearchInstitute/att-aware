@@ -17,7 +17,7 @@ OPTIMIZATIONNUM goes from 0 to num_optimization_runs-1,
 and FILENAMEAPPEND is the 'filename_append' arg in the experiment. 
 
 Usage:
-python parse_denoising_data.py --folder_containing_results FOLDER_CONTAINING_JSONS --num_optimization_runs (same val as used in the experiment)
+python parse_calibration_optimization_data.py --folder_containing_results FOLDER_CONTAINING_JSONS --num_optimization_runs (same val as used in the experiment)
 --miscalibration_noise_levels (same val as used in the experiment) --filename_append (same val as used in the experiment)
 """
 

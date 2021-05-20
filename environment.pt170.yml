@@ -1,0 +1,54 @@
+name: pt170
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - cudatoolkit
+  - cython
+  - ignite
+  - joblib
+  - jupyter
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - protobuf=3
+  - pyqt
+  - python=3
+  - pytorch=1.7.0
+  - scikit-learn
+  - scipy
+  - simplejson
+  - torchvision
+  - mkdocs
+  - mongodb
+  - pymongo
+  - jupyter
+  - seaborn
+  - shapely
+  - invoke
+  - pytest
+  - imageio
+  - skorch
+  - pip:
+      - opencv-python==4.2.0.32
+      - addict
+      - geopy
+      - PyQt5
+      - pyquaternion
+      - tensorboardX
+      - tensorboard
+      - tqdm
+      - transforms3d
+      - imageio-ffmpeg
+      - u-msgpack-python
+      - utm
+      - psutil
+      - pillow
+      - filelock
+      - snakeviz
+      - colorama
+      - ipython
+      - grpcio
+      - grpcio-tools
+

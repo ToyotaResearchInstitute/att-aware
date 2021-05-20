@@ -300,7 +300,7 @@ def arg_setter(parser):
         action="store",
         nargs="*",
         type=float,
-        default=[1.0e-3, 1.0e-2, 1.0e-1],
+        default=[0.1, 0.2, 0.3, 0.5],
         help="Noise levels for different experiments",
     )
 
