@@ -1,5 +1,5 @@
 ## Cognitive Heat Map: A Model for Driver Situational Awareness
-[Install](#install) // [Datasets](#datasets) // [Training](#training) // [Evaluation](#evaluation) // [Models](#models) // [License](#license) // [References](#references)
+[Install](#install) // [Datasets](#datasets) // [Training](#training) // [Experiments](#experiments) // [Analysis](#analysis) // [License](#license)
 
 Official [PyTorch](https://pytorch.org/) implementation of *Cognitive Heat Map (CHM)* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/), in particular for [Link to Paper](https://www.overleaf.com/project/5cb74be8dc8abc4e20cab4bc)
 *Deepak Gopinath, Guy Rosman, Simon Stent, Katsuya Terahata, Luke Fletcher, John Leonard, Brenna Argall*.
@@ -101,3 +101,6 @@ where `NOISELEVEL` is in the `miscalibration_noise_levels` argument in `experime
 `OPTIMIZATIONNUM` goes from 0 to `num_optimization_runs`-1 and `FILENAMEAPPEND` is the `filename_append` argument in the experiment.
 
 `python parse_calibration_optimization_data.py --folder_containing_results FOLDER_CONTAINING_JSONS --num_optimization_runs (same val as used in the experiment) --miscalibration_noise_levels (same val as used in the experiment) --filename_append (same val as used in the experiment)`
+
+## License
+The source code is released under the [MIT License](LICENSE.md)
