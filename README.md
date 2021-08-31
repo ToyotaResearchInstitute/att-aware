@@ -2,9 +2,9 @@
 [Install](#install) // [Datasets](#datasets) // [Training](#training) // [Experiments](#experiments) // [Analysis](#analysis) // [License](#license)
 
 Official [PyTorch](https://pytorch.org/) implementation of *A Model for Attended Awareness in Driving (MAAD)* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/), in particular for [Link to Paper](https://www.overleaf.com/project/5cb74be8dc8abc4e20cab4bc)
-*Deepak Gopinath, Guy Rosman, Simon Stent, Katsuya Terahata, Luke Fletcher, John Leonard, Brenna Argall*.
+*Deepak Gopinath, Guy Rosman, Simon Stent, Katsuya Terahata, Luke Fletcher, Brenna Argall, John Leonard*.
 
-MAAD affords estimation of attended awareness based on noisy gaze estimates and scene video over time.  This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
+MAAD affords estimation of attended awareness based on noisy gaze estimates and scene video over time. This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
 
 ## Install
 
