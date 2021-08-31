@@ -1,10 +1,10 @@
-## Cognitive Heat Map: A Model for Driver Situational Awareness
+## MAAD: A Model for Attended Awareness in Driving
 [Install](#install) // [Datasets](#datasets) // [Training](#training) // [Experiments](#experiments) // [Analysis](#analysis) // [License](#license)
 
-Official [PyTorch](https://pytorch.org/) implementation of *Cognitive Heat Map (CHM)* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/), in particular for [Link to Paper](https://www.overleaf.com/project/5cb74be8dc8abc4e20cab4bc)
+Official [PyTorch](https://pytorch.org/) implementation of *A Model for Attended Awareness in Driving (MAAD)* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/), in particular for [Link to Paper](https://www.overleaf.com/project/5cb74be8dc8abc4e20cab4bc)
 *Deepak Gopinath, Guy Rosman, Simon Stent, Katsuya Terahata, Luke Fletcher, John Leonard, Brenna Argall*.
 
-CHM affords estimation of attended awareness based on noisy gaze estimates and scene video over time.  This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
+MAAD affords estimation of attended awareness based on noisy gaze estimates and scene video over time.  This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
 
 ## Install
 
@@ -22,7 +22,7 @@ We will list below all commands as if run directly inside the conda environment.
 All the datasets are assumed to be downloaded in `/data/`.
 
 ### Videos
-CHM uses subset of videos (8 videos of urban driving) from th Dr(Eye)ve Dataset. The entire Dr(Eye)ve dataset can be downloaded at [Dr(Eye)ve Full Dataset](https://aimagelab.ing.unimore.it/imagelab/page.asp?IdPage=8). We collected gaze and attended awareness annotation data on the videos **[06, 07, 10, 11, 26, 35, 53, 60]**.
+MAAD uses subset of videos (8 videos of urban driving) from th Dr(Eye)ve Dataset. The entire Dr(Eye)ve dataset can be downloaded at [Dr(Eye)ve Full Dataset](https://aimagelab.ing.unimore.it/imagelab/page.asp?IdPage=8). We collected gaze and attended awareness annotation data on the videos **[06, 07, 10, 11, 26, 35, 53, 60]**.
 Each video folder should be located at `/data/dreyeve/VIDEO_ID`
 
 ### Gaze Dataset
@@ -38,23 +38,23 @@ Each annotation consists of the following fields:
 video_id | query_frame | subject | cognitive_modifier | query_x | query_y | anno_is_aware | anno_is_object | anno_expected_awareness | anno_surprise_factor
 ```
 Any field which starts with `anno` is the annotation. For more details refer to supplementary material of the paper. 
-Datasets are assumed to be downloaded in `/data/datasets/CHM_ATT_AWARENESS_LABELS.csv` (can be a symbolic link).
+Datasets are assumed to be downloaded in `/data/datasets/MAAD_ATT_AWARENESS_LABELS.csv` (can be a symbolic link).
 
 ### Optic Flow
-CHM uses optic flow of the videos as a side-channel information to perform temporal regularizations. For the purposes of our model, we utilized [[RAFT: Recurrent All Pairs Field Transforms for Optical Flow](https://arxiv.org/pdf/2003.12039.pdf)] to generate optic flow. 
+MAAD uses optic flow of the videos as a side-channel information to perform temporal regularizations. For the purposes of our model, we utilized [[RAFT: Recurrent All Pairs Field Transforms for Optical Flow](https://arxiv.org/pdf/2003.12039.pdf)] to generate optic flow. 
 For each video in the dataset, the optic flow model has to be run all frame pairs N frames apart. The current code assumes that the optic flow generated is at half-resolution with a padding of 2 pixels (on each side) along the y direction. These parameters denoted as `OPTIC_FLOW_SCALE_FACTOR, OPTIC_FLOW_H_PAD, OPTIC_FLOW_W_PAD` can be altered in the `att-aware/src/chm/utils/chm_consts.py` file to suit your needs.
 
 Optic flow is assumed to be cached as `~/chm_cache/optic_flow/VIDEO_ID/frame_N.npy`
 
 ### Segmentation Masks
-CHM uses segmentation masks for the videos in order to perform diffusivity-based spatial regularization. For the purposes of our model, we used MaskRCNN to generate the segmentation masks for each frame for each video. 
+MAAD uses segmentation masks for the videos in order to perform diffusivity-based spatial regularization. For the purposes of our model, we used MaskRCNN to generate the segmentation masks for each frame for each video. 
 
 Segmentation masks are assumed to be cached as `~/chm_cache/segmentations_from_video/VIDEO_ID/segmentations_frames/frame_N.png`
 
 During training, lower resolution mask images will be generated by resizing the full sized masks and will be cached back into the same location as `frame_N_ar_{aspect_ratio_reduction_factor}.png`.
 
 ## Training
-CHM model training can be done using the `train.py` script. 
+MAAD model training can be done using the `train.py` script. 
 Run the following command to train a model using all 8 videos (split into a train and test sets) using the parameter settings used in the ICCV paper. 
 ` python train.py --train_sequence_ids 6 7 10 11 26 35 53 60 --use_std_train_test_split --add_optic_flow --use_s3d --enable_amp`
 Default resolution used is `240 x 135`.
@@ -62,17 +62,17 @@ All training args are present in `/att-aware/src/chm/config/args_file.py`
 
 Models will be saved at `~/cognitive_heatmap/models/TRAINING_HASH_NAME`
 ## Experiments
-Three different experiments are proposed for CHM. All experiments are done using the test split. Gaze Denoising and Awareness Estimation uses the trained model for inference. Gaze Calibration experiment involves continued training to optimize the miscalibration transform. 
+Three different experiments are proposed for MAAD. All experiments are done using the test split. Gaze Denoising and Awareness Estimation uses the trained model for inference. Gaze Calibration experiment involves continued training to optimize the miscalibration transform. 
 All experiment results are saved as jsons in `~/cognitive_heatmap/results/`
 ### Gaze Denoising
-CHM can be used for denoising noisy gaze estimates by relying on saliency information. 
+MAAD can be used for denoising noisy gaze estimates by relying on saliency information. 
 The denoising experiment script is located at `att-aware/src/scripts/experiment_chm_denoising.py`
 
 The script can be run using the following command:
 `python experiment_chm_denoising.py --train_sequence_ids 6 7 10 11 26 35 53 60 --use_std_train_test_split --add_optic_flow --use_s3d --enable_amp --load_indices_dict_path ~/cognitive_heatmap/logs/TRAINING_HASH/TRAINING_HASH/indices_dict_folder/indices_dict.pkl --load_model_path ~/cognitive_heatmap/models/TRAINING_HASH/MODEL.pt --max_inference_num_batches 1000`
 
 ### Gaze Recalibration
-CHM can be used for recalibration of a miscalibrated gaze (due to errors in DMS). 
+MAAD can be used for recalibration of a miscalibrated gaze (due to errors in DMS). 
 The calibration experiment script is located at `att-aware/src/scripts/experiment_chm_calibration.py`
 The calibration experiment script can be run using the follow command:
 
@@ -81,7 +81,7 @@ The calibration experiment script can be run using the follow command:
 Note that, the above command assumes that the model used for recalibration was trained using the default cost parameters. It is important that the cost coefficients match the original values. Furthermore, the `dropout_ratio` for `driver_facing` gaze module should be set at `0.0` so that gaze is available as a side-channel input to the network at all times. The miscalibration noise levels can be specified using the `miscalibration_noise_levels` argument. 
  
 ### Awareness Estimation
-CHM can used for attended awareness estimation based on scene context and an imperfect gaze information. 
+MAAD can used for attended awareness estimation based on scene context and an imperfect gaze information. 
 The attended awareness estimation script is located at `att-aware/src/scripts/experiment_chm_awareness_estimation.py`
 
 The attended awareness estimation script can be run using the following command:
