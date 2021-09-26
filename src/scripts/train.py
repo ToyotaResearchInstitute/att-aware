@@ -5,9 +5,9 @@ import uuid
 import random
 import numpy as np
 
-from chm.configs.args_file import parse_arguments
-from chm.model.model_wrapper import ModelWrapper
-from chm.trainers.cognitive_heatmap_trainer import CHMTrainer
+from maad.configs.args_file import parse_arguments
+from maad.model.model_wrapper import ModelWrapper
+from maad.trainers.maad_trainer import MAADTrainer
 
 
 def train(args, session_hash):
@@ -30,7 +30,7 @@ def train(args, session_hash):
     model_wrapper = ModelWrapper(params_dict, session_hash)
 
     # instantiate trainer class
-    trainer = CHMTrainer(params_dict)
+    trainer = MAADTrainer(params_dict)
 
     # start training
     trainer.fit(model_wrapper)

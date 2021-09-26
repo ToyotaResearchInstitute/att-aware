@@ -4,15 +4,15 @@ import json
 import os
 import numpy as np
 
-from chm.configs.args_file import parse_arguments
-from chm.utils.experiment_result_keys import *
+from maad.configs.args_file import parse_arguments
+from maad.utils.experiment_result_keys import *
 
 """
 Script to extract error stats from calibration optimization experiments. 
 The results of the experiments are expected to stored in files with the following filename convention
 
 experiment_type_gaze_calibration_miscalibration_noise_level_NOISELEVEL_optimization_run_num_OPTIMIZATIONNUM_FILENAMEAPPEND.json,
-where NOISELEVEL is in the miscalibration_noise_levels arg in experiment_chm_calibration_optimization
+where NOISELEVEL is in the miscalibration_noise_levels arg in experiment_maad_calibration_optimization
 OPTIMIZATIONNUM goes from 0 to num_optimization_runs-1, 
 and FILENAMEAPPEND is the 'filename_append' arg in the experiment. 
 

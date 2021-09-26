@@ -6,8 +6,8 @@ import json
 import numpy as np
 import collections
 
-from chm.configs.args_file import parse_arguments
-from chm.utils.experiment_result_keys import *
+from maad.configs.args_file import parse_arguments
+from maad.utils.experiment_result_keys import *
 
 """
 Script to extract error stats from the awareness estimation experiments. If the file to be parsed is named 
@@ -55,90 +55,84 @@ if __name__ == "__main__":
         sample_weights = [1.0 / target_histogram[t] for t in targets]
 
         # extract errors and estimates from the jsons
-        sq_error_chm = jsn[AWARENESS_ERROR_CHM_KEY]
+        sq_error_maad = jsn[AWARENESS_ERROR_MAAD_KEY]
         sq_error_of_spatiotemporal_gaussian = jsn[AWARENESS_ERROR_OF_SPATIOTEMPORAL_GAUSSIAN_KEY]
 
-        abs_error_chm = jsn[AWARENESS_ABS_ERROR_CHM_KEY]
+        abs_error_maad = jsn[AWARENESS_ABS_ERROR_MAAD_KEY]
         abs_error_of_spatiotemporal_gaussian = jsn[AWARENESS_ABS_ERROR_OF_SPATIOTEMPORAL_GAUSSIAN_KEY]
 
-        awareness_estimate_chm = jsn[AWARENESS_ESTIMATE_CHM_KEY]
+        awareness_estimate_maad = jsn[AWARENESS_ESTIMATE_MAAD_KEY]
         awareness_estimate_of_spatiotemporal_gaussian = jsn[AWARENESS_ESTIMATE_OF_SPATIOTEMPORAL_GAUSSIAN_KEY]
 
         # sanity check to make sure all metrics are logged properly
         assert (
             len(targets)
-            == len(sq_error_chm)
+            == len(sq_error_maad)
             == len(sq_error_of_spatiotemporal_gaussian)
-            == len(abs_error_chm)
+            == len(abs_error_maad)
             == len(abs_error_of_spatiotemporal_gaussian)
-            == len(awareness_estimate_chm)
+            == len(awareness_estimate_maad)
             == len(awareness_estimate_of_spatiotemporal_gaussian)
         )
 
         if display_balanced_results:
             # weighted abs and eq errors
-            abs_error_chm = np.array(abs_error_chm) * np.array(sample_weights)
+            abs_error_maad = np.array(abs_error_maad) * np.array(sample_weights)
             abs_error_of_spatiotemporal_gaussian = np.array(abs_error_of_spatiotemporal_gaussian) * np.array(
                 sample_weights
             )
-            sq_error_chm = np.array(sq_error_chm) * np.array(sample_weights)
+            sq_error_maad = np.array(sq_error_maad) * np.array(sample_weights)
             sq_error_of_spatiotemporal_gaussian = np.array(sq_error_of_spatiotemporal_gaussian) * np.array(
                 sample_weights
             )
 
             # absolute weighted error mean and std
-            std_abs_chm = np.std(abs_error_chm)
+            std_abs_maad = np.std(abs_error_maad)
             std_abs_of_spatiotemporal_gaussian = np.std(abs_error_of_spatiotemporal_gaussian)
-            mean_abs_chm = np.sum(abs_error_chm) / np.sum(sample_weights)
+            mean_abs_maad = np.sum(abs_error_maad) / np.sum(sample_weights)
             mean_abs_of_spatiotemporal_gaussian = np.sum(abs_error_of_spatiotemporal_gaussian) / np.sum(sample_weights)
 
             # squared error mean and std
-            std_sq_chm = np.std(sq_error_chm)
+            std_sq_maad = np.std(sq_error_maad)
             std_sq_of_spatiotemporal_gaussian = np.std(sq_error_of_spatiotemporal_gaussian)
-            mean_sq_chm = np.sum(sq_error_chm) / np.sum(sample_weights)
+            mean_sq_maad = np.sum(sq_error_maad) / np.sum(sample_weights)
             mean_sq_of_spatiotemporal_gaussian = np.sum(sq_error_of_spatiotemporal_gaussian) / np.sum(sample_weights)
         else:
             # absolute error mean and std
-            std_abs_chm = np.std(abs_error_chm)
+            std_abs_maad = np.std(abs_error_maad)
             std_abs_of_spatiotemporal_gaussian = np.std(abs_error_of_spatiotemporal_gaussian)
-            mean_abs_chm = np.average(abs_error_chm)
+            mean_abs_maad = np.average(abs_error_maad)
             mean_abs_of_spatiotemporal_gaussian = np.average(abs_error_of_spatiotemporal_gaussian)
             # squared error mean and std
-            std_sq_chm = np.std(sq_error_chm)
+            std_sq_maad = np.std(sq_error_maad)
             std_sq_of_spatiotemporal_gaussian = np.std(sq_error_of_spatiotemporal_gaussian)
-            mean_sq_chm = np.average(sq_error_chm)
+            mean_sq_maad = np.average(sq_error_maad)
             mean_sq_of_spatiotemporal_gaussian = np.average(sq_error_of_spatiotemporal_gaussian)
 
-        # print the means and std deviations for chm and baseline estimate to screen
+        # print the means and std deviations for maad and baseline estimate to screen
         print(
-            "ABS ERROR CHM: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
-                mean_abs_chm,
-                std_abs_chm,
-                mean_abs_of_spatiotemporal_gaussian,
-                std_abs_of_spatiotemporal_gaussian,
+            "ABS ERROR MAAD: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
+                mean_abs_maad, std_abs_maad, mean_abs_of_spatiotemporal_gaussian, std_abs_of_spatiotemporal_gaussian,
             )
         )
 
         print(
-            "SQUARED ERROR CHM: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
-                mean_sq_chm,
-                std_sq_chm,
-                mean_sq_of_spatiotemporal_gaussian,
-                std_sq_of_spatiotemporal_gaussian,
+            "SQUARED ERROR MAAD: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
+                mean_sq_maad, std_sq_maad, mean_sq_of_spatiotemporal_gaussian, std_sq_of_spatiotemporal_gaussian,
             )
         )
 
         # mean and std deviation of the awareness estimates
-        std_awareness_estimate_chm = np.std(awareness_estimate_chm)
+        std_awareness_estimate_maad = np.std(awareness_estimate_maad)
         std_awareness_estimate_of_spatiotemporal_gaussian = np.std(awareness_estimate_of_spatiotemporal_gaussian)
-        mean_awareness_estimate_chm = np.average(awareness_estimate_chm)
+        mean_awareness_estimate_maad = np.average(awareness_estimate_maad)
         mean_awareness_estimate_of_spatiotemporal_gaussian = np.average(awareness_estimate_of_spatiotemporal_gaussian)
 
-        # print the awareness estimate from CHM and baseline estimate to screen
+        # print the awareness estimate from MAAD and baseline estimate to screen
         print(
-            "AWARENESS ESTIMATE CHM: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
-                mean_awareness_estimate_chm,
-                std_awareness_estimate_chm,
+            "AWARENESS ESTIMATE MAAD: {} +/- {}. SpatioTemporal OF Gaussian: {} +/- {}".format(
+                mean_awareness_estimate_maad,
+                std_awareness_estimate_maad,
                 mean_awareness_estimate_of_spatiotemporal_gaussian,
                 std_awareness_estimate_of_spatiotemporal_gaussian,
             )
