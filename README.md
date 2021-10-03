@@ -19,17 +19,17 @@ conda activate pt170
 We will list below all commands as if run directly inside the conda environment. If you encounter out of memory issues, try a lower `batch_size` parameter in the args_file.py.
 
 ## Datasets
-All the datasets are assumed to be downloaded in `/data/`.
+All the datasets are assumed to be downloaded in `~/data/`.
 
 ### Videos
 MAAD uses subset of videos (8 videos of urban driving) from th Dr(Eye)ve Dataset. The entire Dr(Eye)ve dataset can be downloaded at [Dr(Eye)ve Full Dataset](https://aimagelab.ing.unimore.it/imagelab/page.asp?IdPage=8). We collected gaze and attended awareness annotation data on the videos **[06, 07, 10, 11, 26, 35, 53, 60]**.
-Each video folder should be located at `/data/dreyeve/VIDEO_ID`
+Each video folder should be located at `~/data/dreyeve/VIDEO_ID`
 
 ### Gaze Dataset
 Our complete dataset comprises approximately 24.5 hours of gaze tracking data captured via multiple exposures from different subjects. We recruited 23 subjects (aged 20-55), who each watched a subset of video clips with their heads mounted in a chin-rest after a 9-point calibration procedure. Their primary task was to monitor the driving scene as a safety driver might monitor an autonomous vehicle. While not a perfect substitute for in-car driving data collection, this primary task allowed for the capture of many of the characteristics of attentive driving behavior. In order to explore the effect of the cognitive task difference (vs. in-car data) on the gaze and awareness estimates, subjects viewed the video under different cognitive task modifiers, as detailed in Section~\ref{sec:data:conditions} (data collected with non-null cognitive task modifiers comprise $30\%$ of total captured gaze data). Around $45\%$ of video stimuli were watched more than once, of which $11\%$ (40 minutes) was observed by 16 or more subjects.
 
 The gaze dataset will be made available as a pkl (all_videos_subjects_tasks_gaze_data.pkl) file. Each subjects' gaze data is stored as a pandas dataframe in the pkl file (organized according to video, subject and task id). 
-The pkl file is expected to be located at `data/all_videos_subjects_tasks_gaze_data.pkl`
+The pkl file is expected to be located at `~/data/all_videos_subjects_tasks_gaze_data.pkl`
 
 ### Attended Awareness Annotation Dataset
 Our complete attended awareness annotation dataset consists of 54019 third-party annotations of approximately 10s long videos from the Gaze Dataset. Annotators watched a video snippet where the subject's gaze was marked by two circles centered at the gaze point. One circle (green) size was set to the diameter of a person's central foveal vision area at the viewing distance. Another circle (red) was set to a diameter twice the foveal vision circle. At the end of the video snippet, a specific location was chosen and the annotators were asked whether they believe the subject has attended to that location on a scale between 1 and 5 (1-no, definitely not aware, 5-yes, definitely aware). 
@@ -38,7 +38,7 @@ Each annotation consists of the following fields:
 video_id | query_frame | subject | cognitive_modifier | query_x | query_y | anno_is_aware | anno_is_object | anno_expected_awareness | anno_surprise_factor
 ```
 Any field which starts with `anno` is the annotation. For more details refer to supplementary material of the paper. 
-Datasets are assumed to be downloaded in `/data/datasets/MAAD_ATT_AWARENESS_LABELS.csv` (can be a symbolic link).
+Datasets are assumed to be downloaded in `~/data/datasets/MAAD_ATT_AWARENESS_LABELS.csv` (can be a symbolic link).
 
 ### Optic Flow
 MAAD uses optic flow of the videos as a side-channel information to perform temporal regularizations. For the purposes of our model, we utilized [[RAFT: Recurrent All Pairs Field Transforms for Optical Flow](https://arxiv.org/pdf/2003.12039.pdf)] to generate optic flow. 
