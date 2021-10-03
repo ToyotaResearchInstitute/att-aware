@@ -10,7 +10,7 @@ MAAD affords estimation of attended awareness based on noisy gaze estimates and 
 
 You need a machine with recent Nvidia drivers and a GPU with at least 16GB of memory (more for the bigger models at higher resolution). We recommend using conda to have a reproducible environment. To setup your environment, type in a terminal (only tested in Ubuntu 18.04 and PyTorch 1.7.0):
 ```bash
-git glone https://github.com/ToyotaResearchInstitute/att-aware.git
+git clone https://github.com/ToyotaResearchInstitute/att-aware.git
 cd att-aware
 # if you want to use conda (recommended)
 conda env create -f environment.pt170.yml
