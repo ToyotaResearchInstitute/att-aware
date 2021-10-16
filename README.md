@@ -40,6 +40,8 @@ video_id | query_frame | subject | cognitive_modifier | query_x | query_y | anno
 Any field which starts with `anno` is the annotation. For more details refer to supplementary material of the paper. 
 Datasets are assumed to be downloaded in `~/data/datasets/MAAD_ATT_AWARENESS_LABELS.csv` (can be a symbolic link).
 
+Both the gaze dataset and the annotation dataset are available as a zipped folder for download [[here](https://drive.google.com/drive/u/3/folders/11fAUqTEXbuBxaC8Mw806taxc6Qj9b5Vl)].
+
 ### Optic Flow
 MAAD uses optic flow of the videos as a side-channel information to perform temporal regularizations. For the purposes of our model, we utilized [[RAFT: Recurrent All Pairs Field Transforms for Optical Flow](https://arxiv.org/pdf/2003.12039.pdf)] to generate optic flow. 
 For each video in the dataset, the optic flow model has to be run all frame pairs N frames apart. The current code assumes that the optic flow generated is at half-resolution with a padding of 2 pixels (on each side) along the y direction. These parameters denoted as `OPTIC_FLOW_SCALE_FACTOR, OPTIC_FLOW_H_PAD, OPTIC_FLOW_W_PAD` can be altered in the `att-aware/src/maad/utils/maad_consts.py` file to suit your needs.
