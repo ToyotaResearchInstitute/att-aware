@@ -1,11 +1,12 @@
 ## MAAD: A Model for Attended Awareness in Driving
 [Install](#install) // [Datasets](#datasets) // [Training](#training) // [Experiments](#experiments) // [Analysis](#analysis) // [License](#license)
 
-Official [PyTorch](https://pytorch.org/) implementation of *MAAD: A Model and Dataset for "Attended Awareness" in Driving* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/), in particular for [Link to Paper](https://www.overleaf.com/project/5cb74be8dc8abc4e20cab4bc)
+Official [PyTorch](https://pytorch.org/) implementation of *MAAD: A Model and Dataset for "Attended Awareness" in Driving* invented by the RAD Team at [Toyota Research Institute (TRI)](https://www.tri.global/)
 *Deepak Gopinath, Guy Rosman, Simon Stent, Katsuya Terahata, Luke Fletcher, Brenna Argall, John Leonard*.
 
 MAAD affords estimation of attended awareness based on noisy gaze estimates and scene video over time. This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
 
+Paper to be available on Arxiv soon!
 ## Install
 
 You need a machine with recent Nvidia drivers and a GPU with at least 16GB of memory (more for the bigger models at higher resolution). We recommend using conda to have a reproducible environment. To setup your environment, type in a terminal (only tested in Ubuntu 18.04 and PyTorch 1.7.0):
