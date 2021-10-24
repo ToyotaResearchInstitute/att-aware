@@ -6,7 +6,7 @@ Official [PyTorch](https://pytorch.org/) implementation of *MAAD: A Model and Da
 
 MAAD affords estimation of attended awareness based on noisy gaze estimates and scene video over time. This learned model additionally affords saliency estimation and refinement of a noisy gaze signal. We demonstrate the performance of the model on a new, annotated dataset that explores the gaze and perceived attended awareness of subjects as they observe a variety of driving scenarios. In this dataset, we provide a surrogate annotated third person estimate of attended awareness as a reproducible supervisory cue.
 
-Paper to be available on Arxiv soon!
+The full paper along with the supplementary material is available on Arxiv [here](https://arxiv.org/abs/2110.08610).
 ## Install
 
 You need a machine with recent Nvidia drivers and a GPU with at least 16GB of memory (more for the bigger models at higher resolution). We recommend using conda to have a reproducible environment. To setup your environment, type in a terminal (only tested in Ubuntu 18.04 and PyTorch 1.7.0):
