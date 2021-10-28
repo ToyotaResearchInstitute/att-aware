@@ -232,7 +232,7 @@ class MAADBaseDataset(Dataset):
     def fetch_segmentation_mask_from_id(self, video_id, frame_idx, return_reduced_size=True):
         """
         Get the cached segmentation mask image from video_id and frame index.
-        Assumes that the images as stored .png at ~/(self.precache_dir)/segmentations_from_video/"{0:02d}".format(video_id)/segmentations_frames/frame_{frame_idx}.jpg
+        Assumes that the images as stored .png at ~/(self.precache_dir)/segmentations_from_video/"{0:02d}".format(video_id)/segmentation_frames/frame_{frame_idx}.jpg
         Performs appropriate resizing if necessary and stores the resized video frame image in the same directory
 
         Parameters:
