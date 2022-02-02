@@ -20,8 +20,8 @@ class MAADInferenceEngine(object):
 
         # type of dataset used for inference. Either 'train' or 'test'
         self.inference_ds_type = self.params_dict.get("inference_ds_type", "test")
-        # Maximum number of batches to perform inference. Populated by the input_process_dict
-        self.max_batch_num = self.params_dict.get("max_inference_num_batches", 20)
+        # Maximum number of batches to perform inference. Populated by the input_process_dict. If None, iterates over the entire provided dataset
+        self.max_batch_num = None
         # Inference mode. Determines whether the side-channel input gaze needs to be dropped out or not [WITH_GAZE, WITHOUT_GAZE, BOTH].
         self.inference_mode = InferenceMode.BOTH
         # Boolean which determines whether the loss needs to be computed during inference.
