@@ -10,6 +10,7 @@ from maad.experiments.maad_experiments import MAADExperiment
 
 from maad.model.gaze_transform import GazeTransform
 from maad.model.gaze_corruption import GazeCorruption
+from maad.utils.maad_consts import *
 
 # (NOTE) When running this script please make sure that you are using --batch_size = 1
 
@@ -208,10 +209,9 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
                 for t in t_list:
                     # Weird ordering due to the "list nature of aux_info_list"
                     print("Time step ", t)
-                    frame_idx = aux_info_list[t]["road_id"][1][b].numpy().item()
-                    # for example, 'DREYEVE_DATA/06/video_garmin.avi'
-                    video_id_path = aux_info_list[t]["road_id"][0][b]
-                    video_id_num = os.path.split(os.path.split(video_id_path)[0])[1]  # for example, '06'
+                    frame_idx = aux_info_list[t][AUXILIARY_INFO_FRAME_IDX][b].numpy().item()
+                    # for example, '06'
+                    video_id_num = "{0:02d}".format(aux_info_list[t][AUXILIARY_INFO_VIDEO_ID][b])
                     gaze_hmap_with_gaze = (
                         predicted_gaze_with_gaze["gaze_density_map"][b, t, 0, :, :].cpu().detach().numpy()
                     )

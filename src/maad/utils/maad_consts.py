@@ -40,6 +40,7 @@ OPTIC_FLOW_IMAGE_0 = OPTIC_FLOW_IMAGE_TEMPLATE.format(0)
 # daze Dataset specific field names.
 AUXILIARY_INFO_VIDEO_ID = "video_id"
 AUXILIARY_INFO_SUBJECT_ID = "subject_id"
+AUXILIARY_INFO_FRAME_IDX = "frame_id"
 AUXILIARY_INFO_FULL_SIZE_GAZE_0 = AUXILIARY_INFO_FULL_SIZE_GAZE_TEMPLATE.format(0)
 
 # enum for determining whether side channel gaze be used during inference.

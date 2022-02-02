@@ -488,6 +488,8 @@ class MAADBaseDataset(Dataset):
                 video_id of the video corresponding to the data item
             AUXILIARY_INFO_SUBJECT_ID: int
                 subject id of the subject corresponding to the data_item
+            AUXILIARY_INFO_FRAME_IDX: int
+                frame index of the corresponding data item
             AUXILIARY_INFO_FULL_SIZE_GAZE_0: numpy.array (L, 2)
                 Gaze points in full resolution
 
@@ -536,6 +538,7 @@ class MAADBaseDataset(Dataset):
         else:
             auxiliary_info = collections.OrderedDict()
             auxiliary_info[AUXILIARY_INFO_VIDEO_ID] = video_id
+            auxiliary_info[AUXILIARY_INFO_FRAME_IDX] = frame_idx
             auxiliary_info[AUXILIARY_INFO_SUBJECT_ID] = subject
             auxiliary_info[AUXILIARY_INFO_FULL_SIZE_GAZE_0] = full_size_gaze_points_array
 
