@@ -61,7 +61,7 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
                 Used for selecting specific frames for inference. Note that batch size is always set to be 1. 
                 """
                 image_ids = np.array(
-                    [ai["road_id"][1].cpu().detach().numpy() for ai in aux_info_list]
+                    [ai[AUXILIARY_INFO_FRAME_IDX].cpu().detach().numpy() for ai in aux_info_list]
                 ).flatten()  # (T, )
 
                 should_use_batch = True
@@ -95,7 +95,7 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
                 batch_input[gaze_key_before_alteration] = batch_input[gaze_key]
                 # grab the image ids from the aux_info_list. For all the frame_ids within the range, alter
                 image_ids = np.array(
-                    [ai["road_id"][1].cpu().detach().numpy() for ai in aux_info_list]
+                    [ai[AUXILIARY_INFO_FRAME_IDX].cpu().detach().numpy() for ai in aux_info_list]
                 ).flatten()  # (T, ) #works because B = 1 for generating saliency maps,
                 image_id_within_frame_id_range = np.logical_and(
                     image_ids > gaze_alteration_frame_id_range[0], image_ids < gaze_alteration_frame_id_range[1]
