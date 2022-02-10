@@ -4,6 +4,7 @@ import copy
 import functools
 import numpy as np
 import cv2
+import os
 
 from maad.configs.args_file import parse_arguments
 from maad.experiments.maad_experiments import MAADExperiment
@@ -28,7 +29,7 @@ from maad.utils.maad_consts import *
 
 class GenerateSaliencyMapsUsingModel(MAADExperiment):
     """
-    Class to generate saliency maps using the model. 
+    Class to generate saliency maps using the model.
     """
 
     def __init__(self, args, session_hash):
@@ -58,7 +59,7 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
 
             def check_if_batch_should_be_used(batch_input, aux_info_list, batch_inference_frame_id_range):
                 """
-                Used for selecting specific frames for inference. Note that batch size is always set to be 1. 
+                Used for selecting specific frames for inference. Note that batch size is always set to be 1.
                 """
                 image_ids = np.array(
                     [ai[AUXILIARY_INFO_FRAME_IDX].cpu().detach().numpy() for ai in aux_info_list]
@@ -185,10 +186,10 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
 
                 return img_cv_bgr
 
-            batch_input = inference_output_dict["batch_input"]
-            aux_info_list = inference_output_dict["aux_info_list"]
-            batch_target = inference_output_dict["batch_target"]
-            data_item = inference_output_dict["data_item"]
+            batch_input = inference_output_dict["awareness_batch_input"]
+            aux_info_list = inference_output_dict["awareness_aux_info_list"]
+            batch_target = inference_output_dict["awareness_batch_target"]
+            #data_item = inference_output_dict["data_item"]
             predicted_gaze_with_gaze = inference_output_dict["predicted_gaze_with_gaze"]
             predicted_gaze_without_gaze = inference_output_dict["predicted_gaze_without_gaze"]
 
@@ -293,24 +294,25 @@ class GenerateSaliencyMapsUsingModel(MAADExperiment):
                     cv2.imwrite(awareness_hmap_without_gaze_path, awareness_hmap_without_gaze_bgr)
                     print("Saved hmaps for frame id ", frame_idx)
 
-        self.input_process_dict = {}
-        self.input_process_dict["functor"] = functools.partial(alter_gaze_points_for_frame_ids_input_functor)
-        self.input_process_dict["params"] = {}
-        self.input_process_dict["params"]["batch_inference_frame_id_range"] = args.batch_inference_frame_id_range
-        self.input_process_dict["params"]["gaze_alteration_frame_id_range"] = args.gaze_alteration_frame_id_range
+        self.wrapper_model.input_process_dict = {}
+        self.wrapper_model.input_process_dict["functor"] = functools.partial(alter_gaze_points_for_frame_ids_input_functor)
+        self.wrapper_model.input_process_dict["params"] = {}
+        self.wrapper_model.input_process_dict["params"]["batch_inference_frame_id_range"] = args.batch_inference_frame_id_range
+        self.wrapper_model.input_process_dict["params"]["gaze_alteration_frame_id_range"] = args.gaze_alteration_frame_id_range
+        self.wrapper_model.input_process_dict["params"]["batch_size"] = args.batch_size
         # fixed point to which the gaze will be fixed
-        self.input_process_dict["params"]["gaze_fixed_point"] = args.gaze_fixed_point
-        self.input_process_dict["inference_mode"] = InferenceMode.BOTH
+        self.wrapper_model.input_process_dict["params"]["gaze_fixed_point"] = args.gaze_fixed_point
+        self.wrapper_model.input_process_dict["inference_mode"] = InferenceMode.BOTH
 
-        self.output_process_dict = {}
-        self.output_process_dict["functor"] = functools.partial(save_images_in_folder_output_functor)
-        self.output_process_dict["params"] = {}
-        self.output_process_dict["params"]["writer"] = self.writer
-        self.output_process_dict["params"]["batch_size"] = args.batch_size
-        self.output_process_dict["params"]["is_save_only_last_frame"] = True
-        self.output_process_dict["params"]["is_save_gaze_points_on_image"] = True
-        self.output_process_dict["params"]["text_desc"] = "saliency_maps_using_inference"
-        self.output_process_dict["params"]["output_folder"] = os.path.join(self.log_dir, "saliency_maps")
+        self.wrapper_model.output_process_dict = {}
+        self.wrapper_model.output_process_dict["functor"] = functools.partial(save_images_in_folder_output_functor)
+        self.wrapper_model.output_process_dict["params"] = {}
+        #self.wrapper_model.output_process_dict["params"]["writer"] = self.writer
+        self.wrapper_model.output_process_dict["params"]["batch_size"] = args.batch_size
+        self.wrapper_model.output_process_dict["params"]["is_save_only_last_frame"] = True
+        self.wrapper_model.output_process_dict["params"]["is_save_gaze_points_on_image"] = True
+        self.wrapper_model.output_process_dict["params"]["text_desc"] = "saliency_maps_using_inference"
+        self.wrapper_model.output_process_dict["params"]["output_folder"] = os.path.join(args.log_dir, "saliency_maps")
 
     def perform_experiment(self):
         self._perform_experiment()
@@ -338,6 +340,6 @@ def arg_setter(parser):
 if __name__ == "__main__":
     session_hash = uuid.uuid4().hex
     args = parse_arguments(session_hash, [arg_setter])
-    experiment = GenerateSaliencyMapsUsingModel(session_hash, args)
+    experiment = GenerateSaliencyMapsUsingModel(args, session_hash)
     experiment.initialize_functors()
     experiment.perform_experiment()

@@ -148,7 +148,7 @@ class MAADBaseDataset(Dataset):
                 # resize full frame and cache the result in the same folder for later use.
                 full_frame = np.float32(full_frame)
                 road_frame = cv2.resize(full_frame, (self.new_image_width, self.new_image_height))
-                cv2.imwrite(reduced_size_precache_filename, video_frame)
+                cv2.imwrite(reduced_size_precache_filename, road_frame)
         else:  # return full sized frame
             road_frame = cv2.imread(full_size_precache_filename)
 
