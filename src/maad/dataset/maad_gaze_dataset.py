@@ -1,7 +1,7 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
 import itertools
 
-from chm.dataset.chm_base_dataset import MAADBaseDataset
+from maad.dataset.maad_base_dataset import MAADBaseDataset
 
 
 class MAADGazeDataset(MAADBaseDataset):
